@@ -5,8 +5,10 @@ import com.ngontro86.app.common.db.FlatDaoProvider
 import com.ngontro86.app.common.db.NonTxDataSource
 import com.ngontro86.component.testing.ComponentEnv
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
+@Ignore
 class DboeOptionListINTTest {
 
     ComponentEnv env
@@ -14,10 +16,10 @@ class DboeOptionListINTTest {
     @Before
     void "init env"() {
         [
-                'datasource.host'    : '35.224.75.65',
+                'datasource.host'    : 'xxxx',
                 'datasource.name'    : 'dboe',
-                'datasource.username': 'user_rw',
-                'datasource.password': '251120Vi'
+                'datasource.username': 'xxxx',
+                'datasource.password': 'xxxx'
         ].each { k, v -> System.setProperty(k, v) }
 
         env = ComponentEnv.env([NonTxDataSource, FlatDaoProvider])

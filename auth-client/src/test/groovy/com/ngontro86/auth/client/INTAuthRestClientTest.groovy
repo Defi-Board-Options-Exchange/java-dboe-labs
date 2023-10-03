@@ -17,7 +17,7 @@ class INTAuthRestClientTest {
         env = ComponentEnv.env([AuthRestClient, ConfigValuePostProcessor, LoggerPostProcessor])
         [
                 'useremail'           : 'truongvinh.vu@gmail.com',
-                'userpassword'        : 'MTIzNDU2Nzg5',
+                'userpassword'        : 'xxxxx',
                 'authRestClientName'  : 'localServer',
                 'localServer.host'    : 'http://localhost',
                 'localServer.basePath': 'api',

@@ -25,9 +25,9 @@ class DboeOnchainAnalyzerAppTest {
                 'chainId'             : '43114',
                 'gasLimit'            : '7000000',
                 'gasPrice'            : '25000000000',
-                'dboeHost.host'       : 'http://dboe.exchange',
+                'dboeHost.host'       : 'xxxx',
                 'dboeHost.basePath'   : 'api',
-                'dboeHost.port'       : '8686'
+                'dboeHost.port'       : 'xxx'
         ].each { k, v -> System.setProperty(k, v) }
 
         env = ComponentEnv.env([Web3jClientProvider, GasProvider, TxnManagerProvider, ConfigValuePostProcessor, LoggerPostProcessor])

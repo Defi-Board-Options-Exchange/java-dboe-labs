@@ -7,8 +7,10 @@ import com.ngontro86.dboe.web3j.GasProvider
 import com.ngontro86.dboe.web3j.TxnManagerProvider
 import com.ngontro86.dboe.web3j.Web3jClientProvider
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
+@Ignore
 class INTERC20TokenManagerTest {
 
 
