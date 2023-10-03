@@ -1,8 +1,10 @@
 package com.ngontro86.dboe.web3j.smartcontract
 
+import com.ngontro86.common.annotations.DBOEComponent
 import com.ngontro86.dboe.web3j.DBOEClob
 import com.ngontro86.dboe.web3j.inmemory.InMemoryDBOEClob
 
+@DBOEComponent
 class InMemoryClobManager implements ClobManager<InMemoryDBOEClob> {
 
     @Override

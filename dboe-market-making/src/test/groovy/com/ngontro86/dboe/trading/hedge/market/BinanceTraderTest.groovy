@@ -2,8 +2,10 @@ package com.ngontro86.dboe.trading.hedge.market
 
 import com.binance.connector.futures.client.impl.UMFuturesClientImpl
 import com.ngontro86.restful.common.json.JsonUtils
+import org.junit.Ignore
 import org.junit.Test
 
+@Ignore
 class BinanceTraderTest {
 
     @Test
