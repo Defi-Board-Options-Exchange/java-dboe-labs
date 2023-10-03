@@ -1,0 +1,163 @@
+module com.ngontro86.server.dboe_orderbook;
+
+uses com.ngontro86.server.dboe_instr;
+uses com.ngontro86.server.dboe_price;
+uses com.ngontro86.server.dboe_analytic;
+
+create schema DboeRefPriceEvent as (
+    chain string,
+    instr_id string,
+    currency string,
+    ref_price double,
+    in_timestamp long
+);
+
+create window DboeRefPriceWin.std:unique(chain, instr_id, currency) as DboeRefPriceEvent;
+@Name('DboeRefPriceWin') insert into DboeRefPriceWin select * from DboeRefPriceEvent;
+
+@Name('DboeRefStatEvent')
+insert into DboeRefStatEvent
+select
+    r.chain as chain,
+    r.instr_id as instr_id,
+    r.currency as currency,
+    r.ref_price as ref_price,
+    p.ref_price as prev_ref_price,
+    case when p.ref_price > 0 then 100.0 * (r.ref_price / p.ref_price - 1.0) else Double.NaN end as price_change_pct,
+    r.in_timestamp as in_timestamp
+from DboeRefPriceWin r
+left outer join DboePrevRefWin p on r.chain = p.chain and r.instr_id = p.instr_id and r.currency = p.currency;
+
+create schema DboeOrderBookEvent as (
+    chain string,
+    instr_id string,
+    currency string,
+    buy_sell int,
+    amount double,
+    price double,
+    price_level int,
+    in_timestamp long
+);
+
+create window DboeOrderBookWin.std:unique(chain, instr_id, currency, buy_sell, price_level) as DboeOrderBookEvent;
+@Name('DboeOrderBookWin') insert into DboeOrderBookWin select * from DboeOrderBookEvent;
+
+create schema DboeBBOEvent as (
+    chain string,
+    instr_id string,
+    currency string,
+    buy_sell int,
+    amount double,
+    price double,
+    in_timestamp long
+);
+
+create window DboeBBOWin.std:unique(chain, instr_id, currency, buy_sell) as DboeBBOEvent;
+@Name('DboeBBOWin') insert into DboeBBOWin select * from DboeBBOEvent;
+
+@Name('DboeBBOWin-BID')
+insert into DboeBBOEvent
+select maxby(price asc, in_timestamp asc) from DboeOrderBookWin(buy_sell=1, amount > 0) group by chain, instr_id, currency;
+
+@Name('DboeBBOWin-ASK')
+insert into DboeBBOEvent
+select minby(price asc, in_timestamp asc) from DboeOrderBookWin(buy_sell=2, amount > 0) group by chain, instr_id, currency;
+
+@Name('DboePriceEvent-Complete')
+insert into DboePriceEvent
+select
+    b.chain as chain,
+    b.instr_id as instr_id,
+    b.currency as currency,
+    b.price as bid,
+    b.amount as bid_size,
+    a.price as ask,
+    a.amount as ask_size,
+    current_timestamp() as in_timestamp
+from DboeBBOWin(buy_sell=1) b
+full outer join DboeBBOWin(buy_sell=2) a on b.instr_id = a.instr_id and b.chain = a.chain and b.currency = a.currency;
+
+insert into dboe_dsp_event
+select
+    chain,
+    instr_id,
+    currency,
+    avg(price) as dsp
+from DboeBBOWin
+group by chain, instr_id, currency
+output snapshot at (55, 23, *, *, *);
+
+create schema DboeOptionChainMarketEvent as (
+    chain string,
+    instr_id string,
+    currency string,
+    bid double,
+    ref_price double,
+    price_change_pct double,
+    ask double,
+    bid_size double,
+    ask_size double,
+    open_interest double,
+    traded_value double,
+    bid_iv double,
+    ask_iv double,
+    buy_mwr double,
+    sell_mwr double,
+    in_timestamp long
+);
+create window DboeOptionChainMarketWin.std:unique(chain, instr_id, currency) as DboeOptionChainMarketEvent;
+@Name('DboeOptionChainMarketWin') insert into DboeOptionChainMarketWin select * from DboeOptionChainMarketEvent;
+
+@Name('OptionChainMarket-Instant Update due to Instrument Update')
+insert into DboeOptionChainMarketEvent
+select
+    i.chain as chain,
+    i.instr_id as instr_id,
+    i.currency as currency,
+    bid,
+    ref_price,
+    price_change_pct,
+    ask,
+    bid_size,
+    ask_size,
+    coalesce(oi.open_interest, 0.0) * coalesce(s.spot, 0.0) as open_interest,
+    coalesce(tradedValue, 0.0) as traded_value,
+    bid_iv,
+    ask_iv,
+    Math.abs(i.strike - i.cond_strike)/bid as buy_mwr,
+    Math.abs(i.strike - i.cond_strike)/ask as sell_mwr,
+    current_timestamp() as in_timestamp
+from DboeOptionInstrWin i unidirectional
+left outer join DboeSpotWin s on i.underlying = s.underlying
+left outer join DboeRefStatsWin r on i.instr_id = r.instr_id and i.chain = r.chain and i.currency = r.currency
+left outer join DboeImpliedVolWin v on i.instr_id = v.instr_id
+left outer join DboeOpenInterestWin oi on i.instr_id = oi.instr_id and i.chain = oi.chain and i.currency = oi.currency
+left outer join DboeActiveOptionsTradedValueWin t on i.instr_id = t.instr_id and i.chain = t.chain
+full outer join DboePriceWin p on i.instr_id = p.instr_id and i.chain = p.chain and i.currency = p.currency;
+
+@Name('OptionChainMarket-Instant Update due to Price Update')
+insert into DboeOptionChainMarketEvent
+select
+    p.chain as chain,
+    p.instr_id as instr_id,
+    p.currency as currency,
+    bid,
+    ref_price,
+    price_change_pct,
+    ask,
+    bid_size,
+    ask_size,
+    oi.open_interest * s.spot as open_interest,
+    coalesce(tradedValue, 0.0) as traded_value,
+    bid_iv,
+    ask_iv,
+    Math.abs(i.strike - i.cond_strike)/bid as buy_mwr,
+    Math.abs(i.strike - i.cond_strike)/ask as sell_mwr,
+    current_timestamp() as in_timestamp
+from DboePriceWin p
+inner join DboeOptionInstrWin i on i.instr_id = p.instr_id and i.chain = p.chain and i.currency = p.currency
+inner join DboeSpotWin s on i.underlying = s.underlying
+inner join DboeImpliedVolWin v on p.instr_id = v.instr_id
+inner join DboeOpenInterestWin oi on p.instr_id = oi.instr_id and p.chain = oi.chain and p.currency = oi.currency
+left outer join DboeRefStatsWin r on p.instr_id = r.instr_id and p.chain = r.chain and p.currency = r.currency
+left outer join DboeActiveOptionsTradedValueWin t on p.instr_id = t.instr_id and p.chain = t.chain;

@@ -1,0 +1,9 @@
+dependencies {
+    compile project(':cep')
+    compile project(':common')
+    compile project(':app-common')
+    compile project(':restful-common')
+    compile project(':websocket-common')
+    compile project(':cloud-publisher')
+    testCompile project(':component-testing')
+}

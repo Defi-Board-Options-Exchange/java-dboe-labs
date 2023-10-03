@@ -1,0 +1,94 @@
+module com.ngontro86.server.dboe_instr;
+
+create schema dboe_chain_info_event as (
+    chain string,
+    config string,
+    config_value string
+);
+
+create window DboeChainInfoWin.std:unique(chain, config) as dboe_chain_info_event;
+@Name('DboeChainInfoWin') insert into DboeChainInfoWin select * from dboe_chain_info_event;
+
+create schema dboe_collateral_event as (
+    chain string,
+    token string,
+    address string
+);
+
+create window DboeCollateralWin.std:unique(chain, token) as dboe_collateral_event;
+@Name('DboeCollateralWin') insert into DboeCollateralWin select * from dboe_collateral_event;
+
+create schema DboeOptionInstrEvent as (
+    instr_id string,
+    chain string,
+    currency string,
+    collateral_group string,
+    underlying string,
+    underlying_px_scale int,
+    kind string,
+    expiry int,
+    ltt int,
+    strike double,
+    cond_strike double,
+    multiplier int,
+    currency_address string,
+    long_contract_address string,
+    short_contract_address string,
+    ob_address string,
+    fsp_address string,
+    option_factory_address string,
+    clearing_address string
+);
+
+create window DboeOptionInstrWin.std:unique(instr_id, currency, chain) as DboeOptionInstrEvent;
+@Name('DboeOptionInstrWin') insert into DboeOptionInstrWin select * from DboeOptionInstrEvent;
+
+
+create schema dboe_all_options_event as (
+    instr_id string,
+    chain string,
+    collateral_group string,
+    underlying string,
+    underlying_px_scale int,
+    kind string,
+    expiry int,
+    ltt int,
+    strike double,
+    cond_strike double,
+    multiplier int,
+    currency string,
+    currency_address string,
+    long_contract_address string,
+    short_contract_address string,
+    ob_address string,
+    fsp_address string,
+    option_factory_address string,
+    clearing_address string
+);
+
+create window DboeAllOptionsWin.std:unique(instr_id, currency, chain) as dboe_all_options_event;
+@Name('DboeAllOptionsWin') insert into DboeAllOptionsWin select * from dboe_all_options_event;
+
+create schema DboeUnderlyingMarketEvent as (
+    underlying string,
+    strike_scale int,
+    option_price_scale int,
+    min_txn_value int,
+    qty_step double
+);
+
+create window DboeUnderlyingMarketWin.std:unique(underlying) as DboeUnderlyingMarketEvent;
+@Name('DboeUnderlyingMarketWin') insert into DboeUnderlyingMarketWin select * from DboeUnderlyingMarketEvent;
+
+
+create schema dboe_ob_address_divider_event as (
+    underlying string,
+    chain string,
+    expiry int,
+    ob_sc_address string
+);
+
+create window DboeObAddressDividerWin.std:unique(chain, underlying, expiry) as dboe_ob_address_divider_event;
+@Name('DboeObAddressDividerWin') insert into DboeObAddressDividerWin select * from dboe_ob_address_divider_event;
+
+

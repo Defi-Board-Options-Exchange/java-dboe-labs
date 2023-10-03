@@ -1,0 +1,48 @@
+@Primary('')
+define window CurrencyRateWin.std:unique(currency) as select * from fx_rate_event;
+@Name('CurrencyRate') insert into CurrencyRateWin select * from fx_rate_event;
+
+create schema InstEvent as (inst_id string, alias_inst_id string, inst_type int, underlying string, market string, expiry_date int, multiplier int, currency string, tick_size double, timestamp long);
+create window InstWin.std:unique(inst_id) as select * from InstEvent;
+@Name('InstWin') insert into InstWin select * from InstEvent;
+
+create schema PriceStepEvent as (inst_id string,
+	bid double, ask double, last_price double,
+	bid_size int, ask_size int, last_size int,
+	open_price double, close_price double,
+	timestamp long);
+
+create schema PriceEvent as (inst_id string,
+	bid double, ask double, last_price double,
+	bid_size int, ask_size int, last_size int,
+	open_price double, close_price double,
+	micro_price double,
+	timestamp long);
+
+create window PriceWin.std:unique(inst_id) as select * from PriceEvent;
+@Name('PriceWin') insert into PriceWin select * from PriceEvent;
+
+@Name('PriceEvent')
+insert into PriceEvent select
+	inst_id,
+	bid, ask, last_price,
+	bid_size, ask_size, last_size,
+	open_price, close_price,
+	Calculator.microPrice(bid, last_price, ask, bid_size, last_size, ask_size) as micro_price,
+	timestamp
+from PriceStepEvent(bid>0.0,ask>0.0);
+
+create schema OrderMapEvent as (inst_id string, order_req_id string, exchange_order_id string, broker string, account string, portfolio string, side int, timestamp long);
+create window OrderMapWin.std:unique(order_req_id) as select * from OrderMapEvent;
+@Name('OrderMapWin') insert into OrderMapWin select * from OrderMapEvent;
+
+create schema TradeEvent as (inst_id string, order_req_id string, exchange_order_id string, broker string, account string, portfolio string, size int, avg_price double, status string, timestamp long);
+create window TradeWin.std:unique(order_req_id) as select * from TradeEvent;
+@Name('TradeWin') insert into TradeWin select * from TradeEvent;
+
+create schema PortfolioEvent as (inst_id string, broker string, account string, portfolio string, size int, timestamp long);
+create window PortfolioWin.std:unique(inst_id, broker, account, portfolio) as select * from PortfolioEvent;
+@Name('PortfolioWin') insert into PortfolioWin select * from PortfolioEvent;
+insert into PortfolioEvent select
+	inst_id, broker, account, portfolio, sum(size) as size, max(timestamp) as timestamp
+from TradeWin(status in ('Partialfill', 'Filled')) group by inst_id, broker, account, portfolio;

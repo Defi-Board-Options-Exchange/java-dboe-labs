@@ -1,0 +1,130 @@
+﻿<html>
+<head>
+    <base href="/" />
+    <meta charset="utf-8">
+    <title>Local Dashboard</title>
+    <meta name="fragment" content="!">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="MobileOptimized" content="100">
+    <meta name="title" content="Local Dashboard">
+    <meta name="og:title" content="Local Dashboard">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+    <meta name='viewport' content='width=device-width, maximum-scale=1.0, initial-scale=1.0' />
+
+    <link rel="stylesheet" type="text/css" href="assets/css/primeng.min.css" />
+    <link rel="stylesheet" type="text/css" href="assets/css/style.bundle.min.css" />
+    <link rel="stylesheet" type="text/css" href="assets/css/styles.min.css" />
+    <link rel="stylesheet" type="text/css" href="assets/css/fontawesome.css" />
+
+    <script defer type="text/javascript" src="assets/js/jquery.min.js"></script>
+    <script defer src="dist/app.main.js"></script>
+</head>
+<body>
+    <app>
+        <div id="divLoading">
+            <style type="text/css">
+                #pre-bootstrap {
+                    background-color: #262626;
+                    bottom: 0px;
+                    left: 0px;
+                    position: fixed;
+                    right: 0px;
+                    top: 0px;
+                    z-index: 999999;
+                }
+
+                    #pre-bootstrap div.messaging {
+                        color: #FFFFFF;
+                        font-family: monospace;
+                        left: 0px;
+                        margin-top: -37px;
+                        position: absolute;
+                        right: 0px;
+                        text-align: center;
+                        top: 50%;
+                    }
+
+                    #pre-bootstrap h1 {
+                        font-size: 26px;
+                        line-height: 35px;
+                        margin: 0px 0px 20px 0px;
+                    }
+
+                    #pre-bootstrap h2 {
+                        height: 1px;
+                        color: #262626;
+                    }
+
+                    #pre-bootstrap p {
+                        font-size: 18px;
+                        line-height: 14px;
+                        margin: 0px 0px 0px 0px;
+                    }
+
+                .spinner {
+                    margin: 10px auto 0;
+                    width: 70px;
+                    text-align: center;
+                }
+
+                    .spinner > div {
+                        width: 18px;
+                        height: 18px;
+                        background-color: #fff;
+                        border-radius: 100%;
+                        display: inline-block;
+                        -webkit-animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+                        animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+                    }
+
+                    .spinner .bounce1 {
+                        -webkit-animation-delay: -0.32s;
+                        animation-delay: -0.32s;
+                    }
+
+                    .spinner .bounce2 {
+                        -webkit-animation-delay: -0.16s;
+                        animation-delay: -0.16s;
+                    }
+
+                @-webkit-keyframes sk-bouncedelay {
+                    0%, 80%, 100% {
+                        -webkit-transform: scale(0);
+                    }
+
+                    40% {
+                        -webkit-transform: scale(1.0);
+                    }
+                }
+
+                @keyframes sk-bouncedelay {
+                    0%, 80%, 100% {
+                        -webkit-transform: scale(0);
+                        transform: scale(0);
+                    }
+
+                    40% {
+                        -webkit-transform: scale(1.0);
+                        transform: scale(1.0);
+                    }
+                }
+            </style>
+            <div id="pre-bootstrap">
+                <div class="messaging">
+                    <h1>
+                        Local Dashboard
+                    </h1>
+                    <div class="spinner">
+                        <div class="bounce1"></div>
+                        <div class="bounce2"></div>
+                        <div class="bounce3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </app>
+</body>
+</html>

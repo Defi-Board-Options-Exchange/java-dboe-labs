@@ -1,0 +1,8 @@
+module com.ngontro86.server.dboe;
+
+import com.ngontro86.cep.esper.utils.*;
+
+uses com.ngontro86.server.dboe_instr;
+uses com.ngontro86.server.dboe_orderbook;
+uses com.ngontro86.server.dboe_onchain_clob;
+uses com.ngontro86.server.dboe_analytic;

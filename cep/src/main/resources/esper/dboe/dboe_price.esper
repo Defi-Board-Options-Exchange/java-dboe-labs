@@ -1,0 +1,161 @@
+module com.ngontro86.server.dboe_price;
+
+uses com.ngontro86.server.dboe_analytic;
+
+create schema dboe_dsp_event as (
+    chain string,
+    instr_id string,
+    currency string,
+    dsp double
+);
+
+create window DboeDspWin.std:unique(chain, instr_id, currency) as dboe_dsp_event;
+@Name('DboeDspWin') insert into DboeDspWin select * from dboe_dsp_event;
+
+create schema dboe_fsp_event as (
+    chain string,
+    underlying string,
+    expiry int,
+    option_factory_address string,
+    fsp long,
+    in_timestamp long
+);
+
+create window DboeFspWin.std:unique(chain, underlying, expiry) as dboe_fsp_event;
+@Name('DboeFspWin') insert into DboeFspWin select * from dboe_fsp_event;
+
+create schema DboeOptionFspEvent as (
+    chain string,
+    instr_id string,
+    fsp double,
+    in_timestamp long
+);
+
+create window DboeOptionFspWin.std:unique(chain, instr_id) as DboeOptionFspEvent;
+@Name('DboeOptionFspWin') insert into DboeOptionFspWin select * from DboeOptionFspEvent;
+
+insert into DboeOptionFspEvent
+select
+    i.chain as chain,
+    i.instr_id as instr_id,
+    case
+        when i.kind = 'Call'
+        then Math.min(i.cond_strike - i.strike, Math.max(0, f.fsp/i.underlying_px_scale/100000000.0 - i.strike))
+        else Math.min(i.strike - i.cond_strike, Math.max(0, 1.0* i.strike - f.fsp/i.underlying_px_scale/100000000.0)) end as fsp,
+    f.in_timestamp as in_timestamp
+from DboeFspWin f
+inner join DboeAllOptionsWin i on f.chain = i.chain and f.underlying = i.underlying and f.expiry = i.expiry;
+
+create schema dboe_wallet_position_event as (
+    chain string,
+    wallet_id string,
+    instr_id string,
+    currency string,
+    pos double,
+    pos_val double,
+    avg_px double
+);
+
+create window DboeWalletPositionWin.std:unique(chain, wallet_id, instr_id, currency) as dboe_wallet_position_event;
+@Name('DboeWalletPositionWin') insert into DboeWalletPositionWin select * from dboe_wallet_position_event;
+
+create schema DboePriceEvent as (
+    chain string,
+    instr_id string,
+    currency string,
+    bid double,
+    ask double,
+    bid_size double,
+    ask_size double,
+    in_timestamp long
+);
+
+create window DboePriceWin.std:unique(chain, instr_id, currency) as DboePriceEvent;
+@Name('DboePriceWin') insert into DboePriceWin select * from DboePriceEvent;
+
+create schema dboe_prev_ref_event as (
+    chain string,
+    instr_id string,
+    currency string,
+    ref_price double,
+    in_timestamp long
+);
+
+create window DboePrevRefWin.std:unique(chain, instr_id, currency) as dboe_prev_ref_event;
+@Name('DboePrevRefWin') insert into DboePrevRefWin select * from dboe_prev_ref_event;
+
+create schema DboeRefStatEvent as (
+    chain string,
+    instr_id string,
+    currency string,
+    ref_price double,
+    prev_ref_price double,
+    price_change_pct double,
+    in_timestamp long
+);
+
+create window DboeRefStatsWin.std:unique(chain, instr_id, currency) as DboeRefStatEvent;
+@Name('DboeRefStatsWin') insert into DboeRefStatsWin select * from DboeRefStatEvent;
+
+create schema DboeSpotEvent as (
+    underlying string,
+    spot double,
+    in_timestamp long
+);
+
+create window DboeSpotWin.std:unique(underlying) as DboeSpotEvent;
+@Name('DboeSpotWin') insert into DboeSpotWin select * from DboeSpotEvent;
+
+create schema DboeImpliedVolEvent as (
+    instr_id string,
+    bid_iv double,
+    ask_iv double,
+    in_timestamp long
+);
+
+create window DboeImpliedVolWin.win:time(900 sec).std:unique(instr_id) as DboeImpliedVolEvent;
+@Name('DboeImpliedVolWin') insert into DboeImpliedVolWin select * from DboeImpliedVolEvent;
+
+insert into DboeImpliedVolEvent
+select
+    p.instr_id as instr_id,
+    100.0 * OptionUtils.iv(p.bid, i.kind, s.spot, i.strike, i.cond_strike, t.time_to_expiry) as bid_iv,
+    100.0 * OptionUtils.iv(p.ask, i.kind, s.spot, i.strike, i.cond_strike, t.time_to_expiry) as ask_iv,
+    p.in_timestamp as in_timestamp
+from DboePriceWin p
+inner join DboeOptionInstrWin i on p.instr_id = i.instr_id
+inner join DboeOptionTimeToExpiryWin(time_to_expiry>0) t on p.instr_id = t.instr_id
+inner join DboeSpotWin s on i.underlying = s.underlying;
+
+create schema DboeOptionGreekEvent as (
+    instr_id string,
+    timeToExpiry double,
+    vol double,
+    atm_price double,
+    delta double,
+    vega double,
+    gamma double,
+    theta double,
+    in_timestamp long
+);
+
+create window DboeOptionGreekWin.std:unique(instr_id) as DboeOptionGreekEvent;
+@Name('DboeOptionGreekWin') insert into DboeOptionGreekWin select * from DboeOptionGreekEvent;
+
+insert into DboeVolSurfaceEvent
+select
+    i.underlying as underlying,
+    i.expiry as expiry,
+    t.time_to_expiry as timeToExpiry,
+    Math.log(i.strike/s.spot) as moneyness,
+    (v.bid_iv + v.ask_iv) / 2.0 as vol,
+    s.spot as atm_price,
+    i.strike as strike,
+    v.in_timestamp as in_timestamp
+from DboeImpliedVolWin v
+inner join DboeOptionInstrWin i on v.instr_id = i.instr_id
+inner join DboeOptionTimeToExpiryWin(time_to_expiry>0) t on i.instr_id = t.instr_id
+inner join DboeSpotWin s on i.underlying = s.underlying;
+
+
+

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+
+   <appender name="consoleAppender" class="org.apache.log4j.ConsoleAppender">
+      <param name="Threshold" value="INFO" />   
+      <layout class="org.apache.log4j.PatternLayout">
+         <param name="ConversionPattern" value="%d %-5p  [%c{1}] %m %n" />
+      </layout>
+   </appender>
+   
+   <appender name="coreAppender" class="org.apache.log4j.net.SocketAppender">
+      <param name="Threshold" value="ERROR" />   
+      <param name="Port" value="9992" />
+      <param name="RemoteHost" value="127.0.0.1" />
+      <param name="ReconnectionDelay" value="2000" />
+      <layout class="org.apache.log4j.PatternLayout">
+         <param name="ConversionPattern" value="%d %-5p  [%c{1}] %m %n" />
+      </layout>
+   </appender>
+
+	<root>
+		<level value="INFO" />
+		<appender-ref ref="consoleAppender" />
+		<appender-ref ref="coreAppender" />
+	</root>
+
+</log4j:configuration>

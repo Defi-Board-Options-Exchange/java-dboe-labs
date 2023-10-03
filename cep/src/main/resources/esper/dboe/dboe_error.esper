@@ -1,0 +1,12 @@
+module com.ngontro86.server.dboe_error;
+
+create schema DboeErrorEvent as (
+    wallet_id string,
+    instr_id string,
+    error_code int,
+    error_message string,
+    in_timestamp long
+);
+
+create window DboeErrorWin.win:time(720 minutes) as DboeErrorEvent;
+@Name('DboeErrorWin') insert into DboeErrorWin select * from DboeErrorEvent;

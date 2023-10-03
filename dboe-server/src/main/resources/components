@@ -1,0 +1,10 @@
+com.ngontro86.server.dboe
+com.ngontro86.server
+com.ngontro86.cep
+com.ngontro86.app.common
+com.ngontro86.restful.common
+com.ngontro86.websocket.common
+com.ngontro86.common.timer
+com.ngontro86.common.copyq
+com.ngontro86.cloud.publisher
+com.ngontro86.auth.client

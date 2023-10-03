@@ -1,0 +1,22 @@
+server:
+  type: default
+  rootPath: /api/*
+  requestLog:
+    appenders: []
+  applicationConnectors:
+    - type: http
+      port: 8686
+    - type: https
+      port: 8443
+      keyStorePath: "/home/truongvinh_vu_gmail_com/certs/dboeServerCert.jks"
+      keyStoreType: JKS
+      keyStorePassword: "15Feb2022"
+      validateCerts: false
+      validatePeers: false
+  adminConnectors:
+    - type: http
+      port: 8687
+swagger:
+  description: Dropwizard Swagger
+logging:
+  level: INFO

@@ -1,0 +1,76 @@
+module com.ngontro86.server.dboe_analytic;
+
+import com.ngontro86.cep.esper.utils.*;
+
+create schema DboeOpenInterestEvent as (
+    chain string,
+    instr_id string,
+    currency string,
+    open_interest double
+);
+
+create window DboeOpenInterestWin.std:unique(chain, instr_id, currency) as DboeOpenInterestEvent;
+@Name('DboeOpenInterestWin') insert into DboeOpenInterestWin select * from DboeOpenInterestEvent;
+
+create schema DboeOptionTimeToExpiryEvent as (
+    instr_id string,
+    time_to_expiry double,
+    in_timestamp long
+);
+create window DboeOptionTimeToExpiryWin.std:unique(instr_id) as DboeOptionTimeToExpiryEvent;
+@Name('DboeOptionTimeToExpiryWin') insert into DboeOptionTimeToExpiryWin select * from DboeOptionTimeToExpiryEvent;
+
+insert into DboeOptionTimeToExpiryEvent
+select
+    instr_id,
+    OptionUtils.timeDiffInYear(expiry, ltt, current_timestamp()) as time_to_expiry,
+    current_timestamp() as in_timestamp
+from DboeOptionInstrWin
+output snapshot every 60 seconds;
+
+create schema DboeVolSurfaceEvent as (
+    underlying string,
+    expiry int,
+    timeToExpiry double,
+    moneyness double,
+    vol double,
+    atm_price double,
+    strike double,
+    in_timestamp long
+);
+
+create window DboeVolSurfaceWin.win:time(900 sec).std:unique(underlying, expiry, strike) as DboeVolSurfaceEvent;
+@Name('DboeVolSurfaceWin') insert into DboeVolSurfaceWin select * from DboeVolSurfaceEvent;
+
+create schema dboe_active_option_traded_value_event as (
+    chain string,
+    instr_id string,
+    tradedValue double
+);
+
+create window DboeActiveOptionsTradedValueWin.std:unique(chain, instr_id) as dboe_active_option_traded_value_event;
+@Name('DboeActiveOptionsTradedValueWin') insert into DboeActiveOptionsTradedValueWin select * from dboe_active_option_traded_value_event;
+
+
+create schema dboe_wallet_refer_stats_event as (
+    referrer_email string,
+    referrer_wallet string,
+    referee_email string,
+    referee_wallet string,
+    referee_transacted_status int,
+    acked_timestamp long
+);
+
+create window DboeWalletReferStatsWin.std:unique(referrer_email, referee_email) as dboe_wallet_refer_stats_event;
+@Name('DboeWalletReferStatsWin') insert into DboeWalletReferStatsWin select * from dboe_wallet_refer_stats_event;
+
+create schema dboe_wallet_airdrop_event as (
+    plan string,
+    name string,
+    airdrop_date int,
+    Address string,
+    token_reward double
+);
+
+create window DboeWalletAirdropWin.std:unique(plan, name, Address) as dboe_wallet_airdrop_event;
+@Name('DboeWalletAirdropWin') insert into DboeWalletAirdropWin select * from dboe_wallet_airdrop_event;
