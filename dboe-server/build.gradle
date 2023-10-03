@@ -1,0 +1,40 @@
+apply plugin: 'com.github.johnrengelman.shadow'
+
+jar {
+    manifest {
+        attributes 'Description': 'DBOE Server'
+        attributes 'Main-Class': 'com.ngontro86.app.common.AppBootstrap'
+    }
+}
+
+version = rootProject.version
+
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "com.github.jengelman.gradle.plugins:shadow:1.2.4"
+    }
+}
+
+shadowJar {
+    classifier = 'fat'
+    zip64 = true
+    mergeGroovyExtensionModules()
+    mergeServiceFiles {
+        exclude 'META-INF/services/com.acme.*'
+    }
+}
+
+sourceSets.main.resources.srcDirs += [project(':cep').sourceSets.main.resources]
+
+dependencies {
+    compile project(':server')
+    compile project(':ob-matcher')
+    compile project(':market-common')
+
+    testCompile project(':component-testing')
+}

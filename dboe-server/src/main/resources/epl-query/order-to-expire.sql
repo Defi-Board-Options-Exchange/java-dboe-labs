@@ -1,0 +1,1 @@
+select rstream wallet_id, instr_id, ex_order_id, order_hash, txn_sig, user_order_id, buy_sell, order_type, 0.0 as amount, price, 0.0 as notional, in_timestamp from DboeAckedOrderWin(order_type='LMT')

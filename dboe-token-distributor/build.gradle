@@ -1,0 +1,40 @@
+apply plugin: 'com.github.johnrengelman.shadow'
+
+jar {
+    manifest {
+        attributes 'Description': 'DBOE Token Distributor'
+        attributes 'Main-Class': 'com.ngontro86.app.common.AppBootstrap'
+    }
+}
+
+version = rootProject.version
+
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "com.github.jengelman.gradle.plugins:shadow:1.2.4"
+        classpath "org.web3j:web3j-gradle-plugin:4.8.9"
+    }
+}
+
+shadowJar {
+    classifier = 'fat'
+    mergeGroovyExtensionModules()
+    mergeServiceFiles {
+        exclude 'META-INF/services/com.acme.*'
+    }
+}
+
+dependencies {
+    compile project(':common')
+    compile project(':dboe-web3j-common')
+    compile project(':utils')
+
+    testCompile project(':restful-common')
+    testCompile project(':dboe-web3j-common')
+    testCompile project(':component-testing')
+}

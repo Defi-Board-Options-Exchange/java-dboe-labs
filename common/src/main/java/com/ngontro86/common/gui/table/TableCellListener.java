@@ -1,0 +1,105 @@
+package com.ngontro86.common.gui.table;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyVetoException;
+import java.beans.VetoableChangeListener;
+
+/**
+ * @author http://tips4java.wordpress.com/2009/06/07/table-cell-listener/
+ */
+
+public class TableCellListener implements PropertyChangeListener, VetoableChangeListener, Runnable {
+    private JTable table;
+    private Action action;
+
+    private int row;
+    private int column;
+    private Object oldValue;
+    private Object newValue;
+
+    public TableCellListener(JTable table, Action action) {
+        this.table = table;
+        this.action = action;
+        this.table.addPropertyChangeListener(this);
+    }
+
+    private TableCellListener(JTable table, int row, int column, Object oldValue, Object newValue) {
+        this.table = table;
+        this.row = row;
+        this.column = column;
+        this.oldValue = oldValue;
+        this.newValue = newValue;
+    }
+
+    public int getColumn() {
+        return column;
+    }
+
+    public Object getNewValue() {
+        return newValue;
+    }
+
+    public Object getOldValue() {
+        return oldValue;
+    }
+
+    public int getRow() {
+        return row;
+    }
+
+    public JTable getTable() {
+        return table;
+    }
+
+    //
+//  Implement the PropertyChangeListener interface
+//
+    @Override
+    public void propertyChange(PropertyChangeEvent e) {
+        //  A cell has started/stopped editing
+
+        if ("tableCellEditor".equals(e.getPropertyName())) {
+            if (table.isEditing())
+                processEditingStarted();
+            else
+                processEditingStopped();
+        }
+    }
+
+    private void processEditingStarted() {
+        SwingUtilities.invokeLater(this);
+    }
+
+    @Override
+    public void run() {
+        row = table.convertRowIndexToModel(table.getEditingRow());
+        column = table.convertColumnIndexToModel(table.getEditingColumn());
+        oldValue = table.getModel().getValueAt(row, column);
+        newValue = null;
+    }
+
+    private void processEditingStopped() {
+        newValue = table.getModel().getValueAt(row, column);
+
+        if (!newValue.equals(oldValue)) {
+            //  Make a copy of the data in case another cell starts editing
+            //  while processing this change
+            TableCellListener tcl = new TableCellListener(
+                    getTable(), getRow(), getColumn(), getOldValue(), getNewValue());
+            ActionEvent event = new ActionEvent(
+                    tcl,
+                    ActionEvent.ACTION_PERFORMED,
+                    "");
+            action.actionPerformed(event);
+        }
+    }
+
+    @Override
+    public void vetoableChange(PropertyChangeEvent arg0)
+            throws PropertyVetoException {
+        table.setValueAt(oldValue, row, column);
+    }
+}

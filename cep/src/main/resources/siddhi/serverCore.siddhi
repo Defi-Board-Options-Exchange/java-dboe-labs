@@ -1,0 +1,63 @@
+define stream PriceEvent(
+    inst_id string,
+	bid double, 
+	ask double, 
+	last_price double,
+	bid_size int, 
+	ask_size int, 
+	last_size int,
+	open_price double, 
+	close_price double,
+	micro_price double,
+	timestamp long);
+
+define stream OrderMapEvent(
+    inst_id string, 
+    order_req_id string, 
+    exchange_order_id string, 
+    broker string, 
+    account string, 
+    portfolio string, 
+    side int, 
+    timestamp long);
+
+define stream TradeEvent(
+    inst_id string, 
+    order_req_id string, 
+    exchange_order_id string, 
+    broker string, 
+    account string, 
+    portfolio string, 
+    size int, 
+    avg_price double, 
+    status string, 
+    timestamp long);
+
+
+@name('PriceWin')
+from PriceEvent#window.unique:ever(inst_id)
+select *
+insert into PriceWin;
+
+
+@name('OrderMapWin')
+from OrderMapEvent#window.unique:ever(inst_id, order_req_id)
+select *
+insert into OrderMapWin;
+
+@name('TradeWin')
+from TradeEvent#window.unique:ever(inst_id, order_req_id)
+select *
+insert into TradeWin;
+
+@name('PortfolioEvent-AggregateTrade')
+from TradeWin[status == 'Partialfill' or status == 'Filled']
+select inst_id, broker, account, portfolio, sum(size) as size, max(timestamp) as timestamp
+group by inst_id, broker, account, portfolio
+insert into PortfolioEvent;
+
+@name('PortfolioWin')
+@sink(type='log') 
+from PortfolioEvent#window.unique:ever(portfolio, account, broker, inst_id)
+select *
+insert into PortfolioWin;

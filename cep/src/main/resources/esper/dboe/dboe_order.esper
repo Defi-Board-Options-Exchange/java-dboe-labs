@@ -1,0 +1,131 @@
+module com.ngontro86.server.dboe_order;
+
+uses com.ngontro86.server.dboe_orderbook;
+
+
+create schema DboeOrderEvent as (
+    wallet_id string,
+    instr_id string,
+    user_order_id string,
+    ex_order_id string,
+    buy_sell int,
+    order_type string,
+    amount double,
+    price double,
+    notional double,
+    in_timestamp long
+);
+
+create schema DboeCancelOrderEvent as (
+    wallet_id string,
+    user_order_id string,
+    ex_order_id string,
+    in_timestamp long
+);
+
+create window DboeOrderWin.std:firstunique(wallet_id, instr_id, buy_sell, user_order_id) as DboeOrderEvent;
+@Name('DboeOrderWin') insert into DboeOrderWin select * from DboeOrderEvent(buy_sell in (1,2) and order_type in ('MKT', 'LMT'));
+
+create window DboeCancelOrderWin.std:unique(wallet_id, user_order_id, ex_order_id) as DboeCancelOrderEvent;
+@Name('DboeCancelOrderWin') insert into DboeCancelOrderWin select * from DboeCancelOrderEvent(ex_order_id is not null);
+
+create schema DboeOrderSigEvent as (
+    wallet_id string,
+    instr_id string,
+    user_order_id string,
+    ex_order_id string,
+    order_hash string,
+    txn_sig string
+);
+create window DboeOrderSigWin.std:firstunique(wallet_id, user_order_id) as DboeOrderSigEvent;
+@Name('DboeOrderSigWin') insert into DboeOrderSigWin select * from DboeOrderSigEvent;
+
+create schema DboeAckedOrderEvent as (
+    wallet_id string,
+    instr_id string,
+    ex_order_id string,
+    user_order_id string,
+    order_hash string,
+    txn_sig string,
+    buy_sell int,
+    order_type string,
+    amount double,
+    price double,
+    notional double,
+    in_timestamp long
+);
+
+create window DboeAckedOrderWin.std:unique(wallet_id, user_order_id) as DboeAckedOrderEvent;
+@Name('DboeAckedOrderWin') insert into DboeAckedOrderWin select * from DboeAckedOrderEvent;
+
+create window DboeExpiredOrderWin.std:unique(wallet_id, user_order_id) as DboeAckedOrderEvent;
+//@Name('DboeExpiredOrderWin') insert into DboeExpiredOrderWin select rstream * from DboeAckedOrderWin(order_type='LMT');
+
+insert into DboeAckedOrderEvent
+select
+    o.wallet_id as wallet_id,
+    o.instr_id as instr_id,
+    m.ex_order_id as ex_order_id,
+    m.order_hash as order_hash,
+    m.txn_sig as txn_sig,
+    o.user_order_id as user_order_id,
+    o.buy_sell as buy_sell,
+    o.order_type as order_type,
+    o.amount as amount,
+    o.price as price,
+    coalesce(o.notional, o.amount * o.price) as notional,
+    current_timestamp() as in_timestamp
+from DboeOrderSigWin m
+inner join DboeOrderWin o on m.wallet_id = o.wallet_id  and m.user_order_id = o.user_order_id;
+
+@Name('Cancel-LMT Order')
+insert into DboeAckedOrderEvent
+select
+    o.wallet_id as wallet_id,
+    o.instr_id as instr_id,
+    o.ex_order_id as ex_order_id,
+    o.order_hash as order_hash,
+    o.txn_sig as txn_sig,
+    o.user_order_id as user_order_id,
+    o.buy_sell as buy_sell,
+    o.order_type as order_type,
+    0.0 as amount,
+    o.price as price,
+    0.0 as notional,
+    current_timestamp() as in_timestamp
+from DboeCancelOrderWin c unidirectional
+inner join DboeAckedOrderWin o on c.wallet_id = o.wallet_id  and c.user_order_id = o.user_order_id;
+
+@Name('LMT Order Arrival')
+insert into DboeOrderBookEvent
+select
+    o.wallet_id as wallet_id,
+    o.instr_id as instr_id,
+    o.ex_order_id as ex_order_id,
+    o.user_order_id as user_order_id,
+    o.buy_sell as buy_sell,
+    o.order_type as order_type,
+    case when coalesce(f.filled_amount,0) = 0 then 'NEW' else 'PARTIAL FILLED' end as status,
+    max(0, o.amount - coalesce(f.filled_amount, 0)) as amount,
+    o.price as price,
+    -1 as price_level,
+    o.in_timestamp as in_timestamp
+from DboeAckedOrderWin(order_type = 'LMT') o
+left outer join DboeAggregateFillWin f on o.instr_id = f.instr_id and o.wallet_id = f.wallet_id and o.ex_order_id = f.ex_order_id and o.buy_sell = f.buy_sell;
+
+
+@Name('DboeOrderBookWin - Removed Event')
+insert into DboeOrderBookEvent
+select
+    wallet_id,
+    instr_id,
+    ex_order_id,
+    user_order_id,
+    buy_sell,
+    order_type,
+    'REMOVED' as status,
+    0.0 as amount,
+    price,
+    -1 as price_level,
+    current_timestamp() as in_timestamp
+from DboeExpiredOrderWin;

@@ -1,0 +1,169 @@
+module com.ngontro86.server.dboe_onchain_clob;
+
+create schema DboeOnchainOptionEvent as (
+    instr_id string,
+    chain string,
+    long_short int,
+    call_put int,
+    underlying string,
+    strike int,
+    cond_strike int,
+    expiry int,
+    ltt int,
+    lttUtc long,
+    underlying_px_scale int,
+    currency string,
+    address string
+);
+
+create window DboeOnchainOptionWin.std:unique(chain, currency, long_short, instr_id) as DboeOnchainOptionEvent;
+@Name('DboeOnchainOptionWin') insert into DboeOnchainOptionWin select * from DboeOnchainOptionEvent;
+
+@Name('On-chain Underlying Specs')
+insert into DboeUnderlyingMarketEvent
+select
+    underlying,
+    underlying_px_scale as strike_scale,
+    underlying_px_scale as option_price_scale,
+    5 as min_txn_value,
+    0.001 as qty_step
+from DboeOnchainOptionWin;
+
+create schema DboeFixedSpreadEvent as (
+    chain string,
+    ob_address string,
+    buy_sell int,
+    price_level int,
+    fixed_spread_bps int
+);
+
+create window DboeFixedSpreadWin.std:unique(chain, ob_address, buy_sell, price_level) as DboeFixedSpreadEvent;
+@Name('DboeFixedSpreadWin') insert into DboeFixedSpreadWin select * from DboeFixedSpreadEvent;
+
+create schema DboeOnchainClobSpecsEvent as (
+    ob_address string,
+    chain string,
+    num_px_level int,
+    maker_fee_bps int,
+    taker_fee_bps int,
+    max_order_validity_sec int,
+    min_ref_px_waiting_sec int,
+    max_ref_px_waiting_sec int,
+    min_lmt_order_notional int,
+    ref_px_update_random_chance int
+);
+
+create window DboeOnchainClobSpecsWin.std:unique(chain, ob_address) as DboeOnchainClobSpecsEvent;
+@Name('DboeOnchainClobSpecsWin') insert into DboeOnchainClobSpecsWin select * from DboeOnchainClobSpecsEvent;
+
+
+create schema DboeAddressDividerEvent as (
+    chain string,
+    underlying string,
+    expiry int,
+    clearing_address string,
+    ob_address string,
+    fsp_address string,
+    option_factory_address string
+);
+
+create window DboeAddressDividerWin.std:unique(chain, underlying, expiry) as DboeAddressDividerEvent;
+@Name('DboeAddressDividerWin') insert into DboeAddressDividerWin select * from DboeAddressDividerEvent;
+
+@Name('On-chain Option Specs')
+insert into DboeOptionInstrEvent
+select
+    l.instr_id as instr_id,
+    l.chain as chain,
+    '20%' as collateral_group,
+    l.underlying as underlying,
+    m.strike_scale as underlying_px_scale,
+    case when l.call_put = 1 then 'Call' else 'Put' end as kind,
+    l.expiry as expiry,
+    l.ltt as ltt,
+    l.strike/l.underlying_px_scale as strike,
+    l.cond_strike/l.underlying_px_scale as cond_strike,
+    1 as multiplier,
+    l.currency as currency,
+    c.address as currency_address,
+    l.address as long_contract_address,
+    s.address as short_contract_address,
+    d.ob_address as ob_address,
+    d.fsp_address as fsp_address,
+    d.option_factory_address as option_factory_address,
+    d.clearing_address as clearing_address
+from DboeOnchainOptionWin(long_short =1) l
+inner join DboeOnchainOptionWin(long_short =2) s on l.instr_id = s.instr_id and l.chain = s.chain and l.currency = s.currency and l.call_put = s.call_put and l.expiry = s.expiry
+inner join DboeAddressDividerWin d on l.chain = d.chain and l.underlying = d.underlying and l.expiry = d.expiry
+inner join DboeCollateralWin c on l.chain = c.chain and l.currency = c.token
+inner join DboeUnderlyingMarketWin m on l.underlying = m.underlying;
+
+
+@Name('On-chain Option Specs - All Options')
+insert into dboe_all_options_event
+select
+    l.instr_id as instr_id,
+    l.chain as chain,
+    l.underlying as underlying,
+    m.strike_scale as underlying_px_scale,
+    case when l.call_put = 1 then 'Call' else 'Put' end as kind,
+    l.expiry as expiry,
+    l.ltt as ltt,
+    l.strike/l.underlying_px_scale as strike,
+    l.cond_strike/l.underlying_px_scale as cond_strike,
+    1 as multiplier,
+    l.currency as currency,
+    c.address as currency_address,
+    l.address as long_contract_address,
+    s.address as short_contract_address,
+    d.ob_address as ob_address,
+    d.fsp_address as fsp_address,
+    d.option_factory_address as option_factory_address,
+    d.clearing_address as clearing_address
+from DboeOnchainOptionWin(long_short =1) l
+inner join DboeOnchainOptionWin(long_short =2) s on l.instr_id = s.instr_id and l.chain = s.chain and l.currency = s.currency and l.call_put = s.call_put and l.expiry = s.expiry
+inner join DboeAddressDividerWin d on l.chain = d.chain and l.underlying = d.underlying and l.expiry = d.expiry
+inner join DboeCollateralWin c on l.chain = c.chain and l.currency = c.token
+inner join DboeUnderlyingMarketWin m on l.underlying = m.underlying;
+
+create schema DboeOnchainOrderbookEvent as (
+    chain string,
+    ob_address string,
+    instr_id string,
+    currency string,
+    underlying string,
+    expiry int,
+    buy_sell int,
+    price_level int,
+    ref_price int,
+    amount int,
+    in_timestamp long
+);
+
+create window DboeOnchainOrderbookWin.std:unique(chain, instr_id, currency, buy_sell, price_level) as DboeOnchainOrderbookEvent;
+@Name('DboeOnchainOrderbookWin') insert into DboeOnchainOrderbookWin select * from DboeOnchainOrderbookEvent;
+
+@Name('On-chain Ref Price Update')
+insert into DboeRefPriceEvent
+select
+    o.chain as chain, o.instr_id as instr_id, o.currency as currency,
+    1L * ref_price/underlying_px_scale as ref_price,
+    o.in_timestamp as in_timestamp
+from DboeOnchainOrderbookWin o
+inner join DboeOnchainOptionWin(long_short = 1) i on o.instr_id = i.instr_id and o.chain = i.chain and o.currency = i.currency;
+
+@Name('On-chain CLOB Update')
+insert into DboeOrderBookEvent
+select
+    o.chain as chain,
+    o.instr_id as instr_id,
+    o.currency as currency,
+    o.buy_sell as buy_sell,
+    amount/1000000000000000000.0 as amount,
+    ref_price * (10000L + (case when o.buy_sell = 1 then -1L else 1L end) * s.fixed_spread_bps)/10000L/i.underlying_px_scale as price,
+    o.price_level + 1 as price_level,
+    in_timestamp
+from DboeOnchainOrderbookWin o
+inner join DboeOnchainOptionWin(long_short = 1) i on o.instr_id = i.instr_id and o.chain = i.chain and o.currency = i.currency
+inner join DboeFixedSpreadWin s on o.buy_sell = s.buy_sell and o.chain = s.chain and o.price_level = s.price_level and o.ob_address = s.ob_address;
+

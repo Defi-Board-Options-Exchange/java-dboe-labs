@@ -1,0 +1,11 @@
+module com.ngontro86.server.dboe_fee;
+
+create schema dboe_clearingfee_schedule_event as (
+    underlying string,
+    maker_taker int,
+    fee double,
+    min_abs_fee double
+);
+
+create window DboeCfScheduleWin.std:unique(underlying, maker_taker) as dboe_clearingfee_schedule_event;
+@Name('DboeCfScheduleWin') insert into DboeCfScheduleWin select * from dboe_clearingfee_schedule_event;

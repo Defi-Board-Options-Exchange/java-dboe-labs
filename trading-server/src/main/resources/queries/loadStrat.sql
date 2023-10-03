@@ -1,0 +1,1 @@
+select * from pair_config

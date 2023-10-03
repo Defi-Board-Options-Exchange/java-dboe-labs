@@ -1,0 +1,103 @@
+@App:name("HedgeLah")
+@App:description("HedgeLah for everyone")
+
+define stream serv_fx_inst_event(underlying string, currency string, tick_size double, broker string);
+define stream serv_security_inst_event(ticker string, currency string, tick_size double, board_lot int, broker string);
+define stream serv_fut_inst_event(underlying string, market string, expiry_date int, multiplier int, currency string, tick_size double, alias_inst_id string, broker string, symbol string);
+define stream serv_basket_inst_event(name string, inst_id string, divisor double, shares double);
+define stream fx_rate_event (currency string, rate double);
+
+@name('FxInstEvent')
+from serv_fx_inst_event
+select
+  underlying as inst_id,
+  0 as inst_type,
+  underlying,
+  '' as market,
+  0 as expiry_date,
+  1 as multiplier,
+  currency,
+  tick_size,
+  1 as board_lot,
+  broker,
+  '' as symbol,
+  currentTimeMillis() as timestamp
+insert into InstEvent;
+
+@name('SecurityInstEvent')
+from serv_security_inst_event
+select
+  ticker as inst_id,
+  2 as inst_type,
+  ticker as underlying,
+  '' as market,
+  0 as expiry_date,
+  1 as multiplier,
+  currency,
+  tick_size,
+  board_lot,
+  broker,
+  '' as symbol,
+  currentTimeMillis() as timestamp
+insert into InstEvent;
+
+@name('FutureInstEvent')
+from serv_fut_inst_event
+select
+  underlying as inst_id,
+  1 as inst_type,
+  underlying,
+  market,
+  expiry_date,
+  multiplier,
+  currency,
+  tick_size,
+  1 as board_lot,
+  broker,
+  symbol,
+  currentTimeMillis() as timestamp
+insert into InstEvent;
+
+@name('BasketInstEvent')
+from serv_basket_inst_event
+select
+  name as inst_id,
+  3 as inst_type,
+  name as underlying,
+  '' as market,
+  0 as expiry_date,
+  1 as multiplier,
+  '' as currency,
+  0.0 as tick_size,
+  1 as board_lot,
+  '' as broker,
+  '' as symbol,
+   currentTimeMillis() as timestamp
+insert into InstEvent;
+
+
+@name('CurrencyRate')
+from fx_rate_event#window.unique:ever(currency)
+select *
+insert into CurrencyRate;
+
+
+@name('AliasInstIdEvent-Futures')
+from serv_fut_inst_event
+select underlying as inst_id, alias_inst_id as alias_inst_id
+insert into AliasInstIdWin;
+
+@name('AliasInstIdEvent-FX')
+from serv_fx_inst_event
+select underlying as inst_id, underlying as alias_inst_id
+insert into AliasInstIdWin;
+
+@name('AliasInstIdEvent-Stock')
+from serv_security_inst_event
+select ticker as inst_id, ticker as alias_inst_id
+insert into AliasInstIdWin;
+
+@name('AliasInstIdEvent-Basket')
+from serv_basket_inst_event
+select name as inst_id, name as alias_inst_id
+insert into AliasInstIdWin;
