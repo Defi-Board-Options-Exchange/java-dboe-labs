@@ -37,7 +37,10 @@ class CepEngineInitializer {
     @ConfigValue(config = "slowReloadStaticTableMin")
     private Integer slowReloadStaticTableMin = 15
 
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2)
+    @ConfigValue(config = "verySlowReloadStaticTableMin")
+    private Integer verySlowReloadStaticTableMin = 60
+
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3)
 
     @PostConstruct
     void loadStaticTables() {
@@ -58,7 +61,7 @@ class CepEngineInitializer {
                     logger.error(e)
                 }
             }
-        }, reloadStaticTableMin, reloadStaticTableMin, MINUTES)
+        }, 1, reloadStaticTableMin, MINUTES)
 
         scheduler.scheduleAtFixedRate(new Runnable() {
             @Override
@@ -72,7 +75,21 @@ class CepEngineInitializer {
                     logger.error(e)
                 }
             }
-        }, slowReloadStaticTableMin, slowReloadStaticTableMin, MINUTES)
+        }, 2, slowReloadStaticTableMin, MINUTES)
+
+        scheduler.scheduleAtFixedRate(new Runnable() {
+            @Override
+            void run() {
+                try {
+                    loader.verySlowReload("esper", esperId, "1.0").each { table, listOfEntries ->
+                        logger.info("VerySlowReloading table: ${table} with ${listOfEntries.size()} records...")
+                        publish(table, listOfEntries)
+                    }
+                } catch (Exception e) {
+                    logger.error(e)
+                }
+            }
+        }, 5, verySlowReloadStaticTableMin, MINUTES)
     }
 
     private void publish(String table, Collection<Map> events) {

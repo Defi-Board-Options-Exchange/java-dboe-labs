@@ -1,6 +1,6 @@
 package com.ngontro86.server.dboe.services
 
-import com.ngontro86.common.times.GlobalTimeController
+
 import org.junit.Test
 
 import static com.ngontro86.server.dboe.services.Utils.dboeOptionTimeToExpiry
@@ -10,7 +10,7 @@ class UtilsTest {
 
     @Test
     void "should return correct time to expiry for DBOE Option"() {
-        assert abs(dboeOptionTimeToExpiry(20220821, 1660452161251) - 0.02) < 1.0/365.0
+        assert abs(dboeOptionTimeToExpiry(20220821, 1660452161251) - 0.02) < 1.0 / 365.0
     }
 
     @Test
@@ -30,6 +30,30 @@ class UtilsTest {
     @org.junit.Test
     void "test default return value"() {
         println new DefaultReturnTest().ret()
+    }
+
+    @Test
+    void "should replace params"() {
+        def baseString = "##emailConfirmLink##?&email=##values.email##&walletAddress=##metamaskAccount##&isMobile=##isMobile##"
+        println Utils.body(baseString, '##',
+                [
+                        'emailConfirmLink': 'https://dboe.exchange/invite',
+                        'values.email'    : 'investorcrypto2022@gmail.com',
+                        'isMobile'        : true,
+                        'metamaskAccount' : '0xf92c4bb10394612ee38440e9b6711d29e76d9a4d'
+                ])
+    }
+
+    @Test
+    void "test the endWith function"() {
+        assert "0x4acd5Cc057c1b8c771E2E3cD3e30780Ca257dEC0".toLowerCase().endsWith('ca257dec0')
+
+        assert [
+                '0x4acd5Cc057c1b8c771E2E3cD3e30780Ca257dEC0' : 'a@b.com',
+                '0x4acd5Cc057c1b8c771E2E3cD3e30780Ca257dEC01': 'x@z.com'
+
+        ].findAll { it.key.toString().toLowerCase().endsWith('ca257dec0') }
+                .values().first() == 'a@b.com'
     }
 
 }

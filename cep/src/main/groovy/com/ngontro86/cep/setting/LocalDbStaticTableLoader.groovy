@@ -22,6 +22,9 @@ class LocalDbStaticTableLoader implements StaticTableLoader {
     @ConfigValue(config = "slowReloadTables")
     private Collection<String> slowReloadTables
 
+    @ConfigValue(config = "verySlowReloadTables")
+    private Collection<String> verySlowReloadTables
+
     @Inject
     @NonTxTransactional
     private FlatDao flatDao
@@ -42,5 +45,11 @@ class LocalDbStaticTableLoader implements StaticTableLoader {
     Map<String, Collection<Map>> slowReload(String cepType, String instanceId, String version) {
         logger.info("Slow reloading db, ${cepType}, ${instanceId}")
         return slowReloadTables.collectEntries { table -> [(table): flatDao.queryList("select * from ${table}")] }
+    }
+
+    @Override
+    Map<String, Collection<Map>> verySlowReload(String cepType, String instanceId, String version) {
+        logger.info("Very Slow reloading db, ${cepType}, ${instanceId}")
+        return verySlowReloadTables.collectEntries { table -> [(table): flatDao.queryList("select * from ${table}")] }
     }
 }

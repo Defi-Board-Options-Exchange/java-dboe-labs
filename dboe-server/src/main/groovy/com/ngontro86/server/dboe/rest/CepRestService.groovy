@@ -64,7 +64,7 @@ class CepRestService {
     @ApiOperation(value = "User update their email", response = Boolean.class)
     boolean userUpdateEmail(@QueryParam("email") String email,
                             @QueryParam("walletId") String walletId) {
-        logger.info("wallet Id: ${walletId} update their email: ${email} ...")
+        logger.info("User: ${walletId} self-update email: ${email} ...")
         referralService.update(walletId, email)
     }
 
@@ -75,7 +75,7 @@ class CepRestService {
     @ApiOperation(value = "Referee acked", response = Map.class)
     Map referralAck(@QueryParam("walletId") String walletId,
                     @QueryParam("referral_code") String referralCode) {
-        logger.info("wallet Id: ${walletId} update their email: ${referralCode} ...")
+        logger.info("Referee: ${walletId} acked referral code: ${referralCode} ...")
         referralService.ack(walletId, referralCode)
     }
 

@@ -142,7 +142,10 @@ class DboeListingOptionApp {
 
     private double spot(String und) {
         def spots = restClient.withQueryParams("query/query", ['query': "select * from DboeSpotWin(underlying='${und}')"], Collection) as Collection<Map>
-        return spots.isEmpty() ? 0 : spots.first()['spot']
+        if (spots.isEmpty()) {
+            throw new IllegalStateException("Spot for ${und} is not available...")
+        }
+        return spots.first()['spot']
     }
 
 }

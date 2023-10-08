@@ -3,9 +3,9 @@ package com.ngontro86.server.dboe.services
 import com.ngontro86.app.common.db.FlatDao
 import com.ngontro86.cep.CepEngine
 import com.ngontro86.common.annotations.ConfigValue
+import com.ngontro86.common.annotations.DBOEComponent
 import com.ngontro86.common.annotations.Logging
 import com.ngontro86.common.annotations.NonTxTransactional
-import com.ngontro86.common.annotations.DBOEComponent
 import org.apache.logging.log4j.Logger
 
 import javax.inject.Inject
@@ -173,5 +173,14 @@ class QueryService {
 
     Collection<Map> tradedValueForOneExpiry(String chain, String und, int expiry) {
         cep.queryMap("select i.kind, sum(r.tradedValue) as tradedValue from DboeActiveOptionsTradedValueWin(chain='${chain}') r inner join DboeOptionTimeToExpiryWin(time_to_expiry > 0d) t on r.instr_id = t.instr_id inner join DboeOptionInstrWin(chain='${chain}',underlying='${und}',expiry=${expiry}) i on i.instr_id = r.instr_id group by i.kind")
+    }
+
+    Map dashboard() {
+        def lqDashboard = cep.queryMap("select * from DboeTotalLiquidityDashboardWin")
+        def airdrop = cep.queryMap("select sum(token_reward) as airdrop, count(distinct Address) as num_wallet from DboeWalletAirdropWin")
+
+        def ret = lqDashboard.isEmpty() ? [:] : lqDashboard.first()
+        ret.putAll(airdrop.isEmpty() ? [:] : airdrop.first())
+        return ret
     }
 }

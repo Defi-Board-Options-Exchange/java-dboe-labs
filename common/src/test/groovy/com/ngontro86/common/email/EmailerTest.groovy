@@ -1,16 +1,26 @@
 package com.ngontro86.common.email
 
-import org.junit.Ignore
+
 import org.junit.Test
 
-@Ignore
 class EmailerTest {
 
     @Test
     void "should email 1"() {
-        def emailer = new Emailer(host: 'smtp.gmail.com', port: 587, username: 'quantvu86@gmail.com', password: 'xxx')
+        def emailer = new Emailer(host: 'smtp.gmail.com', port: 587, username: 'xxx@dboe.io', password: 'xxxxx')
         emailer.sendMessage(
-                ['truongvinh.vu@gmail.com', 'truongvinh.vu@sgx.com'],
+                ['xxx@gmail.com'],
+                'Test Email',
+                'Test email'
+        )
+    }
+
+    @Test
+    void "should email sendgrid"() {
+        def emailer = new Emailer(host: 'smtp.xxxx.net', port: 587, username: 'apikey', password: 'xxx')
+        emailer.sendMessage(
+                'xxx@gmail.com',
+                ['xxx@gmail.com'],
                 'Test Email',
                 'Test email'
         )

@@ -197,3 +197,33 @@ FROM (
 	GROUP BY 1,2,3
 ) x
 INNER JOIN _dboe_ref_prices r ON x.chain = r.chain AND x.instr_id = r.instr_id AND x.currency = r.currency AND x.in_timestamp = r.in_timestamp
+
+CREATE OR REPLACE VIEW dboe_total_liquidity_dashboard as
+SELECT
+t.num_txn, t.total_traded_value, t.total_fee, v.open_interest
+FROM
+(
+	SELECT
+	SUM(o.open_interest * avg_spot) AS open_interest
+	from
+	(
+		SELECT o.instr_id, o.chain, o.currency, o.DATE, MAX(o.TIMESTAMP) AS timestamp, avg_spot
+		FROM _dboe_open_interest o
+		INNER JOIN dboe_options_universe i ON i.instr_id = o.instr_id AND i.chain = o.chain AND i.currency = o.currency and i.expiry >= o.date
+		INNER JOIN
+		(
+			select DATE, underlying, avg(spot) as avg_spot from dboe_intraday_spot
+			WHERE spot > 0
+			GROUP BY 1, 2
+		) s ON i.underlying = s.underlying AND o.date= s.date
+		WHERE o.currency <> 'NUSD' and MOD(o.TIMESTAMP, o.DATE) < 230000 AND o.date >= 20230813
+		GROUP BY 1,2,3,4
+	) v
+	INNER JOIN _dboe_open_interest o ON v.instr_id = o.instr_id AND v.timestamp = o.timestamp AND o.chain = v.chain AND o.currency = v.currency
+) v
+INNER JOIN
+(
+	SELECT cast(COUNT(*)/2 AS UNSIGNED) AS num_txn, SUM(Amount) AS total_fee, SUM(Amount) * 100.0/0.30 as total_traded_value
+	FROM analytics.dboe_enriched_transfers
+	where TxnTimestamp >= '2023-08-13'AND currencySymbol like 'USD%' AND ReceiverAddress = '0x649fb2a8ebd926faf4375c7ed7259e74d1d7851d'
+) t

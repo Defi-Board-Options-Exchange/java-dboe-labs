@@ -145,6 +145,14 @@ class JsonUtilsTest {
         )
     }
 
+    @Test
+    void "should be able to format a map"() {
+        println JsonUtils.toJson([
+                'emailLink'   : 'https://dboe.exchange/invite',
+                'wallet'      : '0xadad',
+                'values.email': 'inbox@gmail.com'
+        ])
+    }
 
     @Test
     void "should be able to parse back from Position Json String into an array of Map"() {

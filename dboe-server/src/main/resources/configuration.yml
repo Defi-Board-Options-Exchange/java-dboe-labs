@@ -1,5 +1,7 @@
 server:
   type: default
+  maxThreads: 4096
+  maxQueuedRequests: 4096
   rootPath: /api/*
   requestLog:
     appenders: []

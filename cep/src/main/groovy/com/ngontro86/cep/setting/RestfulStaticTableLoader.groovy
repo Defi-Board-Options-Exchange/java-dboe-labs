@@ -38,4 +38,9 @@ class RestfulStaticTableLoader implements StaticTableLoader {
     Map<String, Collection<Map>> slowReload(String cepType, String instanceId, String version) {
         return [:]
     }
+
+    @Override
+    Map<String, Collection<Map>> verySlowReload(String cepType, String instanceId, String version) {
+        return [:]
+    }
 }

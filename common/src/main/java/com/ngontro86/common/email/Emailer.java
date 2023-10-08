@@ -39,11 +39,15 @@ public class Emailer {
         transport.connect(host, username, password);
     }
 
-    public void sendMessage(Collection<String> recipientList, String subject, String messageBody) {
+    public void sendMessage(Collection<String> recipientList, String subject, String messageBody) throws Exception {
+        sendMessage(this.username, recipientList, subject, messageBody);
+    }
+
+    public void sendMessage(String from, Collection<String> recipientList, String subject, String messageBody) throws Exception {
         try {
             establishSession();
             MimeMessage message = new MimeMessage(this.session);
-            message.setFrom(new InternetAddress(this.username));
+            message.setFrom(new InternetAddress(from));
             for (String to : recipientList) {
                 message.addRecipient(Message.RecipientType.TO, new InternetAddress(to));
             }
@@ -53,7 +57,7 @@ public class Emailer {
             openTransport();
             transport.sendMessage(message, message.getAllRecipients());
         } catch (Exception e) {
-            logger.error("sendMessage got exception: ", e);
+            throw e;
         } finally {
             if (transport != null) {
                 try {

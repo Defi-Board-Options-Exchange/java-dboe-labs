@@ -7,4 +7,6 @@ interface StaticTableLoader {
     Map<String, Collection<Map>> reload(String cepType, String instanceId, String version)
 
     Map<String, Collection<Map>> slowReload(String cepType, String instanceId, String version)
+
+    Map<String, Collection<Map>> verySlowReload(String cepType, String instanceId, String version)
 }

@@ -332,4 +332,13 @@ class QueryRestService {
     Collection<Map> tradedValueForOneExpiry(@PathParam('chain') String chain, @PathParam('underlying') String underlying, @PathParam('expiry') Integer expiry) {
         return queryService.tradedValueForOneExpiry(chain, underlying, expiry)
     }
+
+    @GET
+    @Path('/dashboard')
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Traded Value, Open Interest and Airdrop Info", response = Map.class)
+    Map dashboard() {
+        return queryService.dashboard()
+    }
 }

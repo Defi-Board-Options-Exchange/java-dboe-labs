@@ -74,3 +74,14 @@ create schema dboe_wallet_airdrop_event as (
 
 create window DboeWalletAirdropWin.std:unique(plan, name, Address) as dboe_wallet_airdrop_event;
 @Name('DboeWalletAirdropWin') insert into DboeWalletAirdropWin select * from dboe_wallet_airdrop_event;
+
+
+create schema dboe_total_liquidity_dashboard_event as (
+    num_txn int,
+    total_traded_value double,
+    total_fee double,
+    open_interest double
+);
+
+create window DboeTotalLiquidityDashboardWin.win:length(1) as dboe_total_liquidity_dashboard_event;
+@Name('DboeTotalLiquidityDashboardWin') insert into DboeTotalLiquidityDashboardWin select * from dboe_total_liquidity_dashboard_event;

@@ -34,4 +34,11 @@ class Utils {
         return Math.max(minFee, feeBps / 10000.0 * tradingNotional)
     }
 
+    static String body(String parameterisedBody, String sep, Map params) {
+        params.each { k, v ->
+            parameterisedBody = parameterisedBody.replaceAll("${sep}${k}${sep}", v.toString())
+        }
+        return parameterisedBody
+    }
+
 }

@@ -71,7 +71,7 @@ create schema DboePriceEvent as (
 );
 
 create window DboePriceWin.std:unique(chain, instr_id, currency) as DboePriceEvent;
-@Name('DboePriceWin') insert into DboePriceWin select * from DboePriceEvent;
+@Name('DboePriceWin') insert into DboePriceWin select * from DboePriceEvent(instr_id is not null);
 
 create schema dboe_prev_ref_event as (
     chain string,
