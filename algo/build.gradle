@@ -3,7 +3,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 jar {
     manifest {
         attributes 'Description': 'DBOE Algo Trader'
-        attributes 'Main-Class': 'com.ngontro86.common.app.AppBootstrap'
+        attributes 'Main-Class': 'com.ngontro86.app.common.AppBootstrap'
     }
 }
 
@@ -29,6 +29,7 @@ shadowJar {
 }
 
 dependencies {
+    compile project(':app-common')
     compile project(':market-common')
     compile project(':dboe-web3j-common')
 }

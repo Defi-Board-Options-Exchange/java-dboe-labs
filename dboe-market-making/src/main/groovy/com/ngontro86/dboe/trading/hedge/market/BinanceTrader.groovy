@@ -36,9 +36,6 @@ class BinanceTrader implements HedgingTrader {
     @ConfigValue(config = "spotPriceReloadSec")
     private Integer spotPriceReload = 15
 
-    @ConfigValue(config = "quantityStep")
-    private Double quantityStep = 0.0001
-
     @ConfigValue(config = "liveHedging")
     private Boolean liveHedging = false
 

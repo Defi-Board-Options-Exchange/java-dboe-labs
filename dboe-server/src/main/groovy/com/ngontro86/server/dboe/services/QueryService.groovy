@@ -6,6 +6,7 @@ import com.ngontro86.common.annotations.ConfigValue
 import com.ngontro86.common.annotations.DBOEComponent
 import com.ngontro86.common.annotations.Logging
 import com.ngontro86.common.annotations.NonTxTransactional
+import com.ngontro86.server.dboe.services.onchain.OnchainPositionLoader
 import org.apache.logging.log4j.Logger
 
 import javax.inject.Inject
@@ -25,6 +26,9 @@ class QueryService {
     @Inject
     @NonTxTransactional
     private FlatDao flatDao
+
+    @Inject
+    private OnchainPositionLoader onchainPositionLoader
 
     @ConfigValue(config = "displayTrades")
     private Boolean displayTrades
@@ -97,7 +101,41 @@ class QueryService {
     }
 
     Collection<Map> walletAvgPx(String walletId) {
-        cep.queryMap("select * from DboeWalletPositionWin(wallet_id='${walletId}')")
+        def ret = cep.queryMap("select p.instr_id as instr_id, pos_val, avg_px, p.chain as chain, wallet_id, pos, long_contract_address, short_contract_address, bid, ask " +
+                "from DboeWalletPositionWin(wallet_id='${walletId}') p " +
+                "left outer join DboeOptionInstrWin i on p.instr_id = i.instr_id and p.chain = i.chain " +
+                "left outer join DboePriceWin m on p.instr_id = m.instr_id and p.chain = m.chain")
+        ret.findAll { it['ask'] != null && it['bid'] != null }.each { m ->
+            try {
+                def currPos = onchainPositionLoader.loadPosition(m['chain'], m['long_contract_address'], m['long_contract_address'], walletId)
+                if (currPos != Double.NaN) {
+                    m['avg_px'] = Utils.estAvgPx(currPos, m['pos'], m['avg_px'], m['bid'], m['ask'])
+                    m['estimated'] = true
+                }
+            } catch (Exception e) {
+                logger.error(e)
+            }
+        }
+        return ret
+    }
+
+    Collection<Map> walletAvgPx(String walletId, String instrId) {
+        def ret = cep.queryMap("select i.instr_id as instr_id, pos_val, avg_px, i.chain as chain, wallet_id, pos, long_contract_address, short_contract_address, bid, ask " +
+                "from DboeOptionInstrWin(instr_id='${instrId}') i " +
+                "left outer join DboeWalletPositionWin(wallet_id='${walletId}') p on p.instr_id = i.instr_id and p.chain = i.chain " +
+                "inner join DboePriceWin(instr_id='${instrId}') m on i.instr_id = m.instr_id and i.chain = m.chain")
+        ret.findAll { it['ask'] != null && it['bid'] != null }.each { m ->
+            try {
+                def currPos = onchainPositionLoader.loadPosition(m['chain'], m['long_contract_address'], m['long_contract_address'], walletId)
+                if (currPos != Double.NaN && m['pos'] != null && m['avg_px'] != null) {
+                    m['avg_px'] = Utils.estAvgPx(currPos, m['pos'], m['avg_px'], m['bid'], m['ask'])
+                    m['estimated'] = true
+                }
+            } catch (Exception e) {
+                logger.error(e)
+            }
+        }
+        return ret
     }
 
     Map allChainInfo() {

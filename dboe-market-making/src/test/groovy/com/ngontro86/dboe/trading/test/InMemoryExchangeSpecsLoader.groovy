@@ -7,12 +7,22 @@ import com.ngontro86.market.instruments.ExchangeSpecsLoader
 class InMemoryExchangeSpecsLoader implements ExchangeSpecsLoader {
 
     @Override
+    Collection loadChains() {
+        return []
+    }
+
+    @Override
     Collection loadOptions(String chain) {
         return []
     }
 
     @Override
     Collection loadClobs(String chain) {
+        return []
+    }
+
+    @Override
+    Collection loadOptionChainMarket(String chain, String und, int expiry) {
         return []
     }
 }

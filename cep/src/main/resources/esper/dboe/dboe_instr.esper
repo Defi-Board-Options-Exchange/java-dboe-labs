@@ -88,7 +88,7 @@ create schema dboe_ob_address_divider_event as (
     ob_sc_address string
 );
 
-create window DboeObAddressDividerWin.std:unique(chain, underlying, expiry) as dboe_ob_address_divider_event;
+create window DboeObAddressDividerWin.win:time(900 sec).std:unique(chain, underlying, expiry) as dboe_ob_address_divider_event;
 @Name('DboeObAddressDividerWin') insert into DboeObAddressDividerWin select * from dboe_ob_address_divider_event;
 
 

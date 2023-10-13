@@ -73,6 +73,11 @@ class Web3jClobManager implements ClobManager<DBOEClob> {
     }
 
     @Override
+    void calibrateRefs(DBOEClob clob, String underlying, int expiry) {
+        clob.refreshRefs(padding(32, underlying as byte[]), expiry as BigInteger).send()
+    }
+
+    @Override
     void setRef(DBOEClob clob, String instrId, long ref) {
         clob.updateRefPrice(padding(32, instrId as byte[]), ref as BigInteger).send()
     }

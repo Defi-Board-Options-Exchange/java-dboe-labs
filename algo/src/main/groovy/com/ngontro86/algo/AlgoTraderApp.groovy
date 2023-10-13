@@ -1,6 +1,6 @@
 package com.ngontro86.algo
 
-import com.ngontro86.algo.gui.AbstractDlg
+
 import com.ngontro86.algo.gui.OptionChainDlg
 import com.ngontro86.common.annotations.EntryPoint
 import com.ngontro86.common.annotations.Logging
@@ -12,7 +12,6 @@ import javax.swing.*
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
-import java.util.Timer
 
 class AlgoTraderApp {
 
@@ -35,13 +34,22 @@ class AlgoTraderApp {
                 initGUI()
             }
         })
-        new Timer().schedule(loggingTask, 1000, 5 * 60000)
+        new java.util.Timer().schedule(loggingTask, 1000, 5 * 60000)
+    }
+
+    def buttonActionListener = new ActionListener() {
+        @Override
+        void actionPerformed(ActionEvent e) {
+            displayMenu((JMenuItem) e.source)
+        }
     }
 
     private void initGUI() {
         CommonGUI.setLookAndFeel()
         this.dBfrm = new JFrame("DBOE Algo Trading - ${new Date().toString()}")
         this.dBfrm.setVisible(true)
+        this.dBfrm.setIconImage(new ImageIcon("assets/dboe-icon.png").getImage())
+
         dBfrm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
         dBfrm.setBounds(100, 100, 600, 150)
         dBfrm.setLayout(new BoxLayout(dBfrm.getContentPane(), BoxLayout.X_AXIS))
@@ -55,24 +63,14 @@ class AlgoTraderApp {
         def marketMenu = new JMenu("Market")
         menuBar.add(marketMenu)
         [new JMenuItem("OptionChain")].each { itm ->
-            itm.addActionListener(new ActionListener() {
-                @Override
-                void actionPerformed(ActionEvent e) {
-                    displayMenu(itm.getText())
-                }
-            })
+            itm.addActionListener(buttonActionListener)
             marketMenu.add(itm)
         }
 
         def tradingMenu = new JMenu("Algo Strategy")
         menuBar.add(tradingMenu)
         [new JMenuItem("Market Making"), new JMenuItem("Sniping")].each { itm ->
-            itm.addActionListener(new ActionListener() {
-                @Override
-                void actionPerformed(ActionEvent e) {
-                    displayMenu(itm.getText())
-                }
-            })
+            itm.addActionListener(buttonActionListener)
             tradingMenu.add(itm)
         }
 
@@ -80,20 +78,15 @@ class AlgoTraderApp {
         menuBar.add(reportMenu)
         [new JMenuItem("Portfolio"), new JMenuItem("PL")].each { itm ->
             reportMenu.add(itm)
-            itm.addActionListener(new ActionListener() {
-                @Override
-                void actionPerformed(ActionEvent e) {
-                    displayMenu(itm.getText())
-                }
-            })
+            itm.addActionListener(buttonActionListener)
         }
 
         JMenu helpMenu = new JMenu("Help")
         menuBar.add(helpMenu)
     }
 
-    private void displayMenu(String windowName) {
-        if (windowName == "OptionChain") {
+    private void displayMenu(JMenuItem bttn) {
+        if (bttn.getText() == "OptionChain") {
             optionChainDlg.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE)
             optionChainDlg.setVisible(true)
         }
@@ -102,7 +95,7 @@ class AlgoTraderApp {
     private TimerTask loggingTask = new TimerTask() {
         @Override
         void run() {
-            for (AbstractDlg dlg : [optionChainDlg, obDlg]) {
+            for (JDialog dlg : [optionChainDlg, obDlg]) {
                 logger.info(dlg.toString())
             }
         }

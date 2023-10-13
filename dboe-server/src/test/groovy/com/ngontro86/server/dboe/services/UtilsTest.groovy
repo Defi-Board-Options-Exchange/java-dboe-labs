@@ -56,4 +56,13 @@ class UtilsTest {
                 .values().first() == 'a@b.com'
     }
 
+    @Test
+    void "should estimate new avg entry px"() {
+        assert Utils.estAvgPx(0.0, 1.5, 15.5, 16.5, 17.5) == 15.5
+        assert Utils.estAvgPx(1.5, 1.5, 15.5, 16.5, 17.5) == 15.5
+
+        assert Utils.estAvgPx(2.0, 1.5, 15.5, 16.5, 17.5) == 16.0
+        assert Utils.estAvgPx(1.0, 1.5, 15.5, 16.5, 17.5) == 15.0
+    }
+
 }

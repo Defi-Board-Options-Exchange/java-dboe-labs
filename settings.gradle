@@ -11,13 +11,9 @@ include ':dboe-web3j-common'
 include ':cep'
 include ':auth-client'
 include ':server'
-include ':trading-server'
-include ':cloud-publisher'
-
 
 include ':algo'
 include ':dboe-server'
-include ':ob-matcher'
 include ':dboe-market-making'
 include ':dboe-onchain-analytic'
 include ':dboe-token-distributor'

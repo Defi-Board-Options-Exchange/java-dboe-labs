@@ -46,7 +46,7 @@ select
 chain,
 Address as wallet_id, instr_id,
 sum(volume) as pos,
-sum(volume * avgPx) as val,
+sum(volume * avgPx) as pos_val,
 case when sum(volume) != 0 then sum(volume * avgPx)/sum(volume) ELSE 0 end as avg_px
 from analytics.dboe_wallet_txn
 group by 1,2,3;
@@ -227,3 +227,11 @@ INNER JOIN
 	FROM analytics.dboe_enriched_transfers
 	where TxnTimestamp >= '2023-08-13'AND currencySymbol like 'USD%' AND ReceiverAddress = '0x649fb2a8ebd926faf4375c7ed7259e74d1d7851d'
 ) t
+
+
+--- on Analytics
+create or replace view dboe_active_options as
+SELECT m.name AS CHAIN, i.instr_id, i.long_contract_address, i.short_contract_address
+FROM dboe_academy._dboe_option_instr i
+INNER JOIN  analytics.chain_mapping m ON i.chain = m.dboe_chain_name
+WHERE expiry >= cast(date_format((now()),'%Y%m%d') as unsigned)

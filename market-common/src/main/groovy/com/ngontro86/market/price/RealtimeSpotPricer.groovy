@@ -8,7 +8,7 @@ class RealtimeSpotPricer implements SpotPricer {
     Map<String, Double> prevs = [:] as ConcurrentHashMap
 
     @Override
-    double spot(String underlying) {
+    Double spot(String underlying) {
         return latest.get(underlying)
     }
 

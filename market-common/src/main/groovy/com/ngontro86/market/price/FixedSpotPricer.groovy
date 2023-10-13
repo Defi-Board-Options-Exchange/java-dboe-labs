@@ -20,7 +20,7 @@ class FixedSpotPricer implements SpotPricer {
     }
 
     @Override
-    double spot(String underlying) {
+    Double spot(String underlying) {
         return spotMap.getOrDefault(underlying, 0d)
     }
 

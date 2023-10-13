@@ -3,6 +3,7 @@ package com.ngontro86.dboe.trading
 import com.ngontro86.common.annotations.ConfigValue
 import com.ngontro86.common.annotations.DBOEComponent
 import com.ngontro86.common.annotations.Logging
+import com.ngontro86.dboe.trading.utils.MarketMakingUtils
 import com.ngontro86.dboe.web3j.Utils
 import com.ngontro86.dboe.web3j.smartcontract.ClobManager
 import com.ngontro86.market.instruments.ExchangeSpecsLoader
@@ -36,7 +37,7 @@ class OrderManager<T> {
     private Map<String, T> clobMap = [:]
 
     @ConfigValue(config = "defaultTimeoutMin")
-    private Integer defaultTimeoutMin = 360
+    private Integer defaultTimeoutMin = 3600
 
     @ConfigValue(config = "defaultQuotingNotional")
     private Integer defaultQuotingNotional = 75
@@ -155,8 +156,11 @@ class OrderManager<T> {
                     def onchainQs = quotes.findAll { it.buySell == bs && it.pxLevel == Integer.valueOf(lvl) }
                     if (onchainQs.isEmpty() || onchainQs.first().amount == 0) {
                         amount *= (1.0 + Math.random() * 0.1d)
-                        println "toPrice(): ${opt['instr_id']}, BuySell: ${bs ? 'B' : 'S'}, amt: ${amount}, ${fp}, lvl: ${lvl}"
-                        clobManager.toPrice(clobMap[opt['ob_address']], opt['instr_id'], bs, amount, Integer.valueOf(lvl), defaultTimeoutMin)
+                        def orderTimeOut = MarketMakingUtils.bestOrderTimeOutInMin(Utils.getTimeUtc(opt['expiry'], opt['ltt']), timeSource.currentTimeMilliSec(), Integer.valueOf(lvl))
+                        if (orderTimeOut > 30) {
+                            println "toPrice(): ${opt['instr_id']}, BuySell: ${bs ? 'B' : 'S'}, amt: ${amount}, ${fp}, lvl: ${lvl}, timeout: ${orderTimeOut}"
+                            clobManager.toPrice(clobMap[opt['ob_address']], opt['instr_id'], bs, amount, Integer.valueOf(lvl), Math.min(orderTimeOut, defaultTimeoutMin))
+                        }
                     }
                 }
             }

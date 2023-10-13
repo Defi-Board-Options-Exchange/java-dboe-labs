@@ -11,4 +11,15 @@ class MarketMakingUtilsTest {
         }
     }
 
+    @Test
+    void "should work out best time out in minute"() {
+        println MarketMakingUtils.bestOrderTimeOutInMin(1697122800000, 1697090023000, 1)
+        println MarketMakingUtils.bestOrderTimeOutInMin(1697122800000, 1697090023000, 2)
+        println MarketMakingUtils.bestOrderTimeOutInMin(1697122800000, 1697090023000, 3)
+        println MarketMakingUtils.bestOrderTimeOutInMin(1697122800000, 1697090023000, 4)
+        println MarketMakingUtils.bestOrderTimeOutInMin(1697122800000, 1697090023000, 5)
+        println MarketMakingUtils.bestOrderTimeOutInMin(1697122800000, 1697090023000, 6)
+        println MarketMakingUtils.bestOrderTimeOutInMin(1697122800000, 1697090023000, 7)
+    }
+
 }

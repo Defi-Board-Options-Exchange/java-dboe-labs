@@ -23,6 +23,11 @@ class RestBasedExchangeSpecsLoader implements ExchangeSpecsLoader {
     }
 
     @Override
+    Collection loadChains() {
+        return restClient.withQueryParams('query/chainInfo', [:], Collection)
+    }
+
+    @Override
     Collection loadOptions(String chain) {
         return restClient.withQueryParams('query/listInstrument', ['chain': chain], Collection).findAll {
             it['chain'] == chain && Utils.getTimeUtc(it['expiry'], it['ltt']) >= timeSource.currentTimeMilliSec()
@@ -34,5 +39,15 @@ class RestBasedExchangeSpecsLoader implements ExchangeSpecsLoader {
         return restClient.withQueryParams('query/clobInfo', [:], Collection).findAll {
             it['chain'] == chain
         } as Collection<Map>
+    }
+
+    @Override
+    Collection loadOptionChainMarket(String chain, String und, int expiry) {
+        return restClient.withQueryParams('query/optionChainMarket', [
+                'chain'          : chain,
+                'underlying'     : und,
+                'expiryDate'     : expiry,
+                'collateralGroup': '20%'
+        ], Collection) as Collection<Map>
     }
 }

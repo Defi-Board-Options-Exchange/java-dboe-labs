@@ -1,7 +1,5 @@
 package com.ngontro86.dboe.web3j.smartcontract
 
-import com.ngontro86.dboe.web3j.DBOEClob
-
 interface ClobManager<T> {
 
     T load(String address)
@@ -10,13 +8,15 @@ interface ClobManager<T> {
 
     List<ClobQuote> userQuotes(T clob, String instrId)
 
-    Long[] refPx(DBOEClob clob, String instrId)
+    Long[] refPx(T clob, String instrId)
 
-    Long currentRefPx(DBOEClob clob, String instrId)
+    Long currentRefPx(T clob, String instrId)
 
     void calibrateRef(T clob, String instrId)
 
+    void calibrateRefs(T clob, String underlying, int expiry)
+
     void cancelOrder(T clob, String instrId, boolean bs, int pxLevel, BigInteger timestamp)
 
-    void setRef(DBOEClob clob, String instrId, long ref)
+    void setRef(T clob, String instrId, long ref)
 }

@@ -1,7 +1,6 @@
 package com.ngontro86.dboe.web3j.smartcontract
 
 import com.ngontro86.common.annotations.DBOEComponent
-import com.ngontro86.dboe.web3j.DBOEClob
 import com.ngontro86.dboe.web3j.inmemory.InMemoryDBOEClob
 
 @DBOEComponent
@@ -23,12 +22,12 @@ class InMemoryClobManager implements ClobManager<InMemoryDBOEClob> {
     }
 
     @Override
-    Long[] refPx(DBOEClob clob, String instrId) {
+    Long[] refPx(InMemoryDBOEClob clob, String instrId) {
         return new Long[0]
     }
 
     @Override
-    Long currentRefPx(DBOEClob clob, String instrId) {
+    Long currentRefPx(InMemoryDBOEClob clob, String instrId) {
         return null
     }
 
@@ -38,12 +37,18 @@ class InMemoryClobManager implements ClobManager<InMemoryDBOEClob> {
     }
 
     @Override
+    void calibrateRefs(InMemoryDBOEClob clob, String underlying, int expiry) {
+
+    }
+
+    @Override
     void cancelOrder(InMemoryDBOEClob clob, String instrId, boolean bs, int pxLevel, BigInteger timestamp) {
 
     }
 
     @Override
-    void setRef(DBOEClob clob, String instrId, long ref) {
+    void setRef(InMemoryDBOEClob clob, String instrId, long ref) {
 
     }
+
 }

@@ -24,6 +24,9 @@ class DboeMarketMakerApp {
     private SpendingLimitApprovalManager spendingLimitTokenManager
 
     @Inject
+    private OptionRefPriceBySpotMoveCalibrator refPriceBySpotMoveCalibrator
+
+    @Inject
     private OrderManager orderManager
 
     @Inject

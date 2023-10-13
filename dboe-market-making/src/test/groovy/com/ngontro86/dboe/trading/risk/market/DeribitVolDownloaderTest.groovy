@@ -11,6 +11,7 @@ import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
+@Ignore
 class DeribitVolDownloaderTest {
 
     ComponentEnv env
@@ -21,7 +22,6 @@ class DeribitVolDownloaderTest {
     }
 
     @Test
-    @Ignore
     void "should be able to load vol surface from Deribit"() {
         def volDownloader = env.component(DeribitVolDownloader)
         volDownloader.loadVols('ETH').each { ttExpiry, map ->

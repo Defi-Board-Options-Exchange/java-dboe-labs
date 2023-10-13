@@ -21,7 +21,30 @@ class MarketMakingUtils {
     }
 
     private static DecimalFormat fmt = new DecimalFormat('0.00')
+
     static double round(double q) {
         return Double.valueOf(fmt.format(q))
+    }
+
+    static int bestOrderTimeOutInMin(long expiryUtc, long currentTime, int pxLevel) {
+        def timeToExpiryInMin = (expiryUtc - currentTime) / 60000
+        int buffTime = 0
+        switch (pxLevel) {
+            case 1:
+            case 2:
+            case 3:
+                buffTime = 3 * 60
+                break
+            case 4:
+                buffTime = 2 * 60
+                break
+            case 5:
+                buffTime = 1 * 60
+                break
+            default:
+                buffTime = 0
+                break
+        }
+        return timeToExpiryInMin - buffTime
     }
 }

@@ -1,4 +1,7 @@
+com.ngontro86.app.common
 com.ngontro86.algo
-com.ngontro86.strategy.common
-com.ngontro86.common.db
-com.ngontro86.common.biz.watcher
+com.ngontro86.server
+com.ngontro86.market
+com.ngontro86.dboe.web3j
+com.ngontro86.restful.common
+

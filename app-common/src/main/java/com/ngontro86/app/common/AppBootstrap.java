@@ -12,7 +12,9 @@ import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 
 public class AppBootstrap {
@@ -38,10 +40,15 @@ public class AppBootstrap {
             context.register(LoggerPostProcessor.class);
 
             context.scan("com.ngontro86.app.common");
-
+            Set<String> excludedPackages = new HashSet<>();
+            for (String exlPackage : ResourcesUtils.lines("excludedComponents")) {
+                excludedPackages.add(exlPackage);
+            }
             for (String packageBase : ResourcesUtils.lines("components")) {
-                context.scan(packageBase);
-                System.out.println("Scanning: " + packageBase);
+                if (!excludedPackage(excludedPackages, packageBase)) {
+                    context.scan(packageBase);
+                    System.out.println("Scanning: " + packageBase);
+                }
             }
             context.refresh();
 
@@ -64,6 +71,15 @@ public class AppBootstrap {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static boolean excludedPackage(Set<String> excls, String basePath) {
+        for (String excl : excls) {
+            if (excl.startsWith(basePath)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     static Method findMarkedMethod(Class cl, Class annotatedMethod) {
