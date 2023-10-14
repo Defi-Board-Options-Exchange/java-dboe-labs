@@ -87,7 +87,7 @@ class ReferralService {
     }
 
     Collection<Map> airdrop(String walletId) {
-        cep.queryMap("SELECT * FROM DboeWalletAirdropWin WHERE Address = '${walletId.toLowerCase()}'")
+        cep.queryMap("SELECT * FROM DboeWalletAirdropWin(Address = '${walletId.toLowerCase()}')")
     }
 
     Map referralInfo(String walletId) {

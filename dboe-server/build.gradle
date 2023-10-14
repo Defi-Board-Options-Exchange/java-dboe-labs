@@ -35,8 +35,5 @@ dependencies {
     compile project(':server')
     compile project(':market-common')
 
-    def web3jVer = '4.8.9'
-    compile group: 'org.web3j', name: 'core', version: web3jVer
-
     testCompile project(':component-testing')
 }

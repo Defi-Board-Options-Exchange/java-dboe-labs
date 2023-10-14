@@ -186,15 +186,6 @@ class QueryRestService {
     }
 
     @GET
-    @Path('/walletAvgPxPerOption')
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Query wallet Avg Px for a given option", response = Collection.class)
-    Collection<Map> walletAvgPx(@QueryParam("walletId") String walletId, @QueryParam("instrId") String instrId) {
-        return queryService.walletAvgPx(walletId, instrId)
-    }
-
-    @GET
     @Path('/volSurface')
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)

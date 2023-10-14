@@ -85,3 +85,40 @@ create schema dboe_total_liquidity_dashboard_event as (
 
 create window DboeTotalLiquidityDashboardWin.win:length(1) as dboe_total_liquidity_dashboard_event;
 @Name('DboeTotalLiquidityDashboardWin') insert into DboeTotalLiquidityDashboardWin select * from dboe_total_liquidity_dashboard_event;
+
+create schema dboe_wallet_position_event as (
+    chain string,
+    wallet_id string,
+    instr_id string,
+    currency string,
+    pos double,
+    pos_val double,
+    avg_px double
+);
+
+create window DboeWalletPositionWin.std:unique(chain, wallet_id, instr_id, currency) as dboe_wallet_position_event;
+@Name('DboeWalletPositionWin') insert into DboeWalletPositionWin select * from dboe_wallet_position_event;
+
+create schema dboe_latest_holder_balance_event as (
+    chain string,
+    instr_id string,
+    wallet string,
+    balance double
+);
+
+create window DboeLatestHolderBalanceWin.win:time(120 sec).std:unique(chain, instr_id, wallet) as dboe_latest_holder_balance_event;
+@Name('DboeLatestHolderBalanceWin') insert into DboeLatestHolderBalanceWin select * from dboe_latest_holder_balance_event;
+
+create schema DboeEntryPxEvent as (
+    chain string,
+    wallet_id string,
+    instr_id string,
+    currency string,
+    pos double,
+    pos_val double,
+    avg_px double,
+    estimated int
+);
+
+create window DboeEntryPxWin.std:unique(chain, instr_id, currency, wallet_id) as DboeEntryPxEvent;
+@Name('DboeEntryPxWin') insert into DboeEntryPxWin select * from DboeEntryPxEvent;

@@ -46,19 +46,6 @@ select
 from DboeFspWin f
 inner join DboeAllOptionsWin i on f.chain = i.chain and f.underlying = i.underlying and f.expiry = i.expiry;
 
-create schema dboe_wallet_position_event as (
-    chain string,
-    wallet_id string,
-    instr_id string,
-    currency string,
-    pos double,
-    pos_val double,
-    avg_px double
-);
-
-create window DboeWalletPositionWin.std:unique(chain, wallet_id, instr_id, currency) as dboe_wallet_position_event;
-@Name('DboeWalletPositionWin') insert into DboeWalletPositionWin select * from dboe_wallet_position_event;
-
 create schema DboePriceEvent as (
     chain string,
     instr_id string,
@@ -156,6 +143,24 @@ from DboeImpliedVolWin v
 inner join DboeOptionInstrWin i on v.instr_id = i.instr_id
 inner join DboeOptionTimeToExpiryWin(time_to_expiry>0) t on i.instr_id = t.instr_id
 inner join DboeSpotWin s on i.underlying = s.underlying;
+
+@Name('Entry Price Estimation')
+insert into DboeEntryPxEvent
+select
+    p.chain as chain,
+    p.wallet_id as wallet_id,
+    p.instr_id as instr_id,
+    p.currency as currency,
+    pos,
+    pos_val,
+    case when p.pos = b.balance then p.avg_px
+         when b.balance = 0.0 or m.bid is null or m.ask is null then p.avg_px
+         else (p.pos_val + (b.balance - p.pos) * (case when b.balance > p.pos then m.ask else m.bid end)) / b.balance
+         end as avg_px,
+    case when p.pos = b.balance then 0 else 1 end as estimated
+from DboeWalletPositionWin p
+inner join DboeLatestHolderBalanceWin b on p.chain = b.chain and p.instr_id = b.instr_id and p.wallet_id = b.wallet
+left outer join DboePriceWin m on p.chain = m.chain and p.instr_id = m.instr_id;
 
 
 

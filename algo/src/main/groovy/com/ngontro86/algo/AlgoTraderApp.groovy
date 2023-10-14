@@ -2,6 +2,7 @@ package com.ngontro86.algo
 
 
 import com.ngontro86.algo.gui.OptionChainDlg
+import com.ngontro86.algo.gui.OrderbookDlg
 import com.ngontro86.common.annotations.EntryPoint
 import com.ngontro86.common.annotations.Logging
 import com.ngontro86.common.gui.chart.CommonGUI
@@ -62,7 +63,7 @@ class AlgoTraderApp {
 
         def marketMenu = new JMenu("Market")
         menuBar.add(marketMenu)
-        [new JMenuItem("OptionChain")].each { itm ->
+        [new JMenuItem("OptionChain"), new JMenuItem("Orderbook")].each { itm ->
             itm.addActionListener(buttonActionListener)
             marketMenu.add(itm)
         }
@@ -89,6 +90,9 @@ class AlgoTraderApp {
         if (bttn.getText() == "OptionChain") {
             optionChainDlg.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE)
             optionChainDlg.setVisible(true)
+        } else if (bttn.getText() == 'Orderbook') {
+            obDlg.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE)
+            obDlg.setVisible(true)
         }
     }
 

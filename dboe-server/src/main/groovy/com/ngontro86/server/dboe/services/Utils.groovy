@@ -40,19 +40,4 @@ class Utils {
         }
         return parameterisedBody
     }
-
-    private static double DOUBLE_PRECISION = 0.00001
-    static double estAvgPx(double currPos, double pos, double avgPx, double bid, double ask) {
-        if (Math.abs(currPos) < DOUBLE_PRECISION) {
-            return avgPx
-        }
-        if (Math.abs(currPos - pos) > DOUBLE_PRECISION) {
-            if (pos == 0d) {
-                return currPos > 0 ? ask : bid
-            }
-            return (pos * avgPx + (currPos - pos) * (currPos > pos ? ask : bid)) / currPos
-        }
-        return avgPx
-    }
-
 }

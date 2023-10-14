@@ -29,6 +29,9 @@ class OptionChainDlg extends JDialog {
     @Inject
     private ExchangeSpecsLoader exchangeSpecsLoader
 
+    @Inject
+    private OrderbookDlg obDlg
+
     @PostConstruct
     void init() {
         initGUI()

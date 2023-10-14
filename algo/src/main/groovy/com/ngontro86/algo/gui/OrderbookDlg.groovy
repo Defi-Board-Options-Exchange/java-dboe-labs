@@ -1,4 +1,4 @@
-package com.ngontro86.algo
+package com.ngontro86.algo.gui
 
 
 import com.ngontro86.algo.gui.table.OrderbookColorRenderer

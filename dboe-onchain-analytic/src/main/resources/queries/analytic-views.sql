@@ -95,12 +95,26 @@ SELECT
 'referral bonus' AS plan, b.name, b.airdrop_date, r.referrer_wallet AS Address, b.bonus_amount AS token_reward
 FROM
 (
-	select referrer_email, referrer_wallet, COUNT(DISTINCT referee_wallet) as numOfReferral
-	from dboe_wallet_refer_stats
+	select i.email as referrer_email, i.wallet_address as referrer_wallet, COUNT(DISTINCT r.wallet_address) as numOfReferral
+	from referral_ack r
+	inner join referral_info i on right(i.wallet_address, 8) = r.referral_code and r.timestamp > i.timestamp
 	GROUP BY 1,2
 ) r
 INNER JOIN dboe_airdrop_bonuses b ON r.numOfReferral >= b.min_no_referral AND r.numOfReferral <= b.max_no_referral
-
+UNION ALL
+SELECT distinct
+'first trade' AS plan, r.name, r.airdrop_date, Address, r.first_trade_bonus as token_reward
+FROM
+(
+	select SenderAddress AS Address, cast(date_format(MIN(TxnTimestamp), '%Y%m%d') as unsigned) AS firstTradeDate
+	from analytics.dboe_transfers
+	GROUP BY 1
+	UNION ALL
+	select ReceiverAddress AS Address, cast(date_format(MIN(TxnTimestamp), '%Y%m%d') as unsigned) AS firstTradeDate
+	from analytics.dboe_transfers
+	GROUP BY 1
+) t
+inner join dboe_airdrop_phases r on t.firstTradeDate between r.starting_date and r.ending_date
 
 
 create or replace view dboe_wallet_refer_stats as
@@ -115,8 +129,11 @@ FROM referral_info i
 LEFT outer JOIN referral_ack r ON right(i.wallet_address, 8) = r.referral_code AND r.timestamp > i.timestamp
 LEFT OUTER JOIN referral_info i2 ON r.wallet_address = i2.wallet_address
 LEFT OUTER JOIN (
-	select distinct Address
-	from analytics.dboe_wallet_txn
+	select distinct SenderAddress AS Address
+    from analytics.dboe_transfers
+    UNION ALL
+    select distinct ReceiverAddress AS Address
+    from analytics.dboe_transfers
 ) t ON r.wallet_address = t.Address
 
 
@@ -235,3 +252,22 @@ SELECT m.name AS CHAIN, i.instr_id, i.long_contract_address, i.short_contract_ad
 FROM dboe_academy._dboe_option_instr i
 INNER JOIN  analytics.chain_mapping m ON i.chain = m.dboe_chain_name
 WHERE expiry >= cast(date_format((now()),'%Y%m%d') as unsigned)
+
+
+CREATE OR replace view dboe_latest_holder_balance as
+SELECT chain, instr_id, wallet, SUM(balance) AS balance
+FROM (
+	SELECT i.chain, i.instr_id, h.contract_address, h.holder_address AS wallet,
+		h.latest_balance AS balance
+	FROM analytics.dboe_token_holders h
+	INNER join _dboe_option_instr i ON i.long_contract_address = h.contract_address
+	INNER JOIN analytics.chain_mapping m ON i.chain = m.dboe_chain_name
+	WHERE h.chain = m.name AND i.expiry >= cast(date_format((now()),'%Y%m%d') as UNSIGNED)
+	UNION ALL
+	SELECT i.chain, i.instr_id, h.contract_address, h.holder_address AS wallet,
+		-h.latest_balance AS balance
+	FROM analytics.dboe_token_holders h
+	INNER join _dboe_option_instr i ON i.short_contract_address = h.contract_address
+	INNER JOIN analytics.chain_mapping m ON i.chain = m.dboe_chain_name
+	WHERE h.chain = m.name AND i.expiry >= cast(date_format((now()),'%Y%m%d') as UNSIGNED)
+) x GROUP BY 1,2,3
