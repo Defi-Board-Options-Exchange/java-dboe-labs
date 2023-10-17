@@ -47,4 +47,18 @@ class MarketMakingUtils {
         }
         return timeToExpiryInMin - buffTime
     }
+
+    static Collection pickNSmallest(Collection sets, int n) {
+        def ret = []
+        if (n >= sets.size()) {
+            ret.addAll(sets)
+            return ret
+        }
+
+        def priorityQueue = new PriorityQueue(sets)
+        n.times {
+            ret.add(priorityQueue.poll())
+        }
+        return ret
+    }
 }

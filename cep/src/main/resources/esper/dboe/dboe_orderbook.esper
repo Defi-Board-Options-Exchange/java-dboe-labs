@@ -15,6 +15,21 @@ create schema DboeRefPriceEvent as (
 create window DboeRefPriceWin.std:unique(chain, instr_id, currency) as DboeRefPriceEvent;
 @Name('DboeRefPriceWin') insert into DboeRefPriceWin select * from DboeRefPriceEvent;
 
+
+@Name('ImpliedVol')
+insert into DboeImpliedVolEvent
+select
+    p.instr_id as instr_id,
+    100.0 * OptionUtils.iv(p.bid, i.kind, s.spot, i.strike, i.cond_strike, t.time_to_expiry) as bid_iv,
+    100.0 * OptionUtils.iv(p.ask, i.kind, s.spot, i.strike, i.cond_strike, t.time_to_expiry) as ask_iv,
+    100.0 * OptionUtils.iv(r.ref_price, i.kind, s.spot, i.strike, i.cond_strike, t.time_to_expiry) as ref_iv,
+    p.in_timestamp as in_timestamp
+from DboePriceWin p
+inner join DboeRefPriceWin r on p.instr_id = r.instr_id and p.chain = r.chain and p.currency = r.currency
+inner join DboeOptionInstrWin i on p.instr_id = i.instr_id
+inner join DboeOptionTimeToExpiryWin(time_to_expiry>0) t on p.instr_id = t.instr_id
+inner join DboeSpotWin s on i.underlying = s.underlying;
+
 @Name('DboeRefStatEvent')
 insert into DboeRefStatEvent
 select

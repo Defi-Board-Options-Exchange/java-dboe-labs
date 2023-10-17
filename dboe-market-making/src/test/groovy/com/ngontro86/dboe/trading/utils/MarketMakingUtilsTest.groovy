@@ -22,4 +22,9 @@ class MarketMakingUtilsTest {
         println MarketMakingUtils.bestOrderTimeOutInMin(1697122800000, 1697090023000, 7)
     }
 
+    @Test
+    void "should pick n smallest elements"() {
+        assert MarketMakingUtils.pickNSmallest([20231011, 20231012, 20231001, 20231005], 1) == [20231001]
+        assert MarketMakingUtils.pickNSmallest([20231011, 20231012, 20231001, 20231005], 2) == [20231001, 20231005]
+    }
 }

@@ -95,10 +95,10 @@ SELECT
 'referral bonus' AS plan, b.name, b.airdrop_date, r.referrer_wallet AS Address, b.bonus_amount AS token_reward
 FROM
 (
-	select i.email as referrer_email, i.wallet_address as referrer_wallet, COUNT(DISTINCT r.wallet_address) as numOfReferral
-	from referral_ack r
-	inner join referral_info i on right(i.wallet_address, 8) = r.referral_code and r.timestamp > i.timestamp
-	GROUP BY 1,2
+    select i.email as referrer_email, i.wallet_address as referrer_wallet, COUNT(DISTINCT r.wallet_address) as numOfReferral
+    from referral_info i
+    LEFT OUTER JOIN referral_ack r on right(i.wallet_address, 8) = r.referral_code and r.timestamp > i.timestamp
+    GROUP BY 1,2
 ) r
 INNER JOIN dboe_airdrop_bonuses b ON r.numOfReferral >= b.min_no_referral AND r.numOfReferral <= b.max_no_referral
 UNION ALL
@@ -186,23 +186,26 @@ from
 (
 	SELECT FLOOR(timestamp/1000000) as date, COUNT(*) AS numNewWallets
 	FROM dboe_tc_agreements
+	where FLOOR(timestamp/1000000) >= cast(date_format(date(date_sub(current_date, INTERVAL 7 Day)), '%Y%m%d') AS UNSIGNED)
 	GROUP BY 1
 ) a
 LEFT outer JOIN (
 	SELECT FLOOR(timestamp/1000000) as date, COUNT(*) AS newWalletKyt
 	FROM dboe_kyt_addresses
+	where FLOOR(timestamp/1000000) >= cast(date_format(date(date_sub(current_date, INTERVAL 7 Day)), '%Y%m%d') AS UNSIGNED)
 	GROUP BY 1
 ) k ON a.date = k.date
 LEFT OUTER JOIN (
 	SELECT cast(date_format(date_sub(TxnTimestamp, INTERVAL -8 HOUR), '%Y%m%d') AS unsigned) AS date, COUNT(DISTINCT Address) AS numberOfWalletSubmittedOrders
 	FROM (
 		SELECT TransactionHash, TxnTimestamp, SenderAddress as Address FROM analytics.dboe_transfers
-		UNION
-		SELECT TransactionHash, TxnTimestamp, ReceiverAddress as Address FROM analytics.dboe_transfers
+        WHERE TIMESTAMPDIFF(MINUTE, TxnTimestamp, CURRENT_TIMESTAMP) < 10080
+        UNION ALL
+        SELECT TransactionHash, TxnTimestamp, ReceiverAddress as Address FROM analytics.dboe_transfers
+        WHERE TIMESTAMPDIFF(MINUTE, TxnTimestamp, CURRENT_TIMESTAMP) < 10080
 	) X
 	GROUP BY 1
 ) t ON a.date = t.date
-WHERE a.date >= cast(date_format(date(date_sub(current_date, INTERVAL 14 Day)), '%Y%m%d') AS UNSIGNED)
 
 CREATE OR replace VIEW dboe_prev_ref as
 SELECT

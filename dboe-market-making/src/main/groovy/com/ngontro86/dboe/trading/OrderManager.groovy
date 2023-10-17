@@ -60,6 +60,9 @@ class OrderManager<T> {
     @ConfigValue(config = "focusedSpreads")
     private Collection focusedSpreads = ['5', '6']
 
+    @ConfigValue(config = "longestTimeToExpiryInHour")
+    private Double longestTimeToExpiryInHour = 26.0
+
     @Inject
     private VolatilityEstimator volEstimator
 
@@ -134,7 +137,10 @@ class OrderManager<T> {
     }
 
     private void spreading() {
-        def options = dexSpecsLoader.loadOptions(chain)
+        def options = dexSpecsLoader.loadOptions(chain).findAll {
+            (Utils.getTimeUtc(it['expiry'], it['ltt']) - timeSource.currentTimeMilliSec()) / 3600000d <= longestTimeToExpiryInHour
+        }
+
         logger.info("Found: ${options.size()} options for chain: ${chain}")
         println "Spreading: Found: ${options.size()} options for chain: ${chain}"
 
