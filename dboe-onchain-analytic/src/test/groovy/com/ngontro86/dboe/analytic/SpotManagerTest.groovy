@@ -10,7 +10,10 @@ import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
 
-@Ignore
+import javax.ws.rs.client.Entity
+
+import static com.ngontro86.restful.common.client.RestClientBuilder.build
+
 class SpotManagerTest {
 
 
@@ -24,7 +27,10 @@ class SpotManagerTest {
                 'credential'          : PrivateKey.DEPLOYER_PK,
                 'chainId'             : '43114',
                 'gasLimit'            : '7000000',
-                'gasPrice'            : '25000000000'
+                'gasPrice'            : '25000000000',
+                'dboeHost.host'       : 'http://dboe.exchange',
+                'dboeHost.basePath'   : 'api',
+                'dboeHost.port'       : '8686'
 
         ].each { k, v -> System.setProperty(k, v) }
 
@@ -35,6 +41,14 @@ class SpotManagerTest {
     void "should read spot info"() {
         def spotManager = env.component(SpotManager)
 
-        println spotManager.getSpot('ETH', (long)((System.currentTimeMillis() - 5000)/1000), 5)
+        println spotManager.getSpot('ETH', (long) ((System.currentTimeMillis() - 5000) / 1000), 5)
+    }
+
+    @Test
+    void "should update spot for BTC"() {
+        def restClient = build('dboeHost')
+        restClient.postWithQParamsAndHeader('coreEngine/updateSpot',
+                ['underlying': 'BTC', 'spot': 28343d],
+                'passCode', '2511', Entity.json(null), Boolean)
     }
 }

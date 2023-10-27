@@ -50,4 +50,12 @@ class RestBasedExchangeSpecsLoader implements ExchangeSpecsLoader {
                 'collateralGroup': '20%'
         ], Collection) as Collection<Map>
     }
+
+    @Override
+    Collection orderbook(String chain, String instrId) {
+        return restClient.withQueryParams('query/orderbook', [
+                'chain'  : chain,
+                'instrId': instrId
+        ], Collection) as Collection<Map>
+    }
 }

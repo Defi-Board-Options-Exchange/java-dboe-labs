@@ -21,4 +21,9 @@ class Web3jBasedExchangeSpecsLoader implements ExchangeSpecsLoader {
     Collection loadOptionChainMarket(String chain, String und, int expiry) {
         return []
     }
+
+    @Override
+    Collection orderbook(String chain, String instrId) {
+        return []
+    }
 }

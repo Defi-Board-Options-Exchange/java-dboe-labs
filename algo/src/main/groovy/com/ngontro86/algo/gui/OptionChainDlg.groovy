@@ -14,6 +14,8 @@ import javax.swing.*
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 
 @DBOEComponent
 class OptionChainDlg extends JDialog {
@@ -98,6 +100,14 @@ class OptionChainDlg extends JDialog {
         def optionTable = new JTable(optionTableModel)
         optionTable.setDefaultRenderer(String.class, new CallPutColorRenderer())
         optionTable.setDefaultRenderer(Double.class, new OptionChainDoubleColorRenderer())
+        optionTable.addMouseListener(new MouseAdapter() {
+            @Override
+            void mousePressed(MouseEvent e) {
+                obDlg.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE)
+                obDlg.setVisible(true)
+                obDlg.setOption((String)chainCbo.getSelectedItem(), (String)(optionTableModel.getRowValues(optionTable.rowAtPoint(e.getPoint()))[0]))
+            }
+        })
 
         tabbedPane.add("Options", new JScrollPane(optionTable))
 
@@ -106,6 +116,7 @@ class OptionChainDlg extends JDialog {
         def selectionPanel = new JPanel(new GridLayout(0, 6))
         this.add(selectionPanel, BorderLayout.SOUTH)
         setupSelectionPanel(selectionPanel)
+
     }
 
     private void setupSelectionPanel(JPanel jPanel) {
@@ -119,6 +130,7 @@ class OptionChainDlg extends JDialog {
         jPanel.add(expCbo)
 
         populateChainDropdown()
+
     }
 
     private void populateChainDropdown() {

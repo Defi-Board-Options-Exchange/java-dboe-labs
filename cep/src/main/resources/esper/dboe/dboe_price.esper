@@ -57,7 +57,7 @@ create schema DboePriceEvent as (
     in_timestamp long
 );
 
-create window DboePriceWin.std:unique(chain, instr_id, currency) as DboePriceEvent;
+create window DboePriceWin.win:time(1800 sec).std:unique(chain, instr_id, currency) as DboePriceEvent;
 @Name('DboePriceWin') insert into DboePriceWin select * from DboePriceEvent(instr_id is not null);
 
 create schema dboe_prev_ref_event as (

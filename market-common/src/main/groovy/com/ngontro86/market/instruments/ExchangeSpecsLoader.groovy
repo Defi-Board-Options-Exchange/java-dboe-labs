@@ -5,4 +5,5 @@ interface ExchangeSpecsLoader {
     Collection loadOptions(String chain)
     Collection loadClobs(String chain)
     Collection loadOptionChainMarket(String chain, String und, int expiry)
+    Collection orderbook(String chain, String instrId)
 }
