@@ -340,4 +340,13 @@ class QueryRestService {
     Map dashboard() {
         return queryService.dashboard()
     }
+
+    @GET
+    @Path('/blockchainError')
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Given error, advise next step", response = Collection.class)
+    Collection blockchainError(@QueryParam("rawError") String rawError) {
+        return queryService.blockchainError(rawError)
+    }
 }

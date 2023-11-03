@@ -8,6 +8,7 @@ import com.ngontro86.common.annotations.Logging
 import com.ngontro86.common.annotations.NonTxTransactional
 import org.apache.logging.log4j.Logger
 
+import javax.annotation.PostConstruct
 import javax.inject.Inject
 
 import static com.ngontro86.common.times.GlobalTimeController.currentTimeMillis
@@ -28,6 +29,13 @@ class QueryService {
 
     @ConfigValue(config = "displayTrades")
     private Boolean displayTrades
+
+    private Collection<Map> blockChainErrors = []
+
+    @PostConstruct
+    private void init() {
+        blockChainErrors = flatDao.queryList("select short_error, suggestion from dboe_blockchain_errors")
+    }
 
     Collection<Map> query(String query) {
         logger.info("${query}")
@@ -182,5 +190,15 @@ class QueryService {
         def ret = lqDashboard.isEmpty() ? [:] : lqDashboard.first()
         ret.putAll(airdrop.isEmpty() ? [:] : airdrop.first())
         return ret
+    }
+
+    Collection blockchainError(String rawError) {
+        for (Map map : blockChainErrors) {
+            if (rawError.contains(map['short_error'])) {
+                return [map['short_error'], map['suggestion']]
+            }
+
+        }
+        return ['Unknown error', 'Reach out to DBOE Support']
     }
 }
