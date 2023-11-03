@@ -11,20 +11,21 @@ group by 1,2,3,4
 
 create or replace view dboe_enriched_transfers AS
 select
-TransactionHash, TxnTimestamp, SenderAddress, ReceiverAddress, Amount, CurrencySymbol, CurrencyAddress, m.dboe_chain_name as chain,
-case when t.CurrencyAddress = o.short_contract_address then ABS(o.strike - o.cond_strike) ELSE 0 end AS Collateral,
-case when o.instr_id IS NULL then 0 ELSE 1 END AS isOption,
-case when t.CurrencyAddress = o.short_contract_address then -1 when t.CurrencyAddress = o.long_contract_address then 1 ELSE 0 END AS isLongOrShort
+TransactionHash, TxnTimestamp, SenderAddress, ReceiverAddress, Amount, CurrencyAddress, m.dboe_chain_name as chain,
+case when s.short_contract_address is not null then ABS(s.strike - s.cond_strike) ELSE 0 end AS Collateral,
+case when (s.instr_id IS NULL and l.instr_id IS null) then 0 ELSE 1 END AS isOption,
+case when s.short_contract_address is not null then -1 when l.long_contract_address is not null then 1 ELSE 0 END AS isLongOrShort
 from dboe_transfers t
 INNER JOIN chain_mapping m ON t.Chain = m.name
-LEFT outer join dboe_academy.dboe_all_options o on t.CurrencySymbol = o.instr_id AND o.chain = m.dboe_chain_name;
+LEFT outer join dboe_academy.dboe_all_options l ON t.CurrencyAddress = l.long_contract_address AND l.chain = m.dboe_chain_name
+LEFT OUTER JOIN dboe_academy.dboe_all_options s ON t.CurrencyAddress = s.short_contract_address AND s.chain = m.dboe_chain_name;
 
 create or replace view dboe_transfer_option_instr AS
 select distinct
-TransactionHash, CurrencySymbol AS instr_id, m.dboe_chain_name as chain
+TransactionHash, instr_id, m.dboe_chain_name as chain
 from dboe_transfers t
 INNER JOIN chain_mapping m ON t.Chain = m.name
-inner join dboe_academy.dboe_all_options o on t.CurrencySymbol = o.instr_id AND o.chain = m.dboe_chain_name;
+inner join dboe_academy.dboe_all_options o ON (t.CurrencyAddress = o.long_contract_address OR t.CurrencyAddress = o.short_contract_address) AND o.chain = m.dboe_chain_name;
 
 
 create or replace view dboe_wallet_txn AS
@@ -169,7 +170,7 @@ INNER JOIN
 	SELECT cast(date_format(date(date_sub(TxnTimestamp, INTERVAL -8 HOUR)), '%Y%m%d') AS UNSIGNED) AS date, chain,
 	COUNT(*)/2 AS numOfTrades, SUM(Amount) AS totalFeeCollected, SUM(Amount) * 100.0/0.30 as tradedValue
 	FROM analytics.dboe_enriched_transfers
-	where TxnTimestamp >= '2023-08-13'AND currencySymbol like 'USD%' AND ReceiverAddress = '0x649fb2a8ebd926faf4375c7ed7259e74d1d7851d'
+	where TxnTimestamp >= '2023-08-13' AND ReceiverAddress = '0x649fb2a8ebd926faf4375c7ed7259e74d1d7851d'
 	GROUP BY 1, 2
 ) t ON t.date = v.date AND t.chain = v.chain
 

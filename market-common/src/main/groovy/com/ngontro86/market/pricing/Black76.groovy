@@ -49,7 +49,7 @@ class Black76 {
     }
 
     private static double priceDboeMap(Map option) {
-        priceOption(option.kind, option.atm, option.strike, option.r, option.t, option.vol) - priceOption(option.kind, option.atm, option.condStrike, option.r, option.t, option.vol)
+        priceOption(option.kind, option.atm, option.strike, option.r, option.t, option.vol) - priceOption(option.kind, option.atm, option.condStrike, option.r, option.t, option.condVol > 0d ? option.condVol : option.vol)
     }
 
     private static Map greekDboeMap(Map option) {

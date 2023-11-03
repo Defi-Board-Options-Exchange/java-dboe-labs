@@ -44,6 +44,14 @@ class HttpsRestClient {
         return builder.buildPost(entity).invoke(out)
     }
 
+    public <T> T post(String path, Map<String, Object> queryParams, Entity entity, Class<T> out) {
+        def webTarget = client.target(target(path))
+        for (Map.Entry<String, Object> e : queryParams.entrySet()) {
+            webTarget = webTarget.queryParam(e.getKey(), e.getValue())
+        }
+        return webTarget.request().buildPost(entity).invoke(out)
+    }
+
     private String target(String path) {
         return host + (port != 80 ? (":" + port) : "") + "/" + (basePath == "" ? "" : (basePath + "/")) + path;
     }

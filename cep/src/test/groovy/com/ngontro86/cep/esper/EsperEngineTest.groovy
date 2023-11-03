@@ -58,6 +58,14 @@ class EsperEngineTest {
             }
         })
 
+        cep.registerMapHandler("select * from DboeVolSurfaceWin where (kind='Call' and moneyness >= 0) or (kind='Put' and moneyness <= 0)", new Handler<Object>() {
+            @Override
+            boolean handle(Object obj) {
+                println "VolSurface: ${obj}"
+                return true
+            }
+        })
+
         [
                 [
                         'instr_id'              : 'Opt1',

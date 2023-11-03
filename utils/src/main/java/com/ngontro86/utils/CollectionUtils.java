@@ -20,14 +20,22 @@ public class CollectionUtils {
     }
 
     public static String join(Collection<Object> objects, String sep) {
+        return join(objects, null, sep);
+    }
+
+    public static String join(Collection<Object> objects, String qualifier, String sep) {
         final StringBuilder sb = new StringBuilder();
         boolean first = true;
-        for(Object obj : objects) {
-            if(!first) {
+        for (Object obj : objects) {
+            if (!first) {
                 sb.append(sep);
             }
             first = false;
-            sb.append(obj);
+            if (qualifier != null) {
+                sb.append(qualifier).append(obj).append(qualifier);
+            } else {
+                sb.append(obj);
+            }
         }
         return sb.toString();
     }

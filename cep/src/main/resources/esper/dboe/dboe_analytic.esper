@@ -31,6 +31,7 @@ output snapshot every 60 seconds;
 create schema DboeVolSurfaceEvent as (
     underlying string,
     expiry int,
+    kind string,
     timeToExpiry double,
     moneyness double,
     vol double,
@@ -39,7 +40,7 @@ create schema DboeVolSurfaceEvent as (
     in_timestamp long
 );
 
-create window DboeVolSurfaceWin.win:time(900 sec).std:unique(underlying, expiry, strike) as DboeVolSurfaceEvent;
+create window DboeVolSurfaceWin.win:time(900 sec).std:unique(underlying, expiry, kind, strike) as DboeVolSurfaceEvent;
 @Name('DboeVolSurfaceWin') insert into DboeVolSurfaceWin select * from DboeVolSurfaceEvent;
 
 create schema dboe_active_option_traded_value_event as (

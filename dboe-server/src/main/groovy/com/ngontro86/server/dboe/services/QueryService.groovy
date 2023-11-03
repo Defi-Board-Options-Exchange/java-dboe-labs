@@ -39,7 +39,7 @@ class QueryService {
     }
 
     Collection<Map> volSurface(String underlying) {
-        cep.queryMap("select * from DboeVolSurfaceWin(underlying='${underlying}')")
+        cep.queryMap("select * from DboeVolSurfaceWin(underlying='${underlying}') where (kind='Call' and moneyness >= 0) or (kind='Put' and moneyness <= 0) ")
     }
 
     Collection<Map> optionChainMarket(String chain, String underlying, int expiryDate, String collateralGroup) {

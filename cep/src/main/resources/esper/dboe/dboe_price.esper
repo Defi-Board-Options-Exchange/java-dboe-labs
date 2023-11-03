@@ -123,6 +123,7 @@ insert into DboeVolSurfaceEvent
 select
     i.underlying as underlying,
     i.expiry as expiry,
+    i.kind as kind,
     t.time_to_expiry as timeToExpiry,
     Math.log(i.strike/s.spot) as moneyness,
     v.ref_iv as vol,

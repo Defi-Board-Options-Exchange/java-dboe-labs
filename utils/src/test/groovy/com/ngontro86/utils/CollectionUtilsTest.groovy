@@ -21,6 +21,7 @@ class CollectionUtilsTest {
     @Test
     void "should join a collection"() {
         assert CollectionUtils.join(['A', 'B', 'C'], ',') == 'A,B,C'
+        assert CollectionUtils.join(['A', 'B', 'C'], "'",',') == "'A','B','C'"
     }
 
     @Test

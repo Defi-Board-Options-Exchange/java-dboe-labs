@@ -14,6 +14,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 
 import static java.util.concurrent.TimeUnit.MINUTES
+import static java.util.concurrent.TimeUnit.SECONDS
 
 @Lazy(false)
 @DBOEComponent
@@ -31,8 +32,8 @@ class CepEngineInitializer {
     @ConfigValue(config = "cepInstanceId")
     private String esperId
 
-    @ConfigValue(config = "reloadStaticTableMin")
-    private Integer reloadStaticTableMin = 5
+    @ConfigValue(config = "reloadStaticTableSec")
+    private Integer reloadStaticTableSec = 15
 
     @ConfigValue(config = "slowReloadStaticTableMin")
     private Integer slowReloadStaticTableMin = 15
@@ -61,7 +62,7 @@ class CepEngineInitializer {
                     logger.error(e)
                 }
             }
-        }, 1, reloadStaticTableMin, MINUTES)
+        }, 5, reloadStaticTableSec, SECONDS)
 
         scheduler.scheduleAtFixedRate(new Runnable() {
             @Override
