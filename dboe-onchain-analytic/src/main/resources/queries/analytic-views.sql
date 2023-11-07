@@ -18,7 +18,8 @@ case when s.short_contract_address is not null then -1 when l.long_contract_addr
 from dboe_transfers t
 INNER JOIN chain_mapping m ON t.Chain = m.name
 LEFT outer join dboe_academy.dboe_all_options l ON t.CurrencyAddress = l.long_contract_address AND l.chain = m.dboe_chain_name
-LEFT OUTER JOIN dboe_academy.dboe_all_options s ON t.CurrencyAddress = s.short_contract_address AND s.chain = m.dboe_chain_name;
+LEFT OUTER JOIN dboe_academy.dboe_all_options s ON t.CurrencyAddress = s.short_contract_address AND s.chain = m.dboe_chain_name
+WHERE t.TxnTimestamp >= (now() - INTERVAL 15 day);
 
 create or replace view dboe_transfer_option_instr AS
 select distinct

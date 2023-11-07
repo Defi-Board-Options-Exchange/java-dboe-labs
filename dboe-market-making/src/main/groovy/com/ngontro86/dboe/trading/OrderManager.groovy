@@ -48,6 +48,9 @@ class OrderManager<T> {
     @ConfigValue(config = "maxCollateral")
     private Double maxCollateral = 500.0
 
+    @ConfigValue(config = "qtyIncrementPct")
+    private Double qtyIncrementPct = 25.0
+
     @ConfigValue(config = "spreadingCheckMin")
     private Integer spreadingCheckMin = 10
 
@@ -161,7 +164,7 @@ class OrderManager<T> {
                 focusedSpreads.each { lvl ->
                     def onchainQs = quotes.findAll { it.buySell == bs && it.pxLevel == Integer.valueOf(lvl) }
                     if (onchainQs.isEmpty() || onchainQs.first().amount == 0) {
-                        amount *= (1.0 + Math.random() * 0.1d)
+                        amount *= (1.0 + Math.random() * qtyIncrementPct/100.0)
                         def orderTimeOut = MarketMakingUtils.bestOrderTimeOutInMin(Utils.getTimeUtc(opt['expiry'], opt['ltt']), timeSource.currentTimeMilliSec(), Integer.valueOf(lvl))
                         if (orderTimeOut > 30) {
                             println "toPrice(): ${opt['instr_id']}, BuySell: ${bs ? 'B' : 'S'}, amt: ${amount}, ${fp}, lvl: ${lvl}, timeout: ${orderTimeOut}"
