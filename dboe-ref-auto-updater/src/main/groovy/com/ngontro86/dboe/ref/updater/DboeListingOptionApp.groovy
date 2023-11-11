@@ -42,6 +42,9 @@ class DboeListingOptionApp {
     @ConfigValue(config = "asOf")
     private Integer expiry = 0
 
+    @ConfigValue(config = "underlyingSpots")
+    private Collection underlyingSpots = ['ETH:2100.0']
+
     private RestClient restClient
 
     @Inject
@@ -53,11 +56,17 @@ class DboeListingOptionApp {
     @Inject
     private ContractGasProvider gasProvider
 
+    private Map<String, Double> hardcodedSpots = [:]
+
     @PostConstruct
     private void init() {
         restClient = build('dboeHost')
         if (expiry == 0) {
             expiry = getTimeFormat(currentTimeMillis() + listAheadInDay * 24 * 3600 * 1000, 'yyyyMMdd')
+        }
+
+        hardcodedSpots = underlyingSpots.collectEntries {
+            [(it.split(":")[0]): Double.valueOf(it.split(":")[1])]
         }
     }
 
@@ -143,7 +152,9 @@ class DboeListingOptionApp {
     private double spot(String und) {
         def spots = restClient.withQueryParams("query/query", ['query': "select * from DboeSpotWin(underlying='${und}')"], Collection) as Collection<Map>
         if (spots.isEmpty()) {
-            throw new IllegalStateException("Spot for ${und} is not available...")
+            logger.error("Spot for ${und} is not available in CEP. Taking from config? Pausing for 10sec...")
+            sleep(10000)
+            return hardcodedSpots[und]
         }
         return spots.first()['spot']
     }

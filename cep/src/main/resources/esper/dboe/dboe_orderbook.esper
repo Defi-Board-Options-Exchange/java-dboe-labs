@@ -39,6 +39,7 @@ select
     r.ref_price as ref_price,
     p.ref_price as prev_ref_price,
     case when p.ref_price > 0 then 100.0 * (r.ref_price / p.ref_price - 1.0) else Double.NaN end as price_change_pct,
+    p.delay as delay,
     r.in_timestamp as in_timestamp
 from DboeRefPriceWin r
 left outer join DboePrevRefWin p on r.chain = p.chain and r.instr_id = p.instr_id and r.currency = p.currency;
@@ -117,6 +118,7 @@ create schema DboeOptionChainMarketEvent as (
     bid double,
     ref_price double,
     price_change_pct double,
+    delay string,
     ask double,
     bid_size double,
     ask_size double,
@@ -149,6 +151,7 @@ select
     bid,
     ref_price,
     price_change_pct,
+    delay,
     ask,
     bid_size,
     ask_size,
@@ -176,6 +179,7 @@ select
 
     i.underlying as underlying,
     i.underlying_px_scale as underlying_px_scale,
+    delay,
     i.kind as kind,
     i.expiry as expiry,
     i.ltt as ltt,

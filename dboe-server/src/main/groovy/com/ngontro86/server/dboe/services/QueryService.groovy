@@ -27,9 +27,6 @@ class QueryService {
     @NonTxTransactional
     private FlatDao flatDao
 
-    @ConfigValue(config = "displayTrades")
-    private Boolean displayTrades
-
     private Collection<Map> blockChainErrors = []
 
     @PostConstruct
@@ -79,10 +76,6 @@ class QueryService {
                 it.value * (greeksMap[it.key] == null ? 0d : greeksMap[it.key][oneGreek])
             }.sum()]
         }
-    }
-
-    Collection<Map> allUserTrades(String walletId) {
-        return displayTrades ? flatDao.queryList("select * from analytics.dboe_wallet_txn where Address='${walletId}'") : []
     }
 
     Map priceOptionWithShocks(boolean isCall,
@@ -199,6 +192,7 @@ class QueryService {
             }
 
         }
+        logger.error("New raw error: ${rawError}...")
         return ['Unknown error', 'Reach out to DBOE Support']
     }
 }

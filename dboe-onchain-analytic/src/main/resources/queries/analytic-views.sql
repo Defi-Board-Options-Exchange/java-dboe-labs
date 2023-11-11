@@ -139,15 +139,6 @@ LEFT OUTER JOIN (
 ) t ON r.wallet_address = t.Address
 
 
-SELECT Address, SmartContractMethodSignatureHash,
-case WHEN SmartContractMethodSignatureHash = '6c4ffcf4' then 'toTrade'
-	WHEN SmartContractMethodSignatureHash = '1a0f33fb' then 'toPrice'
-	WHEN SmartContractMethodSignatureHash = 'bd66528a' then 'claim'
-	WHEN SmartContractMethodSignatureHash = 'cf9484ae' then 'Refresh Ref Px'
-	ELSE 'N.A' END AS method
-FROM dboe_transactions WHERE TxnTimestamp > '2023-08-24 00:08:24'
-
-
 CREATE OR REPLACE VIEW dboe_liquidity_14d as
 SELECT
 v.chain, v.currency, v.date, t.numOfTrades, t.tradedValue, t.totalFeeCollected, v.open_interest
@@ -211,11 +202,12 @@ LEFT OUTER JOIN (
 
 CREATE OR replace VIEW dboe_prev_ref as
 SELECT
-	r.*
+	r.*, '4h' as delay
 FROM (
-	SELECT CHAIN, instr_id, currency, MAX(in_timestamp) AS in_timestamp
-	FROM _dboe_ref_prices
-	WHERE in_timestamp <= (UNIX_TIMESTAMP()*1000 - 7200000)
+	SELECT r.CHAIN, r.instr_id, r.currency, MAX(in_timestamp) AS in_timestamp
+	FROM _dboe_ref_prices r
+	INNER JOIN _dboe_option_instr i ON r.chain = i.chain AND r.instr_id = i.instr_id AND r.currency = i.currency
+	WHERE in_timestamp <= (UNIX_TIMESTAMP()*1000 - 7200000) AND i.expiry >= cast(date_format((now()),'%Y%m%d') as UNSIGNED)
 	GROUP BY 1,2,3
 ) x
 INNER JOIN _dboe_ref_prices r ON x.chain = r.chain AND x.instr_id = r.instr_id AND x.currency = r.currency AND x.in_timestamp = r.in_timestamp
@@ -231,10 +223,11 @@ FROM
 	(
 		SELECT o.instr_id, o.chain, o.currency, o.DATE, MAX(o.TIMESTAMP) AS timestamp, avg_spot
 		FROM _dboe_open_interest o
-		INNER JOIN dboe_options_universe i ON i.instr_id = o.instr_id AND i.chain = o.chain AND i.currency = o.currency and i.expiry >= o.date
+		INNER JOIN _dboe_option_instr i ON i.instr_id = o.instr_id AND i.chain = o.chain AND i.currency = o.currency and i.expiry >= o.date
 		INNER JOIN
 		(
-			select DATE, underlying, avg(spot) as avg_spot from dboe_intraday_spot
+			select DATE, underlying, avg(spot) as avg_spot
+			from dboe_intraday_spot
 			WHERE spot > 0
 			GROUP BY 1, 2
 		) s ON i.underlying = s.underlying AND o.date= s.date
@@ -247,7 +240,7 @@ INNER JOIN
 (
 	SELECT cast(COUNT(*)/2 AS UNSIGNED) AS num_txn, SUM(Amount) AS total_fee, SUM(Amount) * 100.0/0.30 as total_traded_value
 	FROM analytics.dboe_enriched_transfers
-	where TxnTimestamp >= '2023-08-13'AND currencySymbol like 'USD%' AND ReceiverAddress = '0x649fb2a8ebd926faf4375c7ed7259e74d1d7851d'
+	where TxnTimestamp >= '2023-08-13' AND ReceiverAddress = '0x649fb2a8ebd926faf4375c7ed7259e74d1d7851d'
 ) t
 
 
@@ -276,3 +269,9 @@ FROM (
 	INNER JOIN analytics.chain_mapping m ON i.chain = m.dboe_chain_name
 	WHERE h.chain = m.name AND i.expiry >= cast(date_format((now()),'%Y%m%d') as UNSIGNED)
 ) x GROUP BY 1,2,3
+
+
+CREATE OR REPLACE VIEW dboe_wallet_trades as
+SELECT Address, count(distinct TransactionHash) as numOfTrades, SUM(ABS(notional)) AS tradedValue
+FROM analytics.dboe_wallet_txn
+GROUP BY 1

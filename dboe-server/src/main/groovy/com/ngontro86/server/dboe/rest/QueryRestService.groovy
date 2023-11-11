@@ -42,24 +42,6 @@ class QueryRestService {
     }
 
     @GET
-    @Path('/allUserOrders/{walletId}')
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Query all User Orders", response = Collection.class)
-    Collection<Map> allUserOrders(@PathParam('walletId') String walletId) {
-        return []
-    }
-
-    @GET
-    @Path('/allUserTrades/{walletId}')
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Query all User Trades", response = Collection.class)
-    Collection<Map> allUserTrades(@PathParam('walletId') String walletId) {
-        return queryService.allUserTrades(walletId)
-    }
-
-    @GET
     @Path('/listReferees/{walletId}')
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)

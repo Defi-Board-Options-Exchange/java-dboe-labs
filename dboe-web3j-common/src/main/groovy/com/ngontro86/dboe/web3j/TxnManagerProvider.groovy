@@ -17,6 +17,9 @@ class TxnManagerProvider {
     @ConfigValue(config = "chainId")
     private Integer chainId = 56
 
+    @ConfigValue(config = "offsetNonce")
+    private Boolean offsetNonce = false
+
     @Inject
     private Web3j web3j
 
@@ -32,7 +35,7 @@ class TxnManagerProvider {
 
     @Bean
     RawTransactionManager txnManager() {
-        return new RawTransactionManager(web3j, credentials, chainId)
+        return offsetNonce ? new CustomNonceTxnManager(web3j, credentials, chainId) : new RawTransactionManager(web3j, credentials, chainId)
     }
 
     @Bean
@@ -41,6 +44,6 @@ class TxnManagerProvider {
     }
 
     RawTransactionManager onDemandTxnManager(String credential) {
-        return new RawTransactionManager(web3j, Credentials.create(credential), chainId)
+        return offsetNonce? new CustomNonceTxnManager(web3j, Credentials.create(credential), chainId) : new RawTransactionManager(web3j, Credentials.create(credential), chainId)
     }
 }
