@@ -6,3 +6,4 @@
 @Name('DboeAddressDivider') select chain, underlying, expiry, ob_address, fsp_address, option_factory_address, clearing_address from DboeAddressDividerWin
 @Name('DboeUnderlyingMarketWin') select underlying, strike_scale, option_price_scale, min_txn_value, qty_step from DboeUnderlyingMarketWin
 @Name('DboeOpenInterestWin') select chain, instr_id, currency, open_interest, current_timestamp() as timestamp from DboeOpenInterestWin output snapshot at (*/5, *, *, *, *)
+@Name('DboeGiftOpenWin') select name, wallet_id, open_key, reward, current_timestamp() as timestamp from DboeMysteriousGiftUserOpenWin output snapshot at (*/5, *, *, *, *)

@@ -103,6 +103,7 @@ create window DboeWalletPositionWin.std:unique(chain, wallet_id, instr_id, curre
 create schema dboe_wallet_trades_invites_event as (
     Address string,
     numOfTrades int,
+    numOfInvitations int,
     tradedValue double
 );
 
@@ -113,8 +114,57 @@ create schema dboe_mysterious_gift_user_open_event as (
     date int,
     name string,
     wallet_id string,
+    open_key string,
+    reward double,
     timestamp long
 );
 
-create window DboeMysteriousGiftUserOpenWin.win:keepall() as dboe_mysterious_gift_user_open_event;
+create window DboeMysteriousGiftUserOpenWin.std:unique(date, name, wallet_id, open_key) as dboe_mysterious_gift_user_open_event;
 @Name('DboeMysteriousGiftUserOpenWin') insert into DboeMysteriousGiftUserOpenWin select * from dboe_mysterious_gift_user_open_event;
+
+create schema dboe_mysterious_gift_config_event as (
+    name string,
+    type string,
+    frequency string,
+    condition string,
+    max_recipient int,
+    reward_token string,
+    num_gift_box int,
+    avg_reward double,
+    win_prob double,
+    pool_size int,
+    start_date int,
+    end_date int,
+    timestamp long
+);
+
+create window DboeMysteriousGiftConfigWin.std:unique(name, type) as dboe_mysterious_gift_config_event;
+@Name('DboeMysteriousGiftConfigWin') insert into DboeMysteriousGiftUserOpenWin select * from dboe_mysterious_gift_config_event;
+
+create schema DboeMysteriousGiftUserQuotaEvent as (
+    date int,
+    name string,
+    type string,
+    wallet_id string,
+    quota int
+);
+
+create window DboeMysteriousGiftUserQuotaWin.std:unique(date, name, type, wallet_id) as DboeMysteriousGiftUserQuotaEvent;
+@Name('DboeMysteriousGiftUserQuotaWin') insert into DboeMysteriousGiftUserQuotaWin select * from DboeMysteriousGiftUserQuotaEvent;
+
+@Name('Gift-Quota')
+insert into DboeMysteriousGiftUserQuotaEvent
+select
+     current_timestamp.getYear() * 10000 + (1 + current_timestamp.getMonthOfYear()) * 100 + current_timestamp.getDayOfMonth() + 1 as date,
+     c.name as name,
+     c.type as type,
+     w.Address as wallet_id,
+     case
+        when c.frequency = 'Daily' and c.condition = 'Login' then c.num_gift_box
+        when c.frequency = 'OneTime' and c.condition = 'FirstTrade' then (case when w.numOfTrades > 0 then c.num_gift_box else 0 end)
+        when c.frequency = 'OneTime' and c.condition = 'InvitationCount' then w.numOfInvitations * c.num_gift_box
+        when c.frequency = 'OneTime' and c.condition = 'TradedValue' then cast(Math.round(w.tradedValue/100) * c.num_gift_box as int)
+        else 0
+     end as quota
+from DboeWalletTradesInvitesWin w
+inner join DboeMysteriousGiftConfigWin c;

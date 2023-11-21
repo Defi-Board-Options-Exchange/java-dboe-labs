@@ -275,3 +275,35 @@ CREATE OR REPLACE VIEW dboe_wallet_trades as
 SELECT Address, count(distinct TransactionHash) as numOfTrades, SUM(ABS(notional)) AS tradedValue
 FROM analytics.dboe_wallet_txn
 GROUP BY 1
+
+create or replace view dboe_wallet_trades_invites as
+SELECT a.Address, a.numOfInvitations, coalesce(b.numOfTrades,0) AS numOfTrades, coalesce(b.tradedValue, 0.0) AS tradedValue
+FROM (
+	SELECT
+		i.wallet_address AS Address,
+		count(distinct r.wallet_address) AS numOfInvitations
+	FROM referral_info i
+	inner JOIN referral_ack r ON right(i.wallet_address, 8) = r.referral_code AND r.timestamp > i.timestamp
+	GROUP BY 1
+) a
+left outer JOIN (
+	SELECT Address, count(distinct TransactionHash) as numOfTrades, SUM(ABS(notional)) AS tradedValue
+	FROM analytics.dboe_wallet_txn
+	GROUP BY 1
+) b ON a.Address = b.Address
+
+UNION ALL
+SELECT b.Address AS Address, coalesce(a.numOfInvitations,0) AS numOfInvitations, b.numOfTrades, b.tradedValue
+FROM (
+	SELECT
+		i.wallet_address AS Address,
+		count(distinct r.wallet_address) AS numOfInvitations
+	FROM referral_info i
+	inner JOIN referral_ack r ON right(i.wallet_address, 8) = r.referral_code AND r.timestamp > i.timestamp
+	GROUP BY 1
+) a
+right outer JOIN (
+	SELECT Address, count(distinct TransactionHash) as numOfTrades, SUM(ABS(notional)) AS tradedValue
+	FROM analytics.dboe_wallet_txn
+	GROUP BY 1
+) b ON a.Address = b.Address
