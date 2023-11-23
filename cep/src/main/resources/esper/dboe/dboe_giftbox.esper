@@ -1,0 +1,97 @@
+module com.ngontro86.server.dboe_giftbox;
+
+create schema dboe_wallet_trades_invites_event as (
+    Address string,
+    numOfTrades int,
+    numOfInvitations int,
+    tradedValue double
+);
+
+create window DboeWalletTradesInvitesWin.std:unique(Address) as dboe_wallet_trades_invites_event;
+@Name('DboeWalletTradesInvitesWin') insert into DboeWalletTradesInvitesWin select * from dboe_wallet_trades_invites_event;
+
+create schema dboe_mysterious_gift_user_open_event as (
+    date int,
+    name string,
+    wallet_id string,
+    open_key string,
+    reward double,
+    timestamp long
+);
+
+create window DboeMysteriousGiftUserOpenWin.std:unique(date, name, wallet_id, open_key) as dboe_mysterious_gift_user_open_event;
+@Name('DboeMysteriousGiftUserOpenWin') insert into DboeMysteriousGiftUserOpenWin select * from dboe_mysterious_gift_user_open_event;
+
+create schema dboe_mysterious_gift_config_event as (
+    name string,
+    type string,
+    frequency string,
+    condition string,
+    max_recipient int,
+    reward_token string,
+    num_gift_box int,
+    avg_reward double,
+    win_prob double,
+    pool_size int,
+    start_date int,
+    end_date int,
+    timestamp long
+);
+
+create window DboeMysteriousGiftConfigWin.std:unique(name, type) as dboe_mysterious_gift_config_event;
+@Name('DboeMysteriousGiftConfigWin') insert into DboeMysteriousGiftConfigWin select * from dboe_mysterious_gift_config_event;
+
+create schema DboeMysteriousGiftUserQuotaEvent as (
+    name string,
+    wallet_id string,
+    quota int
+);
+
+create window DboeMysteriousGiftUserQuotaWin.std:unique(name, wallet_id) as DboeMysteriousGiftUserQuotaEvent;
+@Name('DboeMysteriousGiftUserQuotaWin') insert into DboeMysteriousGiftUserQuotaWin select * from DboeMysteriousGiftUserQuotaEvent;
+
+@Name('Gift-Quota')
+insert into DboeMysteriousGiftUserQuotaEvent
+select
+     c.name as name,
+     w.Address as wallet_id,
+     case
+        when c.frequency = 'Daily' and c.condition = 'Login' then c.num_gift_box
+        when c.frequency = 'OneTime' and c.condition = 'FirstTrade' then (case when w.numOfTrades > 0 then c.num_gift_box else 0 end)
+        when c.frequency = 'OneTime' and c.condition = 'InvitationCount' then w.numOfInvitations * c.num_gift_box
+        when c.frequency = 'OneTime' and c.condition = 'TradedValue' then cast(Math.round(w.tradedValue/100) * c.num_gift_box as int)
+        else 0
+     end as quota
+from DboeWalletTradesInvitesWin w
+inner join DboeMysteriousGiftConfigWin c;
+
+create schema DboeMysteriousGiftUserQuotaLeftEvent as (
+    name string,
+    wallet_id string,
+    quota int
+);
+
+create window DboeMysteriousGiftUserQuotaLeftWin.std:unique(name, wallet_id) as DboeMysteriousGiftUserQuotaLeftEvent;
+@Name('DboeMysteriousGiftUserQuotaLeftWin') insert into DboeMysteriousGiftUserQuotaLeftWin select * from DboeMysteriousGiftUserQuotaLeftEvent;
+
+@Name('Daily-Gift-Quota-Left')
+insert into DboeMysteriousGiftUserQuotaLeftEvent
+select
+    q.name as name,
+    q.wallet_id as wallet_id,
+    q.quota - cast(count(distinct o.open_key) as int) as quota
+from DboeMysteriousGiftUserQuotaWin q
+inner join DboeMysteriousGiftConfigWin(frequency='Daily') c on q.name = c.name
+left outer join DboeMysteriousGiftUserOpenWin(date=current_timestamp.getYear() * 10000 + (1 + current_timestamp.getMonthOfYear()) * 100 + current_timestamp.getDayOfMonth()) o on q.wallet_id = o.wallet_id and q.name = o.name
+group by q.name, q.wallet_id;
+
+@Name('Daily-Gift-Quota-Left')
+insert into DboeMysteriousGiftUserQuotaLeftEvent
+select
+    q.name as name,
+    q.wallet_id as wallet_id,
+    q.quota - cast(count(distinct o.open_key) as int) as quota
+from DboeMysteriousGiftUserQuotaWin q
+inner join DboeMysteriousGiftConfigWin(frequency<>'Daily') c on q.name = c.name
+left outer join DboeMysteriousGiftUserOpenWin o on q.wallet_id = o.wallet_id and q.name = o.name
+group by q.name, q.wallet_id;

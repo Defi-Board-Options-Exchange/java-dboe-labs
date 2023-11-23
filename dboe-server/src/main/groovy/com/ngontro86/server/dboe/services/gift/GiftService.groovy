@@ -1,6 +1,5 @@
 package com.ngontro86.server.dboe.services.gift
 
-
 import com.ngontro86.cep.CepEngine
 import com.ngontro86.common.annotations.DBOEComponent
 import com.ngontro86.common.annotations.Logging
@@ -30,21 +29,8 @@ class GiftService {
         }
     }
 
-    Map<String, Integer> numOfGifts(String wallet) {
-        def quota = cep.queryMap("select * from DboeMysteriousGiftUserQuotaWin(wallet_id='${wallet}')")
-        def opens = cep.queryMap("select * from DboeMysteriousGiftUserOpenWin(wallet_id='${wallet}')")
-        if (quota.isEmpty()) {
-            return ['Daily Login': 1]
-        }
-        int today = GlobalTimeUtils.getTimeFormat(GlobalTimeController.currentTimeMillis, 'yyyyMMdd')
-        def ret = [:]
-        quota.each {
-            def name = it['name']
-            ret << [(name): it['quota'] - opens.findAll {
-                it['name'] == name && (it['frequency'] == 'Daily' ? it['date'] == today : true)
-            }.size()]
-        }
-        return ret
+    Collection<Map> numOfGifts(String wallet) {
+        return cep.queryMap("select name, quota from DboeMysteriousGiftUserQuotaLeftWin(wallet_id='${wallet}')")
     }
 
     Double open(String openKey, String wallet, String name) {
@@ -69,6 +55,10 @@ class GiftService {
         ]))
 
         return reward
+    }
+
+    Collection<Map> gifts() {
+        cep.queryMap("select name, max_recipient, pool_size, reward_token, avg_reward as reward from DboeMysteriousGiftConfigWin")
     }
 
     private static class GiftConfig {

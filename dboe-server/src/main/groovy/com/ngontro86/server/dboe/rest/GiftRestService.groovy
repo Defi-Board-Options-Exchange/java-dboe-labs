@@ -27,11 +27,20 @@ class GiftRestService {
     private CepAuthenticator cepAuthenticator
 
     @GET
+    @Path('/giftInfo')
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Given wallet, return different gift name and how many opens", response = Collection.class)
+    Collection<Map> giftInfo() {
+        return giftService.gifts()
+    }
+
+    @GET
     @Path('/listGifts')
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Given wallet, return different gift name and how many opens", response = Map.class)
-    Map<String, Integer> listGifts(@QueryParam("walletId") String walletId) {
+    @ApiOperation(value = "Given wallet, return different gift name and how many opens", response = Collection.class)
+    Collection<Map> listGifts(@QueryParam("walletId") String walletId) {
         return giftService.numOfGifts(walletId)
     }
 
