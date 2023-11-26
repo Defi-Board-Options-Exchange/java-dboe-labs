@@ -11,7 +11,7 @@ One of the key developers shared with us that he has been using Esper since 2009
 
 2) Spring Framework at https://spring.io. Yes, we are heavily Spring-driven apps in the way we code and the way we test.
 
-
+**Below instructions are for those who want to connect to DBOE API and Smart Contract to do your own API trading**
 # **End-to-end integration steps**
 
 ###### **Interacting with DBOE Relayer**
@@ -33,24 +33,24 @@ b) To pull Order Book for one particular Option Series: https://dboe.exchange:84
 
 With DBOE Smart Contract addresses found in step 3 above (e.g. clearing_house or ob_address)
 
-Granting Spending Limit (both USDT and Long & Short Option) to Clearing House in order to start trading
-Usual approve() on USDT
-For Options, Users can either do one by one as regular ERC20 tokens or call function enableTrading(bytes32 _und, uint256 _exp) on the clearing house smart contract. Two input parameters are underlying and expiry.
+5. Granting Spending Limit (both USDT and Long & Short Option) to Clearing House in order to start trading
+a) Usual approve() on USDT
+b) For Options, Users can either do one by one as regular ERC20 tokens or call function enableTrading(bytes32 _und, uint256 _exp) on the clearing house smart contract. Two input parameters are underlying and expiry.
 
 
-to submit prices, there are two methods, one for MKT order and one for LMT orders
-LMT order: toPrice(bytes32 optionSeries, bool buySell, uint256 amount, uint256 priceLevel, uint256 validPeriodSecs). Please note: parameter priceLevel starting with 1 as the lowest level rather than 0
-MKT order: 
-toTrade(bytes32 optionSeries, bool buySell, uint256 notional)
-toTradeByQty(bytes32 optionSeries, bool buySell, uint256 amount)
+6. To submit prices, there are two methods, one for MKT order and one for LMT orders
+a) LMT order: toPrice(bytes32 optionSeries, bool buySell, uint256 amount, uint256 priceLevel, uint256 validPeriodSecs). Please note: parameter priceLevel starting with 1 as the lowest level rather than 0
+b) MKT order: 
+- toTrade(bytes32 optionSeries, bool buySell, uint256 notional)
+- toTradeByQty(bytes32 optionSeries, bool buySell, uint256 amount)
 
-To cancel order: toCancel(bytes32 optionSeries, bool buySell, uint256 priceLevel, uint256 orderSubmissionTime)
+7. To cancel order: toCancel(bytes32 optionSeries, bool buySell, uint256 priceLevel, uint256 orderSubmissionTime)
 
-Pull order book from DBOE Order Book Smart Contract (address with property name ob_address): obDepth(bytes32 optionSeries, bool buySell)
+8. Pull order book from DBOE Order Book Smart Contract (address with property name ob_address): obDepth(bytes32 optionSeries, bool buySell)
 
-Users can try to refresh the reference prices. Refer to FAQ no. 1 for more information
-For a particular Option: refreshRefPx(bytes32 optionSeries)
-For for the whole expiry: refreshRefs(bytes32 _und, uint256 _expiry)
+9. Users can try to refresh the reference prices. Refer to FAQ no. 1 for more information
+a) For a particular Option: refreshRefPx(bytes32 optionSeries)
+b) For for the whole expiry: refreshRefs(bytes32 _und, uint256 _expiry)
 
 ###### **Sample Codes**
 
