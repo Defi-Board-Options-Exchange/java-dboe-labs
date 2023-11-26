@@ -34,8 +34,8 @@ class GiftService {
     }
 
     Double open(String openKey, String wallet, String name) {
-        def numOfGifts = numOfGifts(wallet)
-        if (numOfGifts.get(name) == 0) {
+        def numOfGifts = numOfGifts(wallet).groupBy { it['name'] }
+        if (!numOfGifts.containsKey(name) || numOfGifts.get(name).first()['quota'] == 0) {
             throw new IllegalAccessError("No more gift name:${name} for this wallet:${wallet}")
         }
         Double reward = 0d

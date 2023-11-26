@@ -33,6 +33,9 @@ class DboeListingOptionApp {
     @ConfigValue(config = "chain")
     private String chain
 
+    @ConfigValue(config = "template")
+    private String template = 'Daily'
+
     @ConfigValue(config = "underlyings")
     private Collection underlyings = ['ETH']
 
@@ -79,7 +82,7 @@ class DboeListingOptionApp {
         println "${instrIds.size()} Options with expiry = ${expiry} have been listed. ${instrIds}..."
         underlyings.each { und ->
             def spot = spot(und)
-            def template = flatDao.queryList("select * from dboe_listing_template where chain='${chain}' and underlying='${und}'").first()
+            def template = flatDao.queryList("select * from dboe_listing_template where template='${template}' and chain='${chain}' and underlying='${und}'").first()
 
             def optionFactory = DBOEOptionFactory.load(template['option_factory_address'], web3j, txnManagerProvider.onDemandTxnManager(opWallet), gasProvider)
             [true, false].each { callPut ->
