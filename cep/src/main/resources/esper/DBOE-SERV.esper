@@ -7,3 +7,4 @@ uses com.ngontro86.server.dboe_orderbook;
 uses com.ngontro86.server.dboe_onchain_clob;
 uses com.ngontro86.server.dboe_analytic;
 uses com.ngontro86.server.dboe_giftbox;
+uses com.ngontro86.server.dboe_spot_onchain_clob;
