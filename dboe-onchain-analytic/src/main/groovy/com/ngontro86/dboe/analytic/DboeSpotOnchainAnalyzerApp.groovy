@@ -99,24 +99,20 @@ class DboeSpotOnchainAnalyzerApp {
                 def spotMarket = dboeSpotMarkets.get(spotMarketAddr)
                 def quoteToken = spotMarket.quoteToken().send()
                 def baseToken = spotMarket.baseToken().send()
+                def quoteErc20 = ERC20.load(quoteToken, web3j, txnManager, gasProvider)
+                def baseErc20 = ERC20.load(baseToken, web3j, txnManager, gasProvider)
                 println "Found a pair: ${baseToken}/${quoteToken}"
                 servPub.handle(new ObjMap('DboeSpotMarketEvent',
                         [
-                                'chain'      : chain,
-                                'quote_token': quoteToken,
-                                'base_token' : baseToken,
-                                'address'    : spotMarketAddr
+                                'chain'        : chain,
+                                'quote_token'  : quoteToken,
+                                'base_token'   : baseToken,
+                                'base_name'    : baseErc20.symbol().send(),
+                                'quote_name'   : quoteErc20.symbol().send(),
+                                'quote_decimal': (long) Math.pow(10, quoteErc20.decimals().send()),
+                                'base_decimal' : (long) Math.pow(10, baseErc20.decimals().send()),
+                                'address'      : spotMarketAddr
                         ]))
-
-                [quoteToken, baseToken].each { addr ->
-                    def erc20 = ERC20.load(addr, web3j, txnManager, gasProvider)
-                    servPub.handle(new ObjMap('DboeTokenDecimalEvent',
-                            [
-                                    'chain'         : chain,
-                                    'token_address' : addr,
-                                    'decimal_factor': (long) Math.pow(10, erc20.decimals().send())
-                            ]))
-                }
 
                 [true, false].each { buySell ->
                     def fixedSpreads = spotMarket.getFixedSpreads(buySell).send() as int[]

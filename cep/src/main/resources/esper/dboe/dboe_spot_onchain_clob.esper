@@ -5,12 +5,16 @@ create schema dboe_spot_dashboard_address_event as (
     dashboard_address string
 );
 
-create window DboeSpotDashboardAddressWin.win:time(900 sec).std:unique(chain, dashboard_address) as dboe_spot_dashboard_address_event;
+create window DboeSpotDashboardAddressWin.std:unique(chain, dashboard_address) as dboe_spot_dashboard_address_event;
 @Name('DboeSpotDashboardAddressWin') insert into DboeSpotDashboardAddressWin select * from dboe_spot_dashboard_address_event;
 
 create schema DboeSpotMarketEvent as (
     quote_token string,
     base_token string,
+    quote_name string,
+    base_name string,
+    quote_decimal long,
+    base_decimal long,
     chain string,
     address string
 );
@@ -54,15 +58,6 @@ create schema DboeSpotQuoteEvent as (
 create window DboeSpotQuoteWin.std:unique(chain, address, buy_sell, price_level) as DboeSpotQuoteEvent;
 @Name('DboeSpotQuoteWin') insert into DboeSpotQuoteWin select * from DboeSpotQuoteEvent;
 
-create schema DboeTokenDecimalEvent as (
-    chain string,
-    token_address string,
-    decimal_factor long
-);
-create window DboeTokenDecimalWin.std:unique(chain, token_address) as DboeTokenDecimalEvent;
-@Name('DboeTokenDecimalWin') insert into DboeTokenDecimalWin select * from DboeTokenDecimalEvent;
-
-
 create schema DboeSpotRefEvent as (
     chain string,
     address string,
@@ -81,6 +76,8 @@ create schema DboeSpotOrderBookEvent as (
     address string,
     quote_token string,
     base_token string,
+    quote_name string,
+    base_name string,
     buy_sell int,
     amount double,
     price double,
@@ -98,14 +95,15 @@ select
     o.address as address,
     i.quote_token as quote_token,
     i.base_token as base_token,
+    base_name,
+    quote_name,
     o.buy_sell as buy_sell,
-    1.0 * amount/decimal_factor as amount,
+    1.0 * amount/base_decimal as amount,
     ref_price * (10000L + (case when o.buy_sell = 1 then -1L else 1L end) * s.fixed_spread_bps)/10000L/px_scale as price,
     o.price_level + 1 as price_level,
     max(o.in_timestamp, r.in_timestamp) as in_timestamp
 from DboeSpotQuoteWin o
 inner join DboeSpotMarketWin i on o.address = i.address and o.chain = i.chain
 inner join DboeSpotRefWin r on i.address = r.address and i.chain = r.chain
-inner join DboeTokenDecimalWin d on i.chain = d.chain and i.base_token = d.token_address
 inner join DboeSpotFixedSpreadWin s on o.buy_sell = s.buy_sell and o.chain = s.chain and o.price_level = s.price_level and o.address = s.address;
 
