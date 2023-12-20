@@ -47,10 +47,7 @@ create schema DboeOnchainClobSpecsEvent as (
     maker_fee_bps int,
     taker_fee_bps int,
     max_order_validity_sec int,
-    min_ref_px_waiting_sec int,
-    max_ref_px_waiting_sec int,
-    min_lmt_order_notional int,
-    ref_px_update_random_chance int
+    min_lmt_order_notional int
 );
 
 create window DboeOnchainClobSpecsWin.std:unique(chain, ob_address) as DboeOnchainClobSpecsEvent;

@@ -85,7 +85,19 @@ inner join DboeMysteriousGiftConfigWin(frequency='Daily') c on q.name = c.name
 left outer join DboeMysteriousGiftUserOpenWin(date=current_timestamp.getYear() * 10000 + (1 + current_timestamp.getMonthOfYear()) * 100 + current_timestamp.getDayOfMonth()) o on q.wallet_id = o.wallet_id and q.name = o.name
 group by q.name, q.wallet_id;
 
-@Name('Daily-Gift-Quota-Left')
+@Name('Daily-Gift-Quota-Left-Timer')
+insert into DboeMysteriousGiftUserQuotaLeftEvent
+select
+    q.name as name,
+    q.wallet_id as wallet_id,
+    q.quota - cast(count(distinct o.open_key) as int) as quota
+from DboeMysteriousGiftUserQuotaWin q
+inner join DboeMysteriousGiftConfigWin(frequency='Daily') c on q.name = c.name
+left outer join DboeMysteriousGiftUserOpenWin(date=current_timestamp.getYear() * 10000 + (1 + current_timestamp.getMonthOfYear()) * 100 + current_timestamp.getDayOfMonth()) o on q.wallet_id = o.wallet_id and q.name = o.name
+group by q.name, q.wallet_id
+output snapshot every 5 minutes;
+
+@Name('Other Gift-Quota-Left')
 insert into DboeMysteriousGiftUserQuotaLeftEvent
 select
     q.name as name,

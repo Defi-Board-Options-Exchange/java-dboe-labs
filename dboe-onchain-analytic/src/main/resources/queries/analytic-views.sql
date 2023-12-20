@@ -212,6 +212,19 @@ FROM (
 ) x
 INNER JOIN _dboe_ref_prices r ON x.chain = r.chain AND x.instr_id = r.instr_id AND x.currency = r.currency AND x.in_timestamp = r.in_timestamp
 
+
+CREATE OR replace VIEW dboe_spot_prev_ref as
+SELECT
+	r.*, s.quote_token as quote_token, s.base_token as base_token, '4h' as delay
+FROM (
+	SELECT CHAIN, address,  MAX(in_timestamp) AS in_timestamp
+	FROM _dboe_spot_ref_prices
+	WHERE in_timestamp <= (UNIX_TIMESTAMP()*1000 - 7200000)
+	GROUP BY 1,2
+) x
+INNER JOIN _dboe_spot_ref_prices r ON x.chain = r.chain AND x.address = r.address AND x.in_timestamp = r.in_timestamp
+inner join dboe_spot_markets s on r.chain = s.chain and r.address = s.address
+
 CREATE OR REPLACE VIEW dboe_total_liquidity_dashboard as
 SELECT
 t.num_txn, t.total_traded_value, t.total_fee, v.open_interest

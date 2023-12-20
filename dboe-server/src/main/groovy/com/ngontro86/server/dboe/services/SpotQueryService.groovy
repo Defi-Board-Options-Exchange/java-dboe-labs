@@ -17,7 +17,7 @@ class SpotQueryService {
     private CepEngine cep
 
     Collection<Map> allMarkets(String chain) {
-        cep.queryMap("select * from DboeSpotMarketWin(chain='${chain}')")
+        cep.queryMap("select * from DboeSpotMarketOverviewWin(chain='${chain}')")
     }
 
     Collection<Map> orderbook(String chain, String quoteToken, String baseToken) {

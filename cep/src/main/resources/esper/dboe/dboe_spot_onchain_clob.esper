@@ -5,6 +5,20 @@ create schema dboe_spot_dashboard_address_event as (
     dashboard_address string
 );
 
+create schema dboe_spot_prev_ref_event as (
+    chain string,
+    address string,
+    quote_token string,
+    base_token string,
+    ref_price double,
+    delay string,
+    in_timestamp long
+);
+
+create window DboeSpotPrevRefWin.std:unique(chain, quote_token, base_token) as dboe_spot_prev_ref_event;
+@Name('DboeSpotPrevRefWin') insert into DboeSpotPrevRefWin select * from dboe_spot_prev_ref_event;
+
+
 create window DboeSpotDashboardAddressWin.std:unique(chain, dashboard_address) as dboe_spot_dashboard_address_event;
 @Name('DboeSpotDashboardAddressWin') insert into DboeSpotDashboardAddressWin select * from dboe_spot_dashboard_address_event;
 
@@ -70,6 +84,45 @@ create schema DboeSpotRefEvent as (
 
 create window DboeSpotRefWin.std:unique(chain, address) as DboeSpotRefEvent;
 @Name('DboeSpotRefWin') insert into DboeSpotRefWin select * from DboeSpotRefEvent;
+
+create schema DboeSpotMarketOverviewEvent as (
+    quote_token string,
+    base_token string,
+    quote_name string,
+    base_name string,
+    quote_decimal long,
+    base_decimal long,
+    chain string,
+    address string,
+    ref_price double,
+    prev_ref_price double,
+    price_change_pct double,
+    delay string,
+    in_timestamp long
+);
+
+create window DboeSpotMarketOverviewWin.std:unique(chain, quote_token, base_token) as DboeSpotMarketOverviewEvent;
+@Name('DboeSpotMarketOverviewWin') insert into DboeSpotMarketOverviewWin select * from DboeSpotMarketOverviewEvent;
+
+@Name('DBOE Spot and Ref Price')
+insert into DboeSpotMarketOverviewEvent
+select
+    s.quote_token as quote_token,
+    s.base_token as base_token,
+    s.quote_name as quote_name,
+    s.base_name as base_name,
+    s.quote_decimal as quote_decimal,
+    s.base_decimal as base_decimal,
+    s.chain as chain,
+    s.address as address,
+    cr.ref_price/cr.px_scale as ref_price,
+    r.ref_price as prev_ref_price,
+    case when r.ref_price > 0 then 100.0 * (cr.ref_price/cr.px_scale/r.ref_price - 1.0) else Double.NaN end as price_change_pct,
+    r.delay as delay,
+    current_timestamp() as in_timestamp
+from DboeSpotMarketWin s
+left outer join DboeSpotPrevRefWin r on s.chain = r.chain and s.quote_token = r.quote_token and s.base_token = r.base_token
+left outer join DboeSpotRefWin cr on s.chain = cr.chain and s.address = cr.address;
 
 create schema DboeSpotOrderBookEvent as (
     chain string,

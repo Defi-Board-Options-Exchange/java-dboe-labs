@@ -196,10 +196,7 @@ class DboeOnchainAnalyzerApp {
                             'maker_fee_bps'              : specs.component2(),
                             'taker_fee_bps'              : specs.component3(),
                             'max_order_validity_sec'     : specs.component4(),
-                            'min_ref_px_waiting_sec'     : specs.component5(),
-                            'max_ref_px_waiting_sec'     : specs.component6(),
-                            'min_lmt_order_notional'     : specs.component7(),
-                            'ref_px_update_random_chance': specs.component8()
+                            'min_lmt_order_notional'     : specs.component5()
                     ]))
         }
     }
