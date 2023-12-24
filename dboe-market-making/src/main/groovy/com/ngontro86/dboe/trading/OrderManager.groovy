@@ -101,7 +101,7 @@ class OrderManager<T> {
             }
         }, 0, spreadingCheckMin, MINUTES)
 
-        logger.info("Start calibrate ref every ${calibrateRefMin} mins")
+        logger.info("Start Calibrate ref every ${calibrateRefMin} mins")
         scheduler.scheduleAtFixedRate(new Runnable() {
             @Override
             void run() {

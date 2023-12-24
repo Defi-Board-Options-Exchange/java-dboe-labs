@@ -247,7 +247,13 @@ class DboeOnchainAnalyzerApp {
                 def twoSidedOb = [true, false].collectEntries { bs ->
                     [(bs): dboeClob.obDepth(padding(32, option['instr_id'] as byte[]), bs).send()]
                 }
-                def refPx = dboeClob.refPrices(padding(32, option['instr_id'] as byte[])).send()
+                def refPx
+                // TODO: to remove this part.
+                if(option['expiry'] < 20231229) {
+                    refPx = dboeClob.refPrices(padding(32, option['instr_id'] as byte[])).send()
+                } else {
+                    refPx = dboeClob.refInfo(padding(32, option['instr_id'] as byte[])).send().component1()
+                }
 
                 println "${option['instr_id']}, ref: ${refPx}..."
 

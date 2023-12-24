@@ -59,22 +59,22 @@ class Web3jClobManager implements ClobManager<DBOEClob> {
     @Override
     Long[] refPx(DBOEClob clob, String instrId) {
         def tuple3 = clob.refInfo(padding(32, instrId as byte[])).send()
-        return [tuple3.component1() as Long, tuple3.component2() as Long, tuple3.component3() as Long] as Long[]
+        return [tuple3.component1() as Long, tuple3.component2() as Long] as Long[]
     }
 
     @Override
     Long currentRefPx(DBOEClob clob, String instrId) {
-        return clob.refPrices(padding(32, instrId as byte[])).send()
+        return clob.refInfo(padding(32, instrId as byte[])).send().component1() as Long
     }
 
     @Override
     void calibrateRef(DBOEClob clob, String instrId) {
-        clob.refreshRefPx(padding(32, instrId as byte[])).send()
+
     }
 
     @Override
     void calibrateRefs(DBOEClob clob, String underlying, int expiry) {
-        clob.refreshRefs(padding(32, underlying as byte[]), expiry as BigInteger).send()
+
     }
 
     @Override

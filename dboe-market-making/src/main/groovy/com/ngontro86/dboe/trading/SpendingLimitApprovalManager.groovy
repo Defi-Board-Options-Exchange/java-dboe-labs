@@ -1,9 +1,10 @@
 package com.ngontro86.dboe.trading
 
 import com.ngontro86.common.annotations.ConfigValue
-import com.ngontro86.common.annotations.Logging
 import com.ngontro86.common.annotations.DBOEComponent
+import com.ngontro86.common.annotations.Logging
 import com.ngontro86.dboe.web3j.Web3jManager
+import com.ngontro86.dboe.web3j.smartcontract.ClearingHouseManager
 import com.ngontro86.dboe.web3j.token.TokenLoader
 import com.ngontro86.market.instruments.ExchangeSpecsLoader
 import org.apache.logging.log4j.Logger
@@ -40,6 +41,9 @@ class SpendingLimitApprovalManager<T> {
     @Inject
     private ExchangeSpecsLoader dexSpecsLoader
 
+    @Inject
+    private ClearingHouseManager clearingHouseManager
+
     private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1)
 
     @PostConstruct
@@ -65,9 +69,23 @@ class SpendingLimitApprovalManager<T> {
 
     private void approveClearingHouseSLIfNeeded(Collection<Map> options) {
         logger.info("Got: ${options.size()} to approve spending limit!")
-        options.each { option ->
-            approveClearinghouse(tokenLoader.load(option['long_contract_address']), defaultSpendingLimit, option['clearing_address'])
-            approveClearinghouse(tokenLoader.load(option['short_contract_address']), defaultSpendingLimit, option['clearing_address'])
+
+        options.groupBy { it['clearing_address'] }.each { clearingAddr, ops1 ->
+            clearingHouseManager.initClearingHouseIfNeeded(clearingAddr)
+            ops1.groupBy { it['expiry'] }.each { expiry, ops2 ->
+                ops2.groupBy { it['underlying'] }.each { und, ops3 ->
+                    def approvalNeeded = false
+                    ops3.each {
+                        def token = tokenLoader.load(it['long_contract_address'])
+                        approvalNeeded = approvalNeeded ||
+                                tokenLoader.allowance(token, web3jManager.getWallet(), clearingAddr) <= Math.pow(10, tokenLoader.decimals(token)) * minSpendingLimit ||
+                                tokenLoader.allowance(tokenLoader.load(it['short_contract_address']), web3jManager.getWallet(), clearingAddr) <= Math.pow(10, tokenLoader.decimals(token)) * minSpendingLimit
+                    }
+                    if (approvalNeeded) {
+                        clearingHouseManager.enableOptionTrading(clearingAddr, und, expiry)
+                    }
+                }
+            }
         }
     }
 
