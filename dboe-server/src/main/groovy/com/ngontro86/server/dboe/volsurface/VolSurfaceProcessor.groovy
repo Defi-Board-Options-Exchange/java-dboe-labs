@@ -41,7 +41,7 @@ class VolSurfaceProcessor {
     private VolDownloader volDownloader
 
     private String query = ResourcesUtils.content("epl-query/raw-iv.sql")
-    private String queryActiveOptions = ResourcesUtils.content("epl-query/active-option.sql")
+    private String queryActiveOptions = ResourcesUtils.content("epl-query/active-options.sql")
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2)
 
