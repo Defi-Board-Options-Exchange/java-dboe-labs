@@ -11,7 +11,7 @@ public class OptionUtils {
         return (getTimeUtc(yyyyMMdd, ltt) - todayUtcMs) * 1.0 / YEAR_MS;
     }
 
-    protected static long getTimeUtc(int yyyyMMdd, int ltt) {
+    public static long getTimeUtc(int yyyyMMdd, int ltt) {
         return GlobalTimeUtils.getTimeUtc(String.format("%08d %06d", yyyyMMdd, ltt), "GMT", "yyyyMMdd HHmmss");
     }
 

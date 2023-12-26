@@ -8,3 +8,5 @@ com.ngontro86.common.timer
 com.ngontro86.common.copyq
 com.ngontro86.cloud.publisher
 com.ngontro86.auth.client
+com.ngontro86.market.time
+com.ngontro86.market.volatility
