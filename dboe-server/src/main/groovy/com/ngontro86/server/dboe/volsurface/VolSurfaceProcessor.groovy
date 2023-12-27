@@ -94,8 +94,8 @@ class VolSurfaceProcessor {
                 def und = it['underlying']
                 if (surfaces.containsKey(und)) {
                     it << [
-                            'source ': 'Deribit',
-                            'vol'    : surfaces.get(und).estVol(OptionUtils.getTimeUtc(it['expiry'], it['ltt']), it['moneyness'])
+                            'source': 'Deribit',
+                            'vol'   : surfaces.get(und).estVol(OptionUtils.getTimeUtc(it['expiry'], it['ltt']), it['moneyness'])
                     ]
                     cepEngine.accept(new ObjMap("DboeVolSurfaceEvent", it))
                 }
