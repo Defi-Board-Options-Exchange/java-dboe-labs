@@ -58,6 +58,38 @@ create schema DboeOrderBookEvent as (
 create window DboeOrderBookWin.std:unique(chain, instr_id, currency, buy_sell, price_level) as DboeOrderBookEvent;
 @Name('DboeOrderBookWin') insert into DboeOrderBookWin select * from DboeOrderBookEvent;
 
+create schema DboeAggrOrderBookEvent as (
+    chain string,
+    instr_id string,
+    currency string,
+    buy_sell int,
+    amount double,
+    notional double,
+    price double,
+    price_level int,
+    in_timestamp long
+);
+
+create window DboeAggrOrderBookWin.std:unique(chain, instr_id, currency, buy_sell, price_level) as DboeAggrOrderBookEvent;
+@Name('DboeAggrOrderBookWin') insert into DboeAggrOrderBookWin select * from DboeAggrOrderBookEvent;
+
+@Name('Aggregate OB')
+insert into DboeAggrOrderBookEvent
+select
+    i.chain as chain,
+    i.instr_id as instr_id,
+    i.currency as currency,
+    i.buy_sell as buy_sell,
+    sum(b.amount) as amount,
+    sum(b.amount * b.price) as notional,
+    i.price as price,
+    i.price_level as price_level,
+    max(b.in_timestamp) as in_timestamp
+from DboeOrderBookWin i
+inner join DboeOrderBookWin b on i.chain = b.chain and i.instr_id = b.instr_id and i.currency = b.currency and i.buy_sell = b.buy_sell
+where i.price_level >= b.price_level
+group by i.chain, i.instr_id, i.buy_sell, i.price, i.price_level;
+
 create schema DboeBBOEvent as (
     chain string,
     instr_id string,

@@ -5,6 +5,7 @@ import com.ngontro86.common.annotations.Logging
 import com.ngontro86.market.volatility.downloader.VolDownloader
 import org.apache.logging.log4j.Logger
 
+import javax.annotation.PostConstruct
 import javax.inject.Inject
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -29,6 +30,19 @@ class FloatingVolEstimator implements VolatilityEstimator {
 
     private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor()
 
+    @ConfigValue(config = "volMap")
+    private Collection volMap = ["SOL:155", "BTC:75"]
+
+    private Map<String, Double> vols = [:]
+
+    @PostConstruct
+    private void init() {
+        volMap.each {
+            def toks = it.toString().split(":")
+            vols[toks[0]] = Double.valueOf(toks[1]) / 100d
+        }
+    }
+
     @Override
     void setUnderlyings(Set<String> underlyings) {
         logger.info("Setting underlyings: ${underlyings}")
@@ -46,10 +60,11 @@ class FloatingVolEstimator implements VolatilityEstimator {
     }
 
     protected void loadAndFitVolSurface() {
+        surfaces.clear()
         underlyings.each { underlying ->
-            surfaces.putIfAbsent(underlying, new ParamlessPolynomialSurface())
             def volData = volDownloader.loadVols(underlying)
             volData.each { expiryUtc, map ->
+                surfaces.putIfAbsent(underlying, new ParamlessPolynomialSurface())
                 surfaces.get(underlying).addDataThenFit(expiryUtc, map)
             }
         }
@@ -58,7 +73,7 @@ class FloatingVolEstimator implements VolatilityEstimator {
     @Override
     double impliedVol(String underlying, long expiryUtc, double simpleMoneyness) {
         if (!surfaces.containsKey(underlying)) {
-            return 0d
+            return vols[underlying]
         }
         return surfaces.get(underlying).estVol(expiryUtc, simpleMoneyness)
     }

@@ -22,6 +22,10 @@ class MarketMakingUtils {
 
     private static DecimalFormat fmt = new DecimalFormat('0.00')
 
+    static double round(double q, String format) {
+        return Double.valueOf(new DecimalFormat(format).format(q))
+    }
+
     static double round(double q) {
         return Double.valueOf(fmt.format(q))
     }

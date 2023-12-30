@@ -12,9 +12,18 @@ class Web3jClientProvider {
     @ConfigValue(config = "ethereumNodeUrl")
     private String ethereumNodeUrl
 
+    @ConfigValue(config = "web3jApiKey")
+    private String web3jApiKey
+
+    @ConfigValue(config = "web3jApiName")
+    private String web3jApiName = 'X-goog-api-key'
 
     @Bean
     Web3j web3jClient() {
-        return Web3j.build(new HttpService(ethereumNodeUrl))
+        def httpService = new HttpService(ethereumNodeUrl)
+        if (web3jApiKey != null) {
+            httpService.addHeader(web3jApiName, web3jApiKey)
+        }
+        return Web3j.build(httpService)
     }
 }

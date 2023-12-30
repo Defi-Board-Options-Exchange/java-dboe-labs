@@ -29,12 +29,13 @@ class ClearingHouseManager {
     private Map<String, DBOEClearingHouse> clearingHouses = [:]
 
     void initClearingHouseIfNeeded(String addr) {
-        if (clearingHouses.containsKey(addr)) {
+        if (!clearingHouses.containsKey(addr)) {
             clearingHouses.put(addr, DBOEClearingHouse.load(addr, web3j, rawTxnManager, gasProvider))
         }
     }
 
     void enableOptionTrading(String addr, String underlying, int expiry) {
+        println "Enable Option Trading: ${addr} for ${underlying} and ${expiry}..."
         if (clearingHouses.containsKey(addr)) {
             clearingHouses.get(addr).enableTrading(Utils.padding(32, underlying as byte[]), expiry as BigInteger).send()
         }

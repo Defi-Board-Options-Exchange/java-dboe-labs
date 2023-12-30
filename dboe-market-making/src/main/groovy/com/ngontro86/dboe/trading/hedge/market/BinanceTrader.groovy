@@ -43,9 +43,18 @@ class BinanceTrader implements HedgingTrader {
 
     private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor()
 
+    @ConfigValue(config = "qtyFmts")
+    private Collection qtyFmts = ["SOL:0", "ETH:0.00", "BTC:0.000"]
+
+    private Map<String, String> fmts = [:]
+
     @PostConstruct
     private void init() {
         futuresClient = new UMFuturesClientImpl(futuresApiKey, futuresSecretKey)
+        qtyFmts.each {
+            def toks = it.toString().split(":")
+            fmts[toks[0]] = toks[1]
+        }
     }
 
     @Override
@@ -87,14 +96,17 @@ class BinanceTrader implements HedgingTrader {
     @Override
     void hedgeRisk(String underlying, double absDelta) {
         if (liveHedging) {
-            def res = futuresClient.account().newOrder(
-                    [
-                            'symbol'  : umSymbol(underlying),
-                            'side'    : absDelta > 0 ? 'SELL' : 'BUY',
-                            'type'    : 'MARKET',
-                            'quantity': Math.abs(MarketMakingUtils.round(absDelta))
-                    ] as LinkedHashMap)
-            logger.info("Submitted MKT order: ${res}")
+            def qty = Math.abs(MarketMakingUtils.round(absDelta, fmts[underlying]))
+            if (qty > 0) {
+                def res = futuresClient.account().newOrder(
+                        [
+                                'symbol'  : umSymbol(underlying),
+                                'side'    : absDelta > 0 ? 'SELL' : 'BUY',
+                                'type'    : 'MARKET',
+                                'quantity': qty
+                        ] as LinkedHashMap)
+                logger.info("Submitted MKT order: ${res}")
+            }
         }
     }
 

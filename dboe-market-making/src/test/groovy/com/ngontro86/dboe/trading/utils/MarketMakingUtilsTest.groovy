@@ -9,6 +9,10 @@ class MarketMakingUtilsTest {
         100.times {
             println MarketMakingUtils.round((6.0573829800600825 + it * 0.052323))
         }
+
+        10.times {
+            println MarketMakingUtils.round((6.0573829800600825 + it * 0.052323), '0')
+        }
     }
 
     @Test

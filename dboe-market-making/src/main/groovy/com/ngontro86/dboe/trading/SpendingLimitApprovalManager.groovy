@@ -68,18 +68,21 @@ class SpendingLimitApprovalManager<T> {
     }
 
     private void approveClearingHouseSLIfNeeded(Collection<Map> options) {
-        logger.info("Got: ${options.size()} to approve spending limit!")
+        println("Got: ${options.size()} to approve spending limit!")
 
         options.groupBy { it['clearing_address'] }.each { clearingAddr, ops1 ->
             clearingHouseManager.initClearingHouseIfNeeded(clearingAddr)
+
             ops1.groupBy { it['expiry'] }.each { expiry, ops2 ->
+
                 ops2.groupBy { it['underlying'] }.each { und, ops3 ->
-                    def approvalNeeded = false
+                    Boolean approvalNeeded = false
                     ops3.each {
                         def token = tokenLoader.load(it['long_contract_address'])
+                        def scale = Math.pow(10, tokenLoader.decimals(token))
                         approvalNeeded = approvalNeeded ||
-                                tokenLoader.allowance(token, web3jManager.getWallet(), clearingAddr) <= Math.pow(10, tokenLoader.decimals(token)) * minSpendingLimit ||
-                                tokenLoader.allowance(tokenLoader.load(it['short_contract_address']), web3jManager.getWallet(), clearingAddr) <= Math.pow(10, tokenLoader.decimals(token)) * minSpendingLimit
+                                tokenLoader.allowance(token, web3jManager.getWallet(), clearingAddr) <= scale * minSpendingLimit ||
+                                tokenLoader.allowance(tokenLoader.load(it['short_contract_address']), web3jManager.getWallet(), clearingAddr) <= scale * minSpendingLimit
                     }
                     if (approvalNeeded) {
                         clearingHouseManager.enableOptionTrading(clearingAddr, und, expiry)

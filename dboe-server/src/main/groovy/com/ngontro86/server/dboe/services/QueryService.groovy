@@ -52,10 +52,7 @@ class QueryService {
     }
 
     Collection<Map> orderbook(String chain, String instrId) {
-        cep.queryMap("select instr_id, sum(amount) as size, price, price_level, buy_sell " +
-                "from DboeOrderBookWin(chain='${chain}', instr_id='${instrId}') " +
-                "group by buy_sell, price, instr_id, price_level " +
-                "order by price desc")
+        cep.queryMap("select instr_id, amount as size, price, price_level, buy_sell from DboeAggrOrderBookWin(chain='${chain}', instr_id='${instrId}') order by price desc")
     }
 
     Collection<Map> allTradable(String chain) {
