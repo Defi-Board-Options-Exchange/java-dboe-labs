@@ -21,9 +21,8 @@ class SpotQueryService {
     }
 
     Collection<Map> orderbook(String chain, String quoteToken, String baseToken) {
-        cep.queryMap("select address, sum(amount) as size, price, price_level, buy_sell " +
-                "from DboeSpotOrderBookWin(chain='${chain}', quote_token='${quoteToken}', base_token='${baseToken}') " +
-                "group by buy_sell, price, address, price_level " +
+        cep.queryMap("select address, amount as size, notional, price, price_level, buy_sell " +
+                "from DboeAggrSpotOrderBookWin(chain='${chain}', quote_token='${quoteToken}', base_token='${baseToken}') " +
                 "order by price desc")
     }
 

@@ -25,7 +25,7 @@ class Black76 {
     }
 
     private static double MIN_VOL = 0.01, MAX_VOL = 5.0
-    private static double PX_DIFF_PCT_EPSILON = 0.25 //0.25%s
+    private static double PX_DIFF_PCT_EPSILON = 0.25 //0.25%
     private static double PX_DIFF_EPSILON = 0.001
     private static int MAX_ITERATION = 20
 

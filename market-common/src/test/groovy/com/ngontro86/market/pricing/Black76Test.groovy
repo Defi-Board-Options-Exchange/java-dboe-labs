@@ -77,8 +77,13 @@ class Black76Test {
         }
 
 
-        def g = Black76.greekDboe option: [kind: Put, atm: 1789.5d, strike: 1850d, condStrike: 1750d, r: 0.0, t: 5.0/24.0/ 365d, vol: 4.0]
+        def g = Black76.greekDboe option: [kind: Put, atm: 1789.5d, strike: 1850d, condStrike: 1750d, r: 0.0, t: 5.0 / 24.0 / 365d, vol: 4.0]
         println g
+    }
+
+    @Test
+    void "should work out greek"() {
+        println Black76.greekDboe(option: [kind: Call, atm: 104.5d, strike: 97.5d, condStrike: 112.5d, r: 0.0, t: 12.0 / 365d, vol: 1.5])
     }
 
 
@@ -101,7 +106,7 @@ class Black76Test {
         println Black76.iv(116.5, [kind: Put, atm: 1691.5d, strike: 1830d, condStrike: 1680d, r: 0.0, t: 0.7d / 365d])
 
 
-        println Black76.iv(60.5, [kind: Put, atm: 1789.5d, strike: 1850d, condStrike: 1750d, r: 0.0, t: 5.0/24.0/ 365d])
+        println Black76.iv(60.5, [kind: Put, atm: 1789.5d, strike: 1850d, condStrike: 1750d, r: 0.0, t: 5.0 / 24.0 / 365d])
 
     }
 

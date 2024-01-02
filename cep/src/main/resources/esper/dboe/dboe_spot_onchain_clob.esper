@@ -160,3 +160,40 @@ inner join DboeSpotMarketWin i on o.address = i.address and o.chain = i.chain
 inner join DboeSpotRefWin r on i.address = r.address and i.chain = r.chain
 inner join DboeSpotFixedSpreadWin s on o.buy_sell = s.buy_sell and o.chain = s.chain and o.price_level = s.price_level and o.address = s.address;
 
+create schema DboeAggrSpotOrderBookEvent as (
+    chain string,
+    address string,
+    quote_token string,
+    base_token string,
+    quote_name string,
+    base_name string,
+    buy_sell int,
+    amount double,
+    notional double,
+    price double,
+    price_level int,
+    in_timestamp long
+);
+
+create window DboeAggrSpotOrderBookWin.std:unique(chain, address, buy_sell, price_level) as DboeAggrSpotOrderBookEvent;
+@Name('DboeAggrSpotOrderBookWin') insert into DboeAggrSpotOrderBookWin select * from DboeAggrSpotOrderBookEvent;
+
+@Name('Aggr Spot OB')
+insert into DboeAggrSpotOrderBookEvent
+select
+    i.chain as chain,
+    i.address as address,
+    i.quote_token as quote_token,
+    i.base_token as base_token,
+    i.quote_name as quote_name,
+    i.base_name as base_name,
+    i.buy_sell as buy_sell,
+    sum(p.amount) as amount,
+    sum(p.amount*p.price) as notional,
+    i.price as price,
+    i.price_level as price_level,
+    max(p.in_timestamp) as in_timestamp
+from DboeSpotOrderBookWin i
+inner join DboeSpotOrderBookWin p on i.chain = p.chain and i.address = p.address and i.buy_sell = p.buy_sell
+where i.price_level >= p.price_level
+group by i.chain, i.address, i.quote_token, i.base_token, i.quote_name, i.base_name, i.buy_sell, i.price, i.price_level;

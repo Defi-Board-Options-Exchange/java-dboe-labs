@@ -162,7 +162,7 @@ INNER JOIN
 	SELECT cast(date_format(date(date_sub(TxnTimestamp, INTERVAL -8 HOUR)), '%Y%m%d') AS UNSIGNED) AS date, chain,
 	COUNT(*)/2 AS numOfTrades, SUM(Amount) AS totalFeeCollected, SUM(Amount) * 100.0/0.30 as tradedValue
 	FROM analytics.dboe_enriched_transfers
-	where TxnTimestamp >= '2023-08-13' AND ReceiverAddress = '0x649fb2a8ebd926faf4375c7ed7259e74d1d7851d'
+	where TxnTimestamp >= '2023-08-13' AND ReceiverAddress IN ('0x649fb2a8ebd926faf4375c7ed7259e74d1d7851d', '0xe39578ba69805150f869ac5703f128b2cd713595')
 	GROUP BY 1, 2
 ) t ON t.date = v.date AND t.chain = v.chain
 
@@ -251,9 +251,13 @@ FROM
 ) v
 INNER JOIN
 (
-	SELECT cast(COUNT(*)/2 AS UNSIGNED) AS num_txn, SUM(Amount) AS total_fee, SUM(Amount) * 100.0/0.30 as total_traded_value
-	FROM analytics.dboe_enriched_transfers
-	where TxnTimestamp >= '2023-08-13' AND ReceiverAddress = '0x649fb2a8ebd926faf4375c7ed7259e74d1d7851d'
+	select
+	cast(count(distinct TransactionHash)/2 AS UNSIGNED) AS num_txn, sum(Amount) AS total_fee, SUM(Amount)*100.0/0.30 AS total_traded_value
+	from analytics.dboe_transfers t
+	INNER JOIN analytics.chain_mapping m ON t.Chain = m.name
+	LEFT outer join dboe_academy.dboe_all_options l ON t.CurrencyAddress = l.long_contract_address AND l.chain = m.dboe_chain_name
+	LEFT OUTER JOIN dboe_academy.dboe_all_options s ON t.CurrencyAddress = s.short_contract_address AND s.chain = m.dboe_chain_name
+	WHERE TxnTimestamp >= '2023-08-13' AND ReceiverAddress IN ('0x649fb2a8ebd926faf4375c7ed7259e74d1d7851d', '0xe39578ba69805150f869ac5703f128b2cd713595')
 ) t
 
 
