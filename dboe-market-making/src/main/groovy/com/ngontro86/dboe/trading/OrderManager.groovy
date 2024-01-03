@@ -60,8 +60,15 @@ class OrderManager<T> {
     @ConfigValue(config = "calibrateRefMin")
     private Integer calibrateRefMin = 2
 
-    @ConfigValue(config = "focusedSpreads")
-    private Collection focusedSpreads = ['5', '6']
+
+    @ConfigValue(config = "tier1Underlyings")
+    private Collection tier1Underlyings = ['ETH', 'BTC']
+
+    @ConfigValue(config = "tier1FocusedSpreads")
+    private Collection tier1FocusedSpreads = ['5', '6']
+
+    @ConfigValue(config = "tier2FocusedSpreads")
+    private Collection tier2FocusedSpreads = ['5', '6']
 
     @ConfigValue(config = "longestTimeToExpiryInHour")
     private Double longestTimeToExpiryInHour = 26.0
@@ -148,11 +155,11 @@ class OrderManager<T> {
         println "Spreading: Found: ${options.size()} options for chain: ${chain}"
 
         options.each { opt ->
-            spreadingOneOption(opt, focusedSpreads)
+            spreadingOneOption(opt)
         }
     }
 
-    private void spreadingOneOption(opt, Collection focusedSpreads) {
+    private void spreadingOneOption(opt) {
         try {
             def quotes = clobManager.userQuotes(clobMap[opt['ob_address']], opt['instr_id'])
             def fp = clobManager.currentRefPx(clobMap[opt['ob_address']], opt['instr_id']) / opt['underlying_px_scale']
@@ -161,10 +168,10 @@ class OrderManager<T> {
             }
             [true, false].each { bs ->
                 def amount = (bs ? defaultQuotingNotional / fp : Math.min(defaultSellQuotingNotional / fp, maxCollateral / (Math.abs(opt['strike'] - opt['cond_strike']) - fp)))
-                focusedSpreads.each { lvl ->
+                focusedSpreads(opt['underlying']).each { lvl ->
                     def onchainQs = quotes.findAll { it.buySell == bs && it.pxLevel == Integer.valueOf(lvl) }
                     if (onchainQs.isEmpty() || onchainQs.first().amount == 0) {
-                        amount *= (1.0 + Math.random() * qtyIncrementPct/100.0)
+                        amount *= (1.0 + Math.random() * qtyIncrementPct / 100.0)
                         def orderTimeOut = MarketMakingUtils.bestOrderTimeOutInMin(Utils.getTimeUtc(opt['expiry'], opt['ltt']), timeSource.currentTimeMilliSec(), Integer.valueOf(lvl))
                         if (orderTimeOut > 30) {
                             println "toPrice(): ${opt['instr_id']}, BuySell: ${bs ? 'B' : 'S'}, amt: ${amount}, ${fp}, lvl: ${lvl}, timeout: ${orderTimeOut}"
@@ -192,5 +199,9 @@ class OrderManager<T> {
         } catch (Exception e) {
             logger.error(e)
         }
+    }
+
+    private Collection focusedSpreads(String und) {
+        return tier1Underlyings.contains(und) ? tier1FocusedSpreads : tier2FocusedSpreads
     }
 }
