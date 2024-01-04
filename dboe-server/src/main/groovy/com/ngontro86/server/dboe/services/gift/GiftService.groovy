@@ -11,6 +11,9 @@ import org.apache.logging.log4j.Logger
 import javax.annotation.PostConstruct
 import javax.inject.Inject
 
+import static com.ngontro86.common.times.GlobalTimeController.currentTimeMillis
+import static com.ngontro86.utils.GlobalTimeUtils.getTimeFormat
+
 @DBOEComponent
 class GiftService {
 
@@ -27,6 +30,7 @@ class GiftService {
         giftConfigs = cep.queryMap("select * from DboeMysteriousGiftConfigWin").collectEntries {
             [(it['name']): new GiftConfig(winningProb: it['win_prob'], avgReward: it['avg_reward'])]
         }
+        logger.info("Got: ${giftConfigs.size()} Gift Config records")
     }
 
     Collection<Map> numOfGifts(String wallet) {
@@ -35,7 +39,7 @@ class GiftService {
 
     Double open(String openKey, String wallet, String name) {
         def numOfGifts = numOfGifts(wallet).groupBy { it['name'] }
-        if (!numOfGifts.containsKey(name) || numOfGifts.get(name).first()['quota'] == 0) {
+        if (!numOfGifts.containsKey(name) || numOfGifts.get(name).first()['quota'] <= 0) {
             throw new IllegalAccessError("No more gift name:${name} for this wallet:${wallet}")
         }
         Double reward = 0d
@@ -46,12 +50,12 @@ class GiftService {
         }
 
         cep.accept(new ObjMap('dboe_mysterious_gift_user_open_event', [
-                'date'     : GlobalTimeUtils.getTimeFormat(GlobalTimeController.currentTimeMillis, 'yyyyMMdd'),
+                'date'     : getTimeFormat(currentTimeMillis, 'yyyyMMdd'),
                 'name'     : name,
                 'wallet_id': wallet,
                 'open_key' : openKey,
                 'reward'   : reward,
-                'timestamp': GlobalTimeController.currentTimeMillis
+                'timestamp': currentTimeMillis
         ]))
 
         return reward

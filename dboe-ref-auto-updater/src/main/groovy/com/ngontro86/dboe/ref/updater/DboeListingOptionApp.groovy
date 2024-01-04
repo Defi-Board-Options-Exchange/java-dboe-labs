@@ -88,7 +88,7 @@ class DboeListingOptionApp {
             [true, false].each { callPut ->
                 def strikes = Utils.listStrikes(callPut, spot, template['strike_interval'], template['no_itm'], template['no_otm'], template['scale_up'])
                 strikes.each { strike ->
-                    def optionId = Utils.instrId(und, callPut, (int) (strike / template['scale_up']), expiry)
+                    def optionId = Utils.instrId(template['prefix'], template['strike_fmt'], callPut, (double) (strike / template['scale_up']), expiry)
 
                     if (!instrIds.contains(optionId)) {
                         listOneOption(optionId, strike, optionFactory, und, callPut, template)

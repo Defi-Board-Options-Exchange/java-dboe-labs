@@ -22,4 +22,10 @@ class EqualUtilsTest {
         assert !equals(16.666, 16.667, 0.001)
     }
 
+    @Test
+    void "should compare two collections"() {
+        assert equals([1, 2], [2, 1])
+        assert !equals([1, 2], [2, 1, 3])
+    }
+
 }

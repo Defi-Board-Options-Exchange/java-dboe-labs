@@ -2,6 +2,8 @@ package com.ngontro86.dboe.ref.updater
 
 import com.ngontro86.utils.GlobalTimeUtils
 
+import java.text.DecimalFormat
+
 class Utils {
 
     static long getTimeUtc(int yyyyMMdd, int ltt) {
@@ -24,7 +26,7 @@ class Utils {
         return strikes
     }
 
-    static String instrId(String und, boolean callPut, int strike, int expiry) {
-        "${und.charAt(0)}${strike}${callPut ? 'C' : 'P'}${expiry % 10000}"
+    static String instrId(String prefix, String strikeFmt, boolean callPut, double strike, int expiry) {
+        "${prefix}${new DecimalFormat(strikeFmt).format(strike)}${callPut ? 'C' : 'P'}${expiry % 10000}"
     }
 }
