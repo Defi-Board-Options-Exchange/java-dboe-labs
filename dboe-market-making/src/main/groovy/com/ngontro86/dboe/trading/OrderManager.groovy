@@ -52,14 +52,13 @@ class OrderManager<T> {
     private Double qtyIncrementPct = 25.0
 
     @ConfigValue(config = "spreadingCheckMin")
-    private Integer spreadingCheckMin = 10
+    private Integer spreadingCheckMin = 30
 
     @ConfigValue(config = "calibrateRefBuiltin")
     private Boolean calibrateRefBuiltin = false
 
     @ConfigValue(config = "calibrateRefMin")
     private Integer calibrateRefMin = 2
-
 
     @ConfigValue(config = "tier1Underlyings")
     private Collection tier1Underlyings = ['ETH', 'BTC']
@@ -153,25 +152,28 @@ class OrderManager<T> {
 
         logger.info("Found: ${options.size()} options for chain: ${chain}")
         println "Spreading: Found: ${options.size()} options for chain: ${chain}"
-
-        options.each { opt ->
-            spreadingOneOption(opt)
+        Collections.shuffle(options)
+        options.groupBy { it['underlying'] }.each { und, opts ->
+            println "Spreading on ${und}, num of Options: ${opts.size()}"
+            opts.each { opt -> spreadingOneOption(opt) }
         }
     }
 
     private void spreadingOneOption(opt) {
         try {
-            def quotes = clobManager.userQuotes(clobMap[opt['ob_address']], opt['instr_id'])
             def fp = clobManager.currentRefPx(clobMap[opt['ob_address']], opt['instr_id']) / opt['underlying_px_scale']
             if (fp == 0d) {
+                println "Zero ref px, ${opt['instr_id']}..."
                 return
             }
+            def quotes = clobManager.userQuotes(clobMap[opt['ob_address']], opt['instr_id'])
             [true, false].each { bs ->
                 def amount = (bs ? defaultQuotingNotional / fp : Math.min(defaultSellQuotingNotional / fp, maxCollateral / (Math.abs(opt['strike'] - opt['cond_strike']) - fp)))
                 focusedSpreads(opt['underlying']).each { lvl ->
                     def onchainQs = quotes.findAll { it.buySell == bs && it.pxLevel == Integer.valueOf(lvl) }
                     if (onchainQs.isEmpty() || onchainQs.first().amount == 0) {
                         amount *= (1.0 + Math.random() * qtyIncrementPct / 100.0)
+                        amount = Math.min(amount, 999000.0)
                         def orderTimeOut = MarketMakingUtils.bestOrderTimeOutInMin(Utils.getTimeUtc(opt['expiry'], opt['ltt']), timeSource.currentTimeMilliSec(), Integer.valueOf(lvl))
                         if (orderTimeOut > 30) {
                             println "toPrice(): ${opt['instr_id']}, BuySell: ${bs ? 'B' : 'S'}, amt: ${amount}, ${fp}, lvl: ${lvl}, timeout: ${orderTimeOut}"

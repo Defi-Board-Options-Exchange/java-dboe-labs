@@ -119,7 +119,7 @@ class BinanceTrader implements HedgingTrader {
     private void updateSpot() {
         symbols.each {
             def markMap = JsonUtils.fromJson(futuresClient.market().markPrice(['symbol': it] as LinkedHashMap), Map)
-            logger.info "${markMap['symbol']}: ${Double.valueOf(markMap['indexPrice'])}"
+            println "${markMap['symbol']}: ${Double.valueOf(markMap['indexPrice'])}"
             spotPricer.update(underlying(markMap['symbol']), Double.valueOf(markMap['indexPrice']))
         }
     }

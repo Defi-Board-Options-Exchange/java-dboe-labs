@@ -62,11 +62,19 @@ class FloatingVolEstimator implements VolatilityEstimator {
     protected void loadAndFitVolSurface() {
         surfaces.clear()
         underlyings.each { underlying ->
+            loadOneSurface(underlying)
+        }
+    }
+
+    private void loadOneSurface(String underlying) {
+        try {
             def volData = volDownloader.loadVols(underlying)
             volData.each { expiryUtc, map ->
                 surfaces.putIfAbsent(underlying, new ParamlessPolynomialSurface())
                 surfaces.get(underlying).addDataThenFit(expiryUtc, map)
             }
+        } catch (Exception e) {
+            logger.error(e)
         }
     }
 
