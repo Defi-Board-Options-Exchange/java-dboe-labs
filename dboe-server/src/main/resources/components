@@ -10,3 +10,5 @@ com.ngontro86.cloud.publisher
 com.ngontro86.auth.client
 com.ngontro86.market.time
 com.ngontro86.market.volatility
+com.ngontro86.market.web3j
+com.ngontro86.dboe.web3j

@@ -6,8 +6,8 @@ select
     s.spot as spot, Math.log(i.strike/s.spot) as moneyness,
     p.bid as bid, r.ref_price as ref, p.ask as ask,
     t.time_to_expiry as time_to_expiry
-from DboePriceWin p
-inner join DboeRefPriceWin r on p.instr_id = r.instr_id and p.chain = r.chain and p.currency = r.currency
-inner join DboeOptionInstrWin i on p.instr_id = i.instr_id
-inner join DboeOptionTimeToExpiryWin(time_to_expiry>0) t on p.instr_id = t.instr_id
+from DboeRefPriceWin r
+left outer join DboePriceWin p on p.instr_id = r.instr_id and p.chain = r.chain and p.currency = r.currency
+inner join DboeOptionInstrWin i on r.instr_id = i.instr_id
+inner join DboeOptionTimeToExpiryWin(time_to_expiry>0) t on r.instr_id = t.instr_id
 inner join DboeSpotWin s on i.underlying = s.underlying

@@ -87,10 +87,15 @@ class Black76 {
         def d2 = d1 - vol * Math.sqrt(timeToMaturity)
         def px = kind == Call ? Math.exp(-r * timeToMaturity) * (atm * normal.cumulativeProbability(d1) - strike * normal.cumulativeProbability(d2)) :
                 Math.exp(-r * timeToMaturity) * (strike * normal.cumulativeProbability(-d2) - atm * normal.cumulativeProbability(-d1))
+
         def delta = kind == Call ? Math.exp(-r * timeToMaturity) * normal.cumulativeProbability(d1) : -(Math.exp(-r * timeToMaturity) * normal.cumulativeProbability(-d1))
+
         def vega = atm * Math.exp(-r * timeToMaturity) * normal.density(d1) * Math.sqrt(timeToMaturity)
+
         def gamma = Math.exp(-r * timeToMaturity) * normal.density(d1) / (atm * vol * Math.sqrt(timeToMaturity))
+
         def vomma = atm * Math.exp(-r * timeToMaturity) * normal.density(d1) * Math.sqrt(timeToMaturity) * d1 * d2 / vol
+
         def theta = kind == Call ? -(atm * Math.exp(-r * timeToMaturity) * normal.density(d1) * vol / 2 / Math.sqrt(timeToMaturity) + r * strike * Math.exp(-r * timeToMaturity) * normal.cumulativeProbability(d2) - r * atm * Math.exp(-r * timeToMaturity) * normal.cumulativeProbability(d1)) :
                 -(atm * Math.exp(-r * timeToMaturity) * normal.density(d1) * vol / 2 / Math.sqrt(timeToMaturity) - r * strike * Math.exp(-r * timeToMaturity) * normal.cumulativeProbability(-d2) + r * atm * Math.exp(-r * timeToMaturity) * normal.cumulativeProbability(-d1))
         return [
