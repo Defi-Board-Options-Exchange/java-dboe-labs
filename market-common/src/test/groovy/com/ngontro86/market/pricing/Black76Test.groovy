@@ -64,28 +64,9 @@ class Black76Test {
     }
 
     @Test
-    void "should work out greeks for DBOE options"() {
-        def leverage = 10d
-        def time = 7d / 360d
-        def strikeSpread = Math.round(4400d * leverage / 100d / 100d) * 100d
-        5.times { i ->
-            def strike = 4400d + 100d * (i - 15)
-            def c = Black76.greekDboe option: [kind: Call, atm: 4400, strike: strike, condStrike: strike + strikeSpread, r: 0.0, t: time, vol: 0.95]
-            def rc1 = Black76.greek option: [kind: Put, atm: 4400, strike: strike, r: 0.0, t: time, vol: 0.95]
-            def rc2 = Black76.greek option: [kind: Put, atm: 4400, strike: strike + strikeSpread, r: 0.0, t: time, vol: 0.95]
-            println "${strike}, ${strikeSpread}, ${strike + strikeSpread},${c['delta']},${c['gamma']},${c['vega']},${c['vomma']}, ${rc1['delta']},${rc1['gamma']},${rc1['vega']},${rc1['vomma']},${rc2['delta']},${rc2['gamma']},${rc2['vega']},${rc2['vomma']}"
-        }
-
-
-        def g = Black76.greekDboe option: [kind: Put, atm: 1789.5d, strike: 1850d, condStrike: 1750d, r: 0.0, t: 5.0 / 24.0 / 365d, vol: 4.0]
-        println g
-    }
-
-    @Test
     void "should work out greek"() {
-        println Black76.greekDboe(option: [kind: Call, atm: 104.5d, strike: 97.5d, condStrike: 112.5d, r: 0.0, t: 12.0 / 365d, vol: 1.5])
+        println Black76.greekDboe(option: [kind: Call, atm: 104.5d, strike: 105d, condStrike: 120d, r: 0.0, t: 12.0 / 365d, vol: 1.5])
     }
-
 
     @Test
     void "should price DBOE option with variable spot"() {

@@ -20,7 +20,11 @@ class Black76 {
         return greekMap(map.option)
     }
 
-    static Map greekDboe(map) {
+    /**
+     * @param map
+     * @return price, delta, vega, gamma and theta
+     */
+    static Double[] greekDboe(map) {
         return greekDboeMap(map.option)
     }
 
@@ -52,11 +56,11 @@ class Black76 {
         priceOption(option.kind, option.atm, option.strike, option.r, option.t, option.vol) - priceOption(option.kind, option.atm, option.condStrike, option.r, option.t, option.condVol > 0d ? option.condVol : option.vol)
     }
 
-    private static Map greekDboeMap(Map option) {
+    private static Double[] greekDboeMap(Map option) {
         def g1 = greekOption(option.kind, option.atm, option.strike, option.r, option.t, option.vol)
         def g2 = greekOption(option.kind, option.atm, option.condStrike, option.r, option.t, option.vol)
 
-        return g1.collectEntries { k, v -> [(k): v - g2[k]] }
+        return [g1.px - g2.px, g1.delta - g2.delta, g1.vega - g2.vega, g1.gamma - g2.gamma, g1.theta - g2.theta]
     }
 
     private static double priceMap(Map option) {
@@ -70,7 +74,6 @@ class Black76 {
     private static class NormalDistributionWrapper {
         static NormalDistribution normal = new NormalDistribution()
     }
-
 
     static double priceOption(OptionKind kind, double atm, double strike, double r, double timeToMaturity, double vol) {
         def d1 = (Math.log(atm / strike) + vol * vol * timeToMaturity / 2) / vol / Math.sqrt(timeToMaturity)

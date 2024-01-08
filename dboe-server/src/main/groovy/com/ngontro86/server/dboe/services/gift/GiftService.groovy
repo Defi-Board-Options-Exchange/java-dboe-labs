@@ -1,11 +1,10 @@
 package com.ngontro86.server.dboe.services.gift
 
 import com.ngontro86.cep.CepEngine
+import com.ngontro86.cep.setting.CepEngineInitializer
 import com.ngontro86.common.annotations.DBOEComponent
 import com.ngontro86.common.annotations.Logging
 import com.ngontro86.common.serials.ObjMap
-import com.ngontro86.common.times.GlobalTimeController
-import com.ngontro86.utils.GlobalTimeUtils
 import org.apache.logging.log4j.Logger
 
 import javax.annotation.PostConstruct
@@ -22,6 +21,9 @@ class GiftService {
 
     @Inject
     private CepEngine cep
+
+    @Inject
+    private CepEngineInitializer initializer
 
     private Map<String, GiftConfig> giftConfigs
 

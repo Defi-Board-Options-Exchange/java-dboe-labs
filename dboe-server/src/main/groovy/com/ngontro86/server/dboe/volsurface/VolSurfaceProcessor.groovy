@@ -40,7 +40,10 @@ class VolSurfaceProcessor {
     @Inject
     private VolDownloader volDownloader
 
-    private String query = ResourcesUtils.content("epl-query/raw-iv.sql")
+    @ConfigValue(config = "externalSurfaceUnderlyings")
+    private Collection externalSurfaceUnderlyings = ['BTC', 'ETH']
+
+    private String queryRawPx = ResourcesUtils.content("epl-query/raw-px.sql")
     private String queryActiveOptions = ResourcesUtils.content("epl-query/active-options.sql")
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2)
@@ -68,10 +71,38 @@ class VolSurfaceProcessor {
 
     private void processRawVols() {
         try {
-            def vols = cepEngine.queryMap(query)
-            VolSurfaceHelper.smoothenVols(vols)
-            vols.each {
-                cepEngine.accept(new ObjMap("DboeVolSurfaceEvent", it))
+            def optionWithMktPrices = cepEngine.queryMap(queryRawPx)
+            VolSurfaceHelper.implyVols(optionWithMktPrices)
+            VolSurfaceHelper.smoothenVols(optionWithMktPrices)
+            VolSurfaceHelper.updateGreek(optionWithMktPrices)
+            logger.info("Publishing ${optionWithMktPrices.findAll { it['ref_iv'] > 0d }.size()} events to CEP...")
+            optionWithMktPrices.findAll { it['ref_iv'] > 0d }.each {
+                cepEngine.accept(new ObjMap("DboeOptionGreekEvent",
+                        [
+                                'instr_id'    : it['instr_id'],
+                                'ref_iv'      : it['ref_iv'],
+                                'bid_iv'      : it['bid_iv'],
+                                'ask_iv'      : it['ask_iv'],
+                                'spot'        : it['spot'],
+                                'greek'       : it['greek'],
+                                'in_timestamp': cepEngine.currentTimeMillis,
+                        ]
+                ))
+
+                cepEngine.accept(new ObjMap("DboeVolSurfaceEvent",
+                        [
+                                'source'      : 'DBOE',
+                                'underlying'  : it['underlying'],
+                                'expiry'      : it['expiry'],
+                                'kind'        : it['kind'],
+                                'timeToExpiry': it['time_to_expiry'],
+                                'moneyness'   : it['moneyness'],
+                                'vol'         : it['ref_iv'],
+                                'atm_price'   : it['spot'],
+                                'strike'      : it['strike'],
+                                'in_timestamp': cepEngine.currentTimeMillis,
+                        ]
+                ))
             }
         } catch (Exception e) {
             logger.error(e)
@@ -81,8 +112,8 @@ class VolSurfaceProcessor {
     private void injectExternalVols() {
         try {
             Map<String, ParamlessPolynomialSurface> surfaces = [:]
-            cepEngine.queryMap("select distinct underlying from DboeOptionInstrWin").each {
-                surfaces.put(it['underlying'], new ParamlessPolynomialSurface())
+            externalSurfaceUnderlyings.each {
+                surfaces.put(it, new ParamlessPolynomialSurface())
             }
             surfaces.each { und, surface ->
                 def volData = volDownloader.loadVols(und)

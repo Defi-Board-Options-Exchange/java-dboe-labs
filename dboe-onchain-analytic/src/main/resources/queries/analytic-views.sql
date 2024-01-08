@@ -167,11 +167,19 @@ INNER JOIN
 ) t ON t.date = v.date AND t.chain = v.chain
 
 
-CREATE OR REPLACE VIEW dboe_active_option_traded_value as
-SELECT o.chain, t.instr_id, SUM(ABS(notional))/2 AS tradedValue
+CREATE OR REPLACE VIEW dboe_active_option_traded_value AS
+
+SELECT o.chain, t.instr_id, SUM(ABS(volume)) * s.avg_spot/2 AS tradedValue
 FROM analytics.dboe_wallet_txn t
 INNER JOIN  dboe_all_options o ON o.expiry >= cast(date_format(CURRENT_DATE(), '%Y%m%d') AS UNSIGNED) and t.instr_id = o.instr_id AND t.chain = o.chain
-group BY 1, 2
+INNER JOIN
+(
+	select DATE, underlying, avg(spot) as avg_spot
+	from dboe_intraday_spot
+	WHERE spot > 0
+	GROUP BY 1, 2
+) s ON o.underlying = s.underlying AND cast(date_format(t.TxnTimestamp, '%Y%m%d') AS UNSIGNED) = s.date
+group BY o.chain, t.instr_id, s.avg_spot
 
 CREATE OR REPLACE VIEW dboe_new_wallet_count as
 SELECT a.date, a.numNewWallets, k.newWalletKyt, t.numberOfWalletSubmittedOrders

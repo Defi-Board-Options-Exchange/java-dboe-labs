@@ -15,21 +15,6 @@ create schema DboeRefPriceEvent as (
 create window DboeRefPriceWin.std:unique(chain, instr_id, currency) as DboeRefPriceEvent;
 @Name('DboeRefPriceWin') insert into DboeRefPriceWin select * from DboeRefPriceEvent;
 
-
-@Name('ImpliedVol')
-insert into DboeImpliedVolEvent
-select
-    p.instr_id as instr_id,
-    100.0 * OptionUtils.iv(p.bid, i.kind, s.spot, i.strike, i.cond_strike, t.time_to_expiry) as bid_iv,
-    100.0 * OptionUtils.iv(p.ask, i.kind, s.spot, i.strike, i.cond_strike, t.time_to_expiry) as ask_iv,
-    100.0 * OptionUtils.iv(r.ref_price, i.kind, s.spot, i.strike, i.cond_strike, t.time_to_expiry) as ref_iv,
-    p.in_timestamp as in_timestamp
-from DboePriceWin p
-inner join DboeRefPriceWin r on p.instr_id = r.instr_id and p.chain = r.chain and p.currency = r.currency
-inner join DboeOptionInstrWin i on p.instr_id = i.instr_id
-inner join DboeOptionTimeToExpiryWin(time_to_expiry>0) t on p.instr_id = t.instr_id
-inner join DboeSpotWin s on i.underlying = s.underlying;
-
 @Name('DboeRefStatEvent')
 insert into DboeRefStatEvent
 select
@@ -147,17 +132,21 @@ create schema DboeOptionChainMarketEvent as (
     strike double,
     cond_strike double,
 
-    bid double,
     ref_price double,
     price_change_pct double,
     delay string,
+
+    bid double,
     ask double,
     bid_size double,
     ask_size double,
     open_interest double,
     traded_value double,
+
     bid_iv double,
     ask_iv double,
+    greek Double[],
+
     buy_mwr double,
     sell_mwr double,
     in_timestamp long
@@ -191,13 +180,14 @@ select
     coalesce(tradedValue, 0.0) as traded_value,
     bid_iv,
     ask_iv,
+    greek,
     Math.abs(i.strike - i.cond_strike)/bid as buy_mwr,
     Math.abs(i.strike - i.cond_strike)/ask as sell_mwr,
     current_timestamp() as in_timestamp
 from DboeOptionInstrWin i unidirectional
 left outer join DboeSpotWin s on i.underlying = s.underlying
 left outer join DboeRefStatsWin r on i.instr_id = r.instr_id and i.chain = r.chain and i.currency = r.currency
-left outer join DboeImpliedVolWin v on i.instr_id = v.instr_id
+left outer join DboeOptionGreekWin v on i.instr_id = v.instr_id
 left outer join DboeOpenInterestWin oi on i.instr_id = oi.instr_id and i.chain = oi.chain and i.currency = oi.currency
 left outer join DboeActiveOptionsTradedValueWin t on i.instr_id = t.instr_id and i.chain = t.chain
 full outer join DboePriceWin p on i.instr_id = p.instr_id and i.chain = p.chain and i.currency = p.currency;
@@ -228,13 +218,14 @@ select
     coalesce(tradedValue, 0.0) as traded_value,
     bid_iv,
     ask_iv,
+    greek,
     Math.abs(i.strike - i.cond_strike)/bid as buy_mwr,
     Math.abs(i.strike - i.cond_strike)/ask as sell_mwr,
     current_timestamp() as in_timestamp
 from DboePriceWin p
 inner join DboeOptionInstrWin i on i.instr_id = p.instr_id and i.chain = p.chain and i.currency = p.currency
 inner join DboeSpotWin s on i.underlying = s.underlying
-inner join DboeImpliedVolWin v on p.instr_id = v.instr_id
+inner join DboeOptionGreekWin v on p.instr_id = v.instr_id
 inner join DboeOpenInterestWin oi on p.instr_id = oi.instr_id and p.chain = oi.chain and p.currency = oi.currency
 left outer join DboeRefStatsWin r on p.instr_id = r.instr_id and p.chain = r.chain and p.currency = r.currency
 left outer join DboeActiveOptionsTradedValueWin t on p.instr_id = t.instr_id and p.chain = t.chain;

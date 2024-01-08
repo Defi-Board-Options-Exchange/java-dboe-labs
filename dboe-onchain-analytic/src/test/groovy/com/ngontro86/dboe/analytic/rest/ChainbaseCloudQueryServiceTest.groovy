@@ -29,7 +29,8 @@ class ChainbaseCloudQueryServiceTest {
     @Test
     void "should be able to pull all the transfers"() {
         def queryService = env.component(ChainbaseCloudQueryService)
-
+        def txnHashes = lines('txn-hashes')
+        txnHashes.each { println "Txn Hash: ${it}"}
         def transfers = queryService.query(lines('txn-hashes'))
         println "Found: ${transfers.size()} records..."
         transfers.each { println it }

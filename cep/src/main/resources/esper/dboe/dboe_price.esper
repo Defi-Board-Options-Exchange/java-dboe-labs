@@ -95,26 +95,13 @@ create schema DboeSpotEvent as (
 create window DboeSpotWin.std:unique(underlying) as DboeSpotEvent;
 @Name('DboeSpotWin') insert into DboeSpotWin select * from DboeSpotEvent;
 
-create schema DboeImpliedVolEvent as (
-    instr_id string,
-    bid_iv double,
-    ask_iv double,
-    ref_iv double,
-    in_timestamp long
-);
-
-create window DboeImpliedVolWin.win:time(900 sec).std:unique(instr_id) as DboeImpliedVolEvent;
-@Name('DboeImpliedVolWin') insert into DboeImpliedVolWin select * from DboeImpliedVolEvent;
-
 create schema DboeOptionGreekEvent as (
     instr_id string,
-    timeToExpiry double,
-    vol double,
-    atm_price double,
-    delta double,
-    vega double,
-    gamma double,
-    theta double,
+    ref_iv double,
+    bid_iv double,
+    ask_iv double,
+    spot double,
+    greek Double[],
     in_timestamp long
 );
 

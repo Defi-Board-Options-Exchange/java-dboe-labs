@@ -9,8 +9,9 @@ class VolSurfaceHelperTest {
     @Test
     void "should smoothen vol"() {
         def vols = JsonUtils.fromJson(ResourcesUtils.content('impliedVol.txt'), Collection) as Collection<Map>
-        vols.each { println it }
+        VolSurfaceHelper.implyVols(vols)
         VolSurfaceHelper.smoothenVols(vols)
+        VolSurfaceHelper.updateGreek(vols)
         println "Done smoothen..."
         vols.each { println it }
     }
