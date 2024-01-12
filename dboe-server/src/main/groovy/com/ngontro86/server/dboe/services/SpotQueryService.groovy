@@ -35,7 +35,7 @@ class SpotQueryService {
         return maps.isEmpty() ? [:] : maps.first()
     }
 
-    Collection<Map> trades(String walletId) {
+    Collection<Map> trades(String walletId, String chain) {
         []
     }
 

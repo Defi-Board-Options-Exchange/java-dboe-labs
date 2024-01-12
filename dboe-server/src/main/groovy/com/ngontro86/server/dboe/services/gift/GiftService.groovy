@@ -30,13 +30,13 @@ class GiftService {
     @PostConstruct
     private void init() {
         giftConfigs = cep.queryMap("select * from DboeMysteriousGiftConfigWin").collectEntries {
-            [(it['name']): new GiftConfig(winningProb: it['win_prob'], avgReward: it['avg_reward'])]
+            [(it['name']): new GiftConfig(maxReward: it['max_reward'], minReward: it['min_reward'])]
         }
         logger.info("Got: ${giftConfigs.size()} Gift Config records")
     }
 
     Collection<Map> numOfGifts(String wallet) {
-        return cep.queryMap("select name, quota from DboeMysteriousGiftUserQuotaLeftWin(wallet_id='${wallet}')")
+        return cep.queryMap("select name, quota from DboeMysteriousGiftUserQuotaLeftWin(wallet_id='${wallet.toLowerCase()}')")
     }
 
     Double open(String openKey, String wallet, String name) {
@@ -44,12 +44,7 @@ class GiftService {
         if (!numOfGifts.containsKey(name) || numOfGifts.get(name).first()['quota'] <= 0) {
             throw new IllegalAccessError("No more gift name:${name} for this wallet:${wallet}")
         }
-        Double reward = 0d
-        if (giftConfigs.containsKey(name)) {
-            if (Math.random() < giftConfigs.get(name).winningProb) {
-                reward = giftConfigs.get(name).avgReward
-            }
-        }
+        double reward = giftConfigs.containsKey(name) ? (giftConfigs.get(name).minReward + Math.random() * (giftConfigs.get(name).maxReward - giftConfigs.get(name).minReward)) : 0d
 
         cep.accept(new ObjMap('dboe_mysterious_gift_user_open_event', [
                 'date'     : getTimeFormat(currentTimeMillis, 'yyyyMMdd'),
@@ -64,12 +59,20 @@ class GiftService {
     }
 
     Collection<Map> gifts() {
-        cep.queryMap("select name, max_recipient, pool_size, reward_token, avg_reward as reward from DboeMysteriousGiftConfigWin")
+        cep.queryMap("select name, max_recipient, pool_size, reward_token, max_reward as reward from DboeMysteriousGiftConfigWin")
+    }
+
+    Collection<Map> giftHistory(String walletId) {
+        cep.queryMap("select date, o.name as name, reward, c.reward_token as token from DboeMysteriousGiftUserOpenWin(wallet_id='${walletId.toLowerCase()}') o inner join DboeMysteriousGiftConfigWin c on o.name = c.name")
+    }
+
+    Collection<Map> giftDashboard() {
+        cep.queryMap("select c.reward_token as token, sum(c.pool_size) as pool_size, sum(reward) as reward from DboeMysteriousGiftUserOpenWin o inner join DboeMysteriousGiftConfigWin c on o.name = c.name group by c.reward_token")
     }
 
     private static class GiftConfig {
-        double winningProb
-        double avgReward
+        double maxReward
+        double minReward
     }
 
 }

@@ -58,8 +58,8 @@ class SpotQueryRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Query historical trades", response = Collection.class)
-    Collection<Map> walletAvgPx(@QueryParam("walletId") String walletId) {
-        return queryService.trades(walletId)
+    Collection<Map> trades(@QueryParam("walletId") String walletId, @QueryParam("chain") String chain) {
+        return queryService.trades(walletId, chain)
     }
 
     @GET

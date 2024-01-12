@@ -15,8 +15,7 @@ create schema dboe_mysterious_gift_user_open_event as (
     name string,
     wallet_id string,
     open_key string,
-    reward double,
-    timestamp long
+    reward double
 );
 
 create window DboeMysteriousGiftUserOpenWin.std:unique(date, name, wallet_id, open_key) as dboe_mysterious_gift_user_open_event;
@@ -30,8 +29,8 @@ create schema dboe_mysterious_gift_config_event as (
     max_recipient int,
     reward_token string,
     num_gift_box int,
-    avg_reward double,
-    win_prob double,
+    min_reward double,
+    max_reward double,
     pool_size int,
     start_date int,
     end_date int,
@@ -40,6 +39,17 @@ create schema dboe_mysterious_gift_config_event as (
 
 create window DboeMysteriousGiftConfigWin.std:unique(name, type) as dboe_mysterious_gift_config_event;
 @Name('DboeMysteriousGiftConfigWin') insert into DboeMysteriousGiftConfigWin select * from dboe_mysterious_gift_config_event;
+
+create schema dboe_date_event as (date int, in_timestamp long);
+create window DboeDateWin.win:length(1) as dboe_date_event;
+@Name('DBOEDateWin') insert into DboeDateWin select * from dboe_date_event;
+
+insert into dboe_date_event
+select
+    current_timestamp().getYear() * 10000 + (1 + current_timestamp().getMonthOfYear()) * 100 + current_timestamp().getDayOfMonth() as date,
+    current_timestamp as in_timestamp
+from DboeMysteriousGiftConfigWin
+output snapshot every 5 minutes;
 
 create schema DboeMysteriousGiftUserQuotaEvent as (
     name string,
@@ -74,17 +84,6 @@ create schema DboeMysteriousGiftUserQuotaLeftEvent as (
 create window DboeMysteriousGiftUserQuotaLeftWin.std:unique(name, wallet_id) as DboeMysteriousGiftUserQuotaLeftEvent;
 @Name('DboeMysteriousGiftUserQuotaLeftWin') insert into DboeMysteriousGiftUserQuotaLeftWin select * from DboeMysteriousGiftUserQuotaLeftEvent;
 
-@Name('Daily-Gift-Quota-Left')
-insert into DboeMysteriousGiftUserQuotaLeftEvent
-select
-    q.name as name,
-    q.wallet_id as wallet_id,
-    q.quota - cast(count(distinct o.open_key) as int) as quota
-from DboeMysteriousGiftUserQuotaWin q
-inner join DboeMysteriousGiftConfigWin(frequency='Daily') c on q.name = c.name
-left outer join DboeMysteriousGiftUserOpenWin(date=current_timestamp.getYear() * 10000 + (1 + current_timestamp.getMonthOfYear()) * 100 + current_timestamp.getDayOfMonth()) o on q.wallet_id = o.wallet_id and q.name = o.name
-group by q.name, q.wallet_id;
-
 @Name('Daily-Gift-Quota-Left-Timer')
 insert into DboeMysteriousGiftUserQuotaLeftEvent
 select
@@ -93,9 +92,9 @@ select
     q.quota - cast(count(distinct o.open_key) as int) as quota
 from DboeMysteriousGiftUserQuotaWin q
 inner join DboeMysteriousGiftConfigWin(frequency='Daily') c on q.name = c.name
-left outer join DboeMysteriousGiftUserOpenWin(date=current_timestamp.getYear() * 10000 + (1 + current_timestamp.getMonthOfYear()) * 100 + current_timestamp.getDayOfMonth()) o on q.wallet_id = o.wallet_id and q.name = o.name
-group by q.name, q.wallet_id
-output snapshot every 5 minutes;
+left outer join DboeMysteriousGiftUserOpenWin o on q.wallet_id = o.wallet_id and q.name = o.name
+left outer join DboeDateWin d on d.date = o.date
+group by q.name, q.wallet_id;
 
 @Name('Other Gift-Quota-Left')
 insert into DboeMysteriousGiftUserQuotaLeftEvent

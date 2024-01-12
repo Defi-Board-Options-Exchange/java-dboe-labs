@@ -50,7 +50,7 @@ class AnalyticService {
             [(it['instr_id']): it]
         } as Map<String, Map>
 
-        optionPortfolioManager.portfolio(wallets).each { instrId, pos ->
+        optionPortfolioManager.portfolio(wallets).findAll { it.value > 0d }.each { instrId, pos ->
             def opt = optionPortfolioManager.optionByInstrId.get(instrId).first() as Map
             def underlying = opt['underlying']
             risks.putIfAbsent(underlying, new GreekRisk())
@@ -59,9 +59,9 @@ class AnalyticService {
                 def spot = optionGreeks.get(instrId)['spot']
                 def greek = optionGreeks.get(instrId)['greek']
                 risks.get(underlying).delta += pos * spot * greek[1]
-                risks.get(underlying).vega += 100d * pos * greek[2]
-                risks.get(underlying).gamma += pos * greek[3]
-                risks.get(underlying).theta += 365d * pos * greek[4]
+                risks.get(underlying).vega += pos * greek[2]
+                risks.get(underlying).gamma += pos * spot * spot * greek[3]
+                risks.get(underlying).theta +=  pos * greek[4] / 365d
             }
         }
         return risks

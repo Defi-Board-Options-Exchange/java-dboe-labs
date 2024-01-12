@@ -44,6 +44,24 @@ class GiftRestService {
         return giftService.numOfGifts(walletId)
     }
 
+    @GET
+    @Path('/giftHistory')
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Given wallet, return all opens", response = Collection.class)
+    Collection<Map> giftHistory(@QueryParam("walletId") String walletId) {
+        return giftService.giftHistory(walletId)
+    }
+
+    @GET
+    @Path('/giftDashboard')
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Return all opens", response = Collection.class)
+    Collection<Map> giftDashboard() {
+        return giftService.giftDashboard()
+    }
+
     @POST
     @Path('/open')
     @Consumes(MediaType.APPLICATION_JSON)
