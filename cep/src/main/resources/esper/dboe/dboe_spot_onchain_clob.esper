@@ -1,5 +1,14 @@
 module com.ngontro86.server.dboe_spot_onchain_clob;
 
+create schema dboe_underlying_mapping_event as (
+    chain string,
+    token_symbol string,
+    underlying string
+);
+
+create window DboeUnderlyingMappingWin.std:unique(chain, token_symbol, underlying) as dboe_underlying_mapping_event;
+@Name('DboeUnderlyingMappingWin') insert into DboeUnderlyingMappingWin select * from dboe_underlying_mapping_event;
+
 create schema dboe_spot_dashboard_address_event as (
     chain string,
     dashboard_address string
@@ -90,6 +99,8 @@ create schema DboeSpotMarketOverviewEvent as (
     base_token string,
     quote_name string,
     base_name string,
+    quote_underlying string,
+    base_underlying string,
     quote_decimal long,
     base_decimal long,
     chain string,
@@ -111,6 +122,8 @@ select
     s.base_token as base_token,
     s.quote_name as quote_name,
     s.base_name as base_name,
+    coalesce(m1.underlying, s.quote_name) as quote_underlying,
+    coalesce(m2.underlying, s.base_name) as base_underlying,
     s.quote_decimal as quote_decimal,
     s.base_decimal as base_decimal,
     s.chain as chain,
@@ -121,6 +134,8 @@ select
     r.delay as delay,
     current_timestamp() as in_timestamp
 from DboeSpotMarketWin s
+left outer join DboeUnderlyingMappingWin m1 on s.quote_name = m1.token_symbol and s.chain = m1.chain
+left outer join DboeUnderlyingMappingWin m2 on s.base_name = m2.token_symbol and s.chain = m2.chain
 left outer join DboeSpotPrevRefWin r on s.chain = r.chain and s.quote_token = r.quote_token and s.base_token = r.base_token
 left outer join DboeSpotRefWin cr on s.chain = cr.chain and s.address = cr.address;
 

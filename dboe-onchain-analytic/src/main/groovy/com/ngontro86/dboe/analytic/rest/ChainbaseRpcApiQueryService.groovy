@@ -4,6 +4,7 @@ import com.ngontro86.common.annotations.ConfigValue
 import com.ngontro86.common.annotations.DBOEComponent
 import com.ngontro86.restful.common.client.HttpsRestClient
 import com.ngontro86.restful.common.client.RestClientBuilder
+import com.ngontro86.restful.common.json.JsonUtils
 
 import javax.ws.rs.client.Entity
 import javax.ws.rs.core.MediaType
@@ -20,35 +21,37 @@ class ChainbaseRpcApiQueryService {
     private static String USDT_CONTRACT_ADDRESS = '0xc2132d05d31c914a87c6611c10748aeb04b58e8f'
 
     Collection<Map> query(Collection<String> txnHashes) {
+        queryCount++
         def restClient = RestClientBuilder.buildHttpsClient('chainbaserpc')
-        txnHashes.collect { queryWithOneTxnHash(restClient, it) }.flatten()
+        def jsonRes = restClient.post(getApi(queryCount), [:], multipleHashes(txnHashes), String)
+        def logs = JsonUtils.readList(jsonRes, Collection.class, OneResponse.class)
+                .findAll { it.result != null && it.result.logs != null && !it.result.logs.isEmpty() }
+                .collect { it.result.logs }.flatten() as Collection<Log>
+
+        logs.findAll {
+            it.topics != null && it.topics.length == 3 && it.topics[0] == TRANSFER_HEX
+        }.collect { l -> l.toMap() }
     }
 
-    private Collection<Map> queryWithOneTxnHash(HttpsRestClient restClient, String txnHash) {
-        queryCount++
-        def res = restClient.post(getApi(queryCount), [:],
-                Entity.entity(
-                        [
-                                'id'     : 1,
-                                'jsonrpc': '2.0',
-                                'method' : 'eth_getTransactionReceipt',
-                                'params' : [txnHash] as String[]
-                        ],
-                        MediaType.APPLICATION_JSON_TYPE),
-                ChainbaseQueryResponse)
-        if (res.result == null || res.result.logs == null) {
-            return Collections.emptyList()
-        }
-        res.result.logs.findAll { it.topics != null && it.topics.length == 3 && it.topics[0] == TRANSFER_HEX }.collect {
-            it.toMap()
-        }
+    private static Entity multipleHashes(Collection<String> hashes) {
+        int idx = 0
+        Entity.entity(
+                hashes.collect {
+                    [
+                            'id'     : idx++,
+                            'jsonrpc': '2.0',
+                            'method' : 'eth_getTransactionReceipt',
+                            'params' : [it] as String[]
+                    ]
+                },
+                MediaType.APPLICATION_JSON_TYPE)
     }
 
     private String getApi(int cnt) {
         chainbaseApiKeys.getAt(cnt % chainbaseApiKeys.size())
     }
 
-    private static class ChainbaseQueryResponse {
+    private static class OneResponse {
         Result result
     }
 
@@ -80,4 +83,5 @@ class ChainbaseRpcApiQueryService {
             ]
         }
     }
+
 }

@@ -44,11 +44,14 @@ class DboeTransferExtractorApp {
     @ConfigValue(config = "useRPC")
     private Boolean useRPC = true
 
+    @ConfigValue(config = "batchSize")
+    private Integer batchSize = 10
+
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor()
 
     @EntryPoint
     void start() {
-        def query = content("queries/${sqlQueryFile}")
+        def query = String.format(content("queries/${sqlQueryFile}"), insertToTable)
         println query
         scheduler.scheduleAtFixedRate(new Runnable() {
             @Override
@@ -68,9 +71,11 @@ class DboeTransferExtractorApp {
             def txnHashes = flatDao.queryStringList(query)
             if (!txnHashes.isEmpty()) {
                 println("${new Date()}: Found ${txnHashes.size()} transaction hashes without transfers...")
-                def transfers = useRPC ? chainbaseRpcQS.query(txnHashes) : chainbaseCQS.query(txnHashes)
-                println("${new Date()}: Persisting ${transfers.size()} into DB ...")
-                flatDao.persist(insertToTable, transfers)
+                txnHashes.collate(batchSize).each {
+                    def transfers = useRPC ? chainbaseRpcQS.query(it) : chainbaseCQS.query(it)
+                    println("${new Date()}: Persisting ${transfers.size()} into DB ...")
+                    flatDao.persist(insertToTable, transfers)
+                }
             }
         } catch (Exception e) {
             logger.error(e)

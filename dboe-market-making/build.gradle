@@ -2,7 +2,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 
 jar {
     manifest {
-        attributes 'Description': 'Market Maker'
+        attributes 'Description': 'Options Market Maker'
         attributes 'Main-Class': 'com.ngontro86.app.common.AppBootstrap'
     }
 }

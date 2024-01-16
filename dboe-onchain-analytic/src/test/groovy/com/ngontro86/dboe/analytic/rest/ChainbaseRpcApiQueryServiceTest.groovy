@@ -21,7 +21,7 @@ class ChainbaseRpcApiQueryServiceTest {
                 'chainbaserpc.version' : 'TLSv1.2',
                 'chainbaserpc.port'    : '80',
                 'https.protocols'      : 'TLSv1,TLSv1.1,TLSv1.2',
-                'chainbaseApiKeys'     : 'xxxx'
+                'chainbaseApiKeys'     : 'xxx'
         ].each { k, v -> System.setProperty(k, v) }
 
         env = ComponentEnv.env([ChainbaseRpcApiQueryService, ConfigValuePostProcessor, LoggerPostProcessor])

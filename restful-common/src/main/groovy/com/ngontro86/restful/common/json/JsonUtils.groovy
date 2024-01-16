@@ -40,4 +40,13 @@ class JsonUtils {
         }
     }
 
+    static <T> List<T> readList(String json, Class<? extends Collection> type, Class<T> elementClass) {
+        try {
+            return getObjectMapper().readValue(json, getObjectMapper().getTypeFactory().constructCollectionType(type, elementClass))
+        } catch (IOException e) {
+            e.printStackTrace()
+            return null
+        }
+    }
+
 }
