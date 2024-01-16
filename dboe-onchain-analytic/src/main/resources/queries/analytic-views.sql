@@ -145,17 +145,24 @@ v.chain, v.currency, v.date, t.numOfTrades, t.tradedValue, t.totalFeeCollected, 
 FROM
 (
 	SELECT
-	o.chain, o.currency, o.date, SUM(o.open_interest) AS open_interest
+	o.chain, o.currency, o.date, SUM(o.open_interest * s.avg_spot) AS open_interest
 	from
 	(
-		SELECT o.instr_id, o.chain, o.currency, o.DATE, MAX(o.TIMESTAMP) AS timestamp
+		SELECT o.instr_id, i.underlying, o.chain, o.currency, o.DATE, MAX(o.TIMESTAMP) AS timestamp
 		FROM _dboe_open_interest o
 		INNER JOIN dboe_all_options i ON i.instr_id = o.instr_id AND i.chain = o.chain AND i.currency = o.currency and i.expiry >= o.date
 		WHERE MOD(o.TIMESTAMP, o.DATE) < 230000 AND o.date >= 20230813
-		GROUP BY 1,2,3,4
+		GROUP BY 1,2,3,4,5
 	) v
 	INNER JOIN _dboe_open_interest o ON v.instr_id = o.instr_id AND v.timestamp = o.timestamp AND o.chain = v.chain AND o.currency = v.currency
-	GROUP BY 1,2,3
+	INNER JOIN
+	(
+		select DATE, underlying, avg(spot) as avg_spot
+		from dboe_intraday_spot
+		WHERE spot > 0
+		GROUP BY 1, 2
+	) s ON v.underlying = s.underlying AND cast(date_format(v.timestamp, '%Y%m%d') AS UNSIGNED) = s.date
+	GROUP BY o.chain, o.currency, o.date
 ) v
 INNER JOIN
 (
