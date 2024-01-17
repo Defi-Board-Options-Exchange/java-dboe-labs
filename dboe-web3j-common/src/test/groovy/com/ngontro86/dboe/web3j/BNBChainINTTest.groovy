@@ -20,7 +20,7 @@ class BNBChainINTTest {
     void "init"() {
         [
                 'ethereumNodeUrl': 'https://rpc.ankr.com/bsc/a2642745708278991fdd0e67fdf231ac9c2e2318de76bb0695433ec4a129812e',
-                'credential'     : 'OWIyNmExNjQyYWVlNGQzZDJjNDA3NzhjZTk1MDZjNzc3MGNjZGYzYmJjMjk0MjNkYmU3ODZkMmJmNWJmMjNkYg==',
+                'credential'     : 'xxxx',
                 'chainId'        : '56',
                 'gasLimit'       : '12000000',
                 'gasPrice'       : '300000000000',

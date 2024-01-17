@@ -27,12 +27,12 @@ class PolygonINTTest {
                 //'ethereumNodeUrl'  : 'https://polygon-mainnet.g.alchemy.com/v2/6DFTYfJcjb7L4xLcG_hT6VwqHpavk_yq',
                 'ethereumNodeUrl'  : 'https://json-rpc.2aaynfw8c92s0hl9a79u1vdwh.blockchainnodeengine.com',
                 //'ethereumNodeUrl'  : 'https://json-rpc.6umvljcbsy6suny4y4m5vf13n.blockchainnodeengine.com',
-                //'credential'       : 'MDViMzI0ZmQ2MGM0ZTU5MzM5YjY0MmQ0Mzc2MTViNjFhM2Q5NGVmODFiMzBkZjk1NDVlZDhlM2VmOGQ0YjY5Yw==',
-                'credential'       : 'OWIyNmExNjQyYWVlNGQzZDJjNDA3NzhjZTk1MDZjNzc3MGNjZGYzYmJjMjk0MjNkYmU3ODZkMmJmNWJmMjNkYg==',
+                //'credential'       : 'xxxx',
+                'credential'       : 'xxx',
                 'chainId'          : '137',
                 'gasLimit'         : '12000000',
                 'gasPrice'         : '500000000000',
-                'web3jApiKey'      : 'AIzaSyDDLBVi0KKhXY1QHP-bXTP6XjUTsfzEZcU',
+                'web3jApiKey'      : 'xxxx-bXTP6XjUTsfzEZcU',
                 //'gasEstimator'     : 'Dynamic',
                 'nonceOffset'      : '16',
                 'offsetNonce'      : 'false',
@@ -46,8 +46,8 @@ class PolygonINTTest {
 
     @Test
     void "should be able to unhash"() {
-        //println KeyHashUtils.('eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJEQk9FIiwic3ViIjoiUHJpdmF0ZSBLZXkgU2lnbmluZyIsImV4cCI6MTcwMzk1MjAwMCwiY29tbW9uUGhyYXNlIjoiREJPRSIsInByaXZhdGVLZXkiOiIwNWIzMjRmZDYwYzRlNTkzMzliNjQyZDQzNzYxNWI2MWEzZDk0ZWY4MWIzMGRmOTU0NWVkOGUzZWY4ZDRiNjljIn0.7GhuDrGPMS9GB9BVtBt9pDYqKz_JiQ9nTYwMZGEzPl4', 'DBOEToTheMoon')).build().hashedValue
-        //println MaskedConfig.newInstance().setRawValue(KeyHashUtils.unhashedKey('eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJEQk9FIiwic3ViIjoiUHJpdmF0ZSBLZXkgU2lnbmluZyIsImV4cCI6MTcwMzk1MjAwMCwiY29tbW9uUGhyYXNlIjoiREJPRSIsInByaXZhdGVLZXkiOiJjYTYyOTc3MWVhOTc3MTg3NDQwMmJkNTUwOTI0OTFkYjE1MmIzNzQ2N2Q5ODg3Y2Y5YjY4OTRmNjRkNWM3NjliIn0.quveaGY9Ga72SNZSlxMyVWPsylHKVhq7t28BnM9isdM', 'DBOEToTheMoon')).build().hashedValue
+        //println KeyHashUtils.('xxx', 'DBOEToTheMoon')).build().hashedValue
+        //println MaskedConfig.newInstance().setRawValue(KeyHashUtils.unhashedKey('xxxx', 'DBOEToTheMoon')).build().hashedValue
     }
 
     @Test

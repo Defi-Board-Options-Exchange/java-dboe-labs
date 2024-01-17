@@ -21,8 +21,8 @@ class ArbitrumINTTest {
     @Before
     void "init"() {
         [
-                'ethereumNodeUrl'  : 'https://rpc.ankr.com/polygon/a2642745708278991fdd0e67fdf231ac9c2e2318de76bb0695433ec4a129812e',
-                'credential'       : 'MDViMzI0ZmQ2MGM0ZTU5MzM5YjY0MmQ0Mzc2MTViNjFhM2Q5NGVmODFiMzBkZjk1NDVlZDhlM2VmOGQ0YjY5Yw==',
+                'ethereumNodeUrl'  : 'https://rpc.ankr.com/polygon/yyyy',
+                'credential'       : 'xxxx',
                 'chainId'          : '137',
                 'gasLimit'         : '7000000',
                 'gasPrice'         : '90000000000',
@@ -35,32 +35,12 @@ class ArbitrumINTTest {
     }
 
     @Test
-    void "should be able to unhash"() {
-        println MaskedConfig.newInstance().setRawValue(KeyHashUtils.unhashedKey('eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJEQk9FIiwic3ViIjoiUHJpdmF0ZSBLZXkgU2lnbmluZyIsImV4cCI6MTcwMzk1MjAwMCwiY29tbW9uUGhyYXNlIjoiREJPRSIsInByaXZhdGVLZXkiOiIwNWIzMjRmZDYwYzRlNTkzMzliNjQyZDQzNzYxNWI2MWEzZDk0ZWY4MWIzMGRmOTU0NWVkOGUzZWY4ZDRiNjljIn0.7GhuDrGPMS9GB9BVtBt9pDYqKz_JiQ9nTYwMZGEzPl4', 'DBOEToTheMoon')).build().hashedValue
-    }
-
-    @Test
     void "should be able to get BTC and ETH price"() {
         def fsp = FspCalculator.load('0x731B70b86D494d6E6C3860Ad4EF6FCE04f25BA12', env.component(Web3j), env.component(RawTransactionManager), env.component(ContractGasProvider))
         println fsp.avgSpot(Utils.padding(32, 'ETH' as byte[]), 1699369200, 5).send()
         //println fsp.priceScales(Utils.padding(32, 'ETH' as byte[])).send()
     }
 
-    @Test
-    void "should be able to final settle ETH price"() {
-        def optionFactory = DBOEOptionFactory.load('0x231E7ced4B68Ffd6AEF68990F7967a93720A663F', env.component(Web3j), env.component(RawTransactionManager), env.component(ContractGasProvider))
-        //optionFactory.finalSettle(Utils.padding(32, 'ETH' as byte[]), 20231016).send()
-        //println optionFactory.underlyingPrice(Utils.padding(32, 'ETH' as byte[]), 20231006).send()
-        //optionFactory.manualFinalSettle(Utils.padding(32, 'ETH' as byte[]), 20231006, 16342590).send()
-    }
-
-    @Test
-    void "update ref prices for BTC"() {
-        def clob = DBOEClob.load('0xeC4e8861b70Db029d687306AC131B875D6bB1e4b', env.component(Web3j), env.component(RawTransactionManager), env.component(ContractGasProvider))
-        ["B27600C1013", "B27600P1013", "B27750C1013", "B27750P1013", "B27900C1013", "B27900P1013", "B28050C1013", "B28050P1013", "B28200C1013", "B28200P1013", "B28350C1013", "B28350P1013"].each {
-            clob.refreshRefPx(Utils.padding(32, it as byte[])).send()
-        }
-    }
 
     @Test
     void "pull MATIC and USDT balances for KYT wallets"() {
