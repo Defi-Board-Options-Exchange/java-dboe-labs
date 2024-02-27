@@ -32,7 +32,7 @@ class FuturesHedger implements HedgingExecutor {
     @Override
     void hedgeIfNeeded(String underlying, GreekRisk risk) {
         def portfolio = hedger.loadPositions()
-        println "Risk delta: ${risk.delta}, portfolio: ${portfolio.getOrDefault(underlying, 0d)}"
+        println "${underlying}, Risk delta: ${risk.delta}, portfolio: ${portfolio.getOrDefault(underlying, 0d)}"
         if (Math.abs(risk.delta + portfolio.getOrDefault(underlying, 0d)) * spotPricer.spot(underlying) >= deltaThreshold) {
             logger.info("Hedging: ${underlying}, residual delta: ${risk.delta + portfolio.getOrDefault(underlying, 0d)}")
             println("Hedging: ${underlying}, residual delta: ${risk.delta + portfolio.getOrDefault(underlying, 0d)}")

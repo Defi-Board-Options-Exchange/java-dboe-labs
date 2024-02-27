@@ -1,8 +1,9 @@
 package com.ngontro86.dboe.analytic
 
 
-import com.ngontro86.common.annotations.Logging
 import com.ngontro86.common.annotations.DBOEComponent
+import com.ngontro86.common.annotations.Logging
+import com.ngontro86.common.annotations.Web3jReadOnly
 import com.ngontro86.dboe.web3j.FspCalculator
 import org.apache.logging.log4j.Logger
 import org.web3j.protocol.Web3j
@@ -23,9 +24,11 @@ class SpotManager {
     private ContractGasProvider gasProvider
 
     @Inject
+    @Web3jReadOnly
     private Web3j web3j
 
     @Inject
+    @Web3jReadOnly
     private RawTransactionManager txnManager
 
     private Map<String, FspCalculator> fsps = [:]

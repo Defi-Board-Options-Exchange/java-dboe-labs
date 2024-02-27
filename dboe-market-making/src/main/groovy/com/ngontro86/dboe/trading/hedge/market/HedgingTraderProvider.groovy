@@ -12,6 +12,6 @@ class HedgingTraderProvider {
 
     @Bean
     HedgingTrader trader() {
-        return hedgingPlatform == 'Binance' ? new BinanceTrader() : null
+        return hedgingPlatform == 'Binance' ? new BinanceTrader() : new NoOpsHedgingTrader()
     }
 }

@@ -24,7 +24,7 @@ class DboeTokenStakingTest {
                 'gasPrice'       : '30000000000'
         ].each { k, v -> System.setProperty(k, v) }
 
-        env = ComponentEnv.env([Web3jClientProvider, GasProvider, TxnManagerProvider, ConfigValuePostProcessor, LoggerPostProcessor])
+        env = ComponentEnv.env([Web3jClientProvider, GasProvider, TxnManagerDbProvider, ConfigValuePostProcessor, LoggerPostProcessor])
     }
 
     @Test

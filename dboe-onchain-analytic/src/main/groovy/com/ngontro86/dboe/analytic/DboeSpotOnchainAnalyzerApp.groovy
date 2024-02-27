@@ -3,6 +3,7 @@ package com.ngontro86.dboe.analytic
 import com.ngontro86.common.annotations.ConfigValue
 import com.ngontro86.common.annotations.EntryPoint
 import com.ngontro86.common.annotations.Logging
+import com.ngontro86.common.annotations.Web3jReadOnly
 import com.ngontro86.common.net.SocketPublisher
 import com.ngontro86.common.serials.ObjEvent
 import com.ngontro86.common.serials.ObjMap
@@ -34,12 +35,14 @@ class DboeSpotOnchainAnalyzerApp {
     private SocketPublisher<ObjEvent, Object> servPub
 
     @Inject
+    @Web3jReadOnly
     private Web3j web3j
 
     @Inject
     private ContractGasProvider gasProvider
 
     @Inject
+    @Web3jReadOnly
     private RawTransactionManager txnManager
 
     @ConfigValue(config = "chain")

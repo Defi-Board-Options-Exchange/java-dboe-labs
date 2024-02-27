@@ -5,7 +5,7 @@ import com.ngontro86.app.common.postprocessor.LoggerPostProcessor
 import com.ngontro86.component.testing.ComponentEnv
 import com.ngontro86.dboe.web3j.DBOEClob
 import com.ngontro86.dboe.web3j.GasProvider
-import com.ngontro86.dboe.web3j.TxnManagerProvider
+import com.ngontro86.dboe.web3j.TxnManagerDbProvider
 import com.ngontro86.dboe.web3j.Web3jClientProvider
 import org.junit.Before
 import org.junit.Test
@@ -21,7 +21,6 @@ class DboeOnchainAnalyzerAppTest {
     void "init"() {
         [
                 'ethereumNodeUrl'     : 'https://api.avax.network/ext/bc/C/rpc',
-                'credential'          : PrivateKey.DEPLOYER_PK,
                 'chainId'             : '43114',
                 'gasLimit'            : '7000000',
                 'gasPrice'            : '25000000000',
@@ -30,7 +29,7 @@ class DboeOnchainAnalyzerAppTest {
                 'dboeHost.port'       : 'xxx'
         ].each { k, v -> System.setProperty(k, v) }
 
-        env = ComponentEnv.env([Web3jClientProvider, GasProvider, TxnManagerProvider, ConfigValuePostProcessor, LoggerPostProcessor])
+        env = ComponentEnv.env([Web3jClientProvider, GasProvider, TxnManagerDbProvider, ConfigValuePostProcessor, LoggerPostProcessor])
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.ngontro86.dboe.web3j.smartcontract
 
 import com.ngontro86.common.annotations.DBOEComponent
 import com.ngontro86.common.annotations.Logging
+import com.ngontro86.common.annotations.Web3jReadWrite
 import com.ngontro86.dboe.web3j.DBOEClearingHouse
 import com.ngontro86.dboe.web3j.Utils
 import org.apache.logging.log4j.Logger
@@ -21,9 +22,11 @@ class ClearingHouseManager {
     private ContractGasProvider gasProvider
 
     @Inject
+    @Web3jReadWrite
     private Web3j web3j
 
     @Inject
+    @Web3jReadWrite
     private RawTransactionManager rawTxnManager
 
     private Map<String, DBOEClearingHouse> clearingHouses = [:]

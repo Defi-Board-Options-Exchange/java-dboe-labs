@@ -4,18 +4,12 @@ import com.binance.connector.futures.client.impl.UMFuturesClientImpl
 import com.ngontro86.common.annotations.ConfigValue
 import com.ngontro86.common.annotations.Logging
 import com.ngontro86.dboe.trading.utils.MarketMakingUtils
-import com.ngontro86.market.price.SpotPricer
-import com.ngontro86.restful.common.json.JsonUtils
 import org.apache.logging.log4j.Logger
 
 import javax.annotation.PostConstruct
-import javax.inject.Inject
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
 
 import static com.ngontro86.dboe.trading.utils.MarketMakingUtils.*
 import static com.ngontro86.restful.common.json.JsonUtils.fromJson
-import static java.util.concurrent.TimeUnit.SECONDS
 
 class BinanceTrader implements HedgingTrader {
 
@@ -24,24 +18,16 @@ class BinanceTrader implements HedgingTrader {
 
     private UMFuturesClientImpl futuresClient
 
-    @Inject
-    private SpotPricer spotPricer
-
     @ConfigValue(config = "futuresApiKey")
     private String futuresApiKey
 
     @ConfigValue(config = "futuresSecretKey")
     private String futuresSecretKey
 
-    @ConfigValue(config = "spotPriceReloadSec")
-    private Integer spotPriceReload = 15
-
     @ConfigValue(config = "liveHedging")
     private Boolean liveHedging = false
 
     private Set<String> symbols = []
-
-    private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor()
 
     @ConfigValue(config = "qtyFmts")
     private Collection qtyFmts = ["SOL:0", "ETH:0.00", "BTC:0.000"]
@@ -60,14 +46,6 @@ class BinanceTrader implements HedgingTrader {
     @Override
     void setUnderlyings(Set<String> underlyings) {
         symbols.addAll(umSymbols(underlyings))
-        updateSpot()
-        scheduler.scheduleAtFixedRate(new Runnable() {
-            @Override
-            void run() {
-                updateSpot()
-            }
-        }, spotPriceReload, spotPriceReload, SECONDS)
-
     }
 
     @Override
@@ -113,14 +91,6 @@ class BinanceTrader implements HedgingTrader {
     private void throwExceptionIfUnsetSymbols() {
         if (symbols.isEmpty()) {
             throw new IllegalStateException("Unset symbols")
-        }
-    }
-
-    private void updateSpot() {
-        symbols.each {
-            def markMap = JsonUtils.fromJson(futuresClient.market().markPrice(['symbol': it] as LinkedHashMap), Map)
-            println "${markMap['symbol']}: ${Double.valueOf(markMap['indexPrice'])}"
-            spotPricer.update(underlying(markMap['symbol']), Double.valueOf(markMap['indexPrice']))
         }
     }
 }

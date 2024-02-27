@@ -1,6 +1,6 @@
 package com.ngontro86.market.instruments
 
-
+import com.ngontro86.common.annotations.ConfigValue
 import com.ngontro86.dboe.web3j.Utils
 import com.ngontro86.market.time.TimeSource
 import com.ngontro86.restful.common.client.RestClient
@@ -16,6 +16,9 @@ class RestBasedExchangeSpecsLoader implements ExchangeSpecsLoader {
 
     @Inject
     private TimeSource timeSource
+
+    @ConfigValue(config = "mmTokens")
+    private Collection mmTokens = ['WMATIC', 'DAI', 'AAVE', '1INCH', 'LINK', 'KNC', 'GRT', 'MANA', 'CRV']
 
     @PostConstruct
     private void init() {
@@ -57,5 +60,13 @@ class RestBasedExchangeSpecsLoader implements ExchangeSpecsLoader {
                 'chain'  : chain,
                 'instrId': instrId
         ], Collection) as Collection<Map>
+    }
+
+    @Override
+    Collection<Map> loadSpotPairs(String chain) {
+        def pairs = restClient.withQueryParams('spot/query/listMarkets', [
+                'chain': chain
+        ], Collection) as Collection<Map>
+        return pairs.findAll { mmTokens.contains(it['base_name']) }
     }
 }

@@ -29,6 +29,11 @@ class InMemoryTokenLoader implements TokenLoader<InMemoryERC20> {
     }
 
     @Override
+    String getOwnerAddress() {
+        return null
+    }
+
+    @Override
     InMemoryERC20 load(String address) {
         return prebuiltTokens.getOrDefault(address, new InMemoryERC20(address))
     }
@@ -51,5 +56,10 @@ class InMemoryTokenLoader implements TokenLoader<InMemoryERC20> {
     @Override
     BigInteger decimals(InMemoryERC20 token) {
         return 18
+    }
+
+    @Override
+    BigInteger nativeTokenBalance(String addr) {
+        return 0
     }
 }

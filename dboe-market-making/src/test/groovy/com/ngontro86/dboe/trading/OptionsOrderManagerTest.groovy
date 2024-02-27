@@ -3,6 +3,7 @@ package com.ngontro86.dboe.trading
 import com.ngontro86.app.common.postprocessor.ConfigValuePostProcessor
 import com.ngontro86.app.common.postprocessor.LoggerPostProcessor
 import com.ngontro86.component.testing.ComponentEnv
+import com.ngontro86.dboe.trading.spreading.OptionsOrderManager
 import com.ngontro86.market.price.SpotPricerProvider
 import com.ngontro86.market.time.TimeSourceProvider
 import com.ngontro86.market.web3j.Web3OptionPortfolioManager
@@ -12,7 +13,7 @@ import com.ngontro86.dboe.web3j.token.TokenLoaderProvider
 import org.junit.Before
 import org.junit.Test
 
-class OrderManagerTest {
+class OptionsOrderManagerTest {
 
     ComponentEnv env
 
@@ -30,7 +31,7 @@ class OrderManagerTest {
                 'timeSource'          : 'fixed'
         ].each { k, v -> System.setProperty(k, v) }
 
-        env = ComponentEnv.env([OrderManager,
+        env = ComponentEnv.env([OptionsOrderManager,
                                 //InMemoryClobManager,
                                 Web3OptionPortfolioManager,
                                 TokenLoaderProvider,
@@ -44,7 +45,7 @@ class OrderManagerTest {
 
     @Test
     void "should init self hedge"() {
-        env.component(OrderManager).startSpreading()
+        env.component(OptionsOrderManager).startSpreading()
         sleep 10000
         println "DONE!"
     }

@@ -2,6 +2,8 @@ package com.ngontro86.dboe.web3j.token
 
 interface TokenLoader<T> {
 
+    String getOwnerAddress()
+
     T load(String address)
 
     BigInteger balanceOf(T token, String account)
@@ -11,4 +13,6 @@ interface TokenLoader<T> {
     void approve(T token, String spender, BigInteger amount)
 
     BigInteger decimals(T token)
+
+    BigInteger nativeTokenBalance(String addr)
 }

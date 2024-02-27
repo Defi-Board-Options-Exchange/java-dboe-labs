@@ -3,6 +3,7 @@ package com.ngontro86.dboe.ref.updater
 import com.ngontro86.common.annotations.ConfigValue
 import com.ngontro86.common.annotations.EntryPoint
 import com.ngontro86.common.annotations.Logging
+import com.ngontro86.common.annotations.Web3jReadWrite
 import com.ngontro86.dboe.web3j.DBOEClob
 import org.apache.logging.log4j.Logger
 import org.web3j.protocol.Web3j
@@ -26,12 +27,14 @@ class DboeRefUpdaterApp {
     private Integer oldExpiry = 20230901
 
     @Inject
+    @Web3jReadWrite
     private Web3j web3j
 
     @Inject
     private ContractGasProvider gasProvider
 
     @Inject
+    @Web3jReadWrite
     private RawTransactionManager txnManager
 
     private Map<String, DBOEClob> dboeClobs = [:]

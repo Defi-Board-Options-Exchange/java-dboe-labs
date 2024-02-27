@@ -1,4 +1,4 @@
-package com.ngontro86.dboe.trading
+package com.ngontro86.dboe.trading.spreading
 
 import com.ngontro86.common.annotations.ConfigValue
 import com.ngontro86.common.annotations.DBOEComponent
@@ -23,7 +23,7 @@ import static com.ngontro86.market.pricing.OptionKind.Put
 import static java.util.concurrent.TimeUnit.MINUTES
 
 @DBOEComponent
-class OrderManager<T> {
+class OptionsOrderManager<T> {
 
     @Logging
     private Logger logger
@@ -92,10 +92,11 @@ class OrderManager<T> {
     @PostConstruct
     private void init() {
         def clobInfo = dexSpecsLoader.loadClobs(chain)
-        logger.info("Found: ${clobInfo.size()} CLOB for chain: ${chain}")
-
-        def uniqueClobAddresses = clobInfo.collect { it['ob_sc_address'] } as HashSet
-        uniqueClobAddresses.each { clobMap[it] = clobManager.load(it) }
+        println("Found: ${clobInfo.size()} CLOB for chain: ${chain}")
+        clobInfo.groupBy {it['ob_sc_address']}.each {
+            println "Loading DBOE Clob at: ${it.key}"
+            clobMap[it.key] = clobManager.load(it.key)
+        }
     }
 
     void startSpreading() {
@@ -161,6 +162,7 @@ class OrderManager<T> {
 
     private void spreadingOneOption(opt) {
         try {
+            println "Spreading Option: ${opt}"
             def fp = clobManager.currentRefPx(clobMap[opt['ob_address']], opt['instr_id']) / opt['underlying_px_scale']
             if (fp == 0d) {
                 println "Zero ref px, ${opt['instr_id']}..."

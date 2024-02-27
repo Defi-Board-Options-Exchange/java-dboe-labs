@@ -1,17 +1,13 @@
 package com.ngontro86.dboe.ref.updater
 
 import com.ngontro86.app.common.db.FlatDao
-import com.ngontro86.common.annotations.ConfigValue
-import com.ngontro86.common.annotations.EntryPoint
-import com.ngontro86.common.annotations.Logging
-import com.ngontro86.common.annotations.NonTxTransactional
+import com.ngontro86.common.annotations.*
 import com.ngontro86.common.times.GlobalTimeController
 import com.ngontro86.dboe.web3j.DBOEOptionFactory
-import com.ngontro86.dboe.web3j.TxnManagerProvider
-import com.ngontro86.dboe.web3j.encryption.KeyHashUtils
 import com.ngontro86.restful.common.client.RestClient
 import org.apache.logging.log4j.Logger
 import org.web3j.protocol.Web3j
+import org.web3j.tx.RawTransactionManager
 import org.web3j.tx.gas.ContractGasProvider
 
 import javax.annotation.PostConstruct
@@ -51,9 +47,11 @@ class DboeListingOptionApp {
     private RestClient restClient
 
     @Inject
-    private TxnManagerProvider txnManagerProvider
+    @Web3jReadWrite
+    private RawTransactionManager rawTransactionManager
 
     @Inject
+    @Web3jReadWrite
     private Web3j web3j
 
     @Inject
@@ -75,16 +73,13 @@ class DboeListingOptionApp {
 
     @EntryPoint
     void listOptions() {
-        def ops = flatDao.queryList("select signed_private_key, sign_key from dboe_key_admin.private_keys where wallet = 'Ops'").first()
-        def opWallet = KeyHashUtils.unhashedKey(ops['signed_private_key'], ops['sign_key'])
-
         def instrIds = flatDao.queryStringList("select instr_id from dboe_listing_tmp where expiry=${expiry} and chain = '${chain}'") as Set<String>
         println "${instrIds.size()} Options with expiry = ${expiry} have been listed. ${instrIds}..."
         underlyings.each { und ->
             def spot = spot(und)
             def template = flatDao.queryList("select * from dboe_listing_template where template='${template}' and chain='${chain}' and underlying='${und}'").first()
 
-            def optionFactory = DBOEOptionFactory.load(template['option_factory_address'], web3j, txnManagerProvider.onDemandTxnManager(opWallet), gasProvider)
+            def optionFactory = DBOEOptionFactory.load(template['option_factory_address'], web3j, rawTransactionManager, gasProvider)
             [true, false].each { callPut ->
                 def strikes = Utils.listStrikes(callPut, spot, template['strike_interval'], template['no_itm'], template['no_otm'], template['scale_up'])
                 strikes.each { strike ->

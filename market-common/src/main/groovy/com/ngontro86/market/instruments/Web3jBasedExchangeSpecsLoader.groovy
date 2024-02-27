@@ -26,4 +26,9 @@ class Web3jBasedExchangeSpecsLoader implements ExchangeSpecsLoader {
     Collection orderbook(String chain, String instrId) {
         return []
     }
+
+    @Override
+    Collection<Map> loadSpotPairs(String chain) {
+        return []
+    }
 }

@@ -24,9 +24,11 @@ class DeribitVolDownloaderTest {
     @Test
     void "should be able to load vol surface from Deribit"() {
         def volDownloader = env.component(DeribitVolDownloader)
-        volDownloader.loadVols('ETH').each { ttExpiry, map ->
-            map.each { moneyness, vol ->
-                println "${ttExpiry}, ${moneyness}, ${vol}"
+        ['BTC', 'ETH'].each { und ->
+            volDownloader.loadVols(und).each { ttExpiry, map ->
+                map.each { moneyness, vol ->
+                    println "${und},${ttExpiry},${moneyness},${vol}"
+                }
             }
         }
     }

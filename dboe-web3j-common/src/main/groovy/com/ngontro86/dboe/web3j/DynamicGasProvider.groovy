@@ -1,6 +1,7 @@
 package com.ngontro86.dboe.web3j
 
 import com.ngontro86.common.annotations.ConfigValue
+import com.ngontro86.common.annotations.Web3jReadOnly
 import org.web3j.protocol.Web3j
 import org.web3j.tx.gas.ContractGasProvider
 
@@ -12,6 +13,7 @@ class DynamicGasProvider implements ContractGasProvider {
     private Long gasLimit = 8_000_000L
 
     @Inject
+    @Web3jReadOnly
     private Web3j web3j
 
     @Override

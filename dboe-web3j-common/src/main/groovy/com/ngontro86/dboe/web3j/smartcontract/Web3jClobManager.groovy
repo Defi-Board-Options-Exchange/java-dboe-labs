@@ -1,6 +1,8 @@
 package com.ngontro86.dboe.web3j.smartcontract
 
+
 import com.ngontro86.common.annotations.Logging
+import com.ngontro86.common.annotations.Web3jReadWrite
 import com.ngontro86.dboe.web3j.DBOEClob
 import org.apache.logging.log4j.Logger
 import org.web3j.protocol.Web3j
@@ -20,9 +22,11 @@ class Web3jClobManager implements ClobManager<DBOEClob> {
     private ContractGasProvider gasProvider
 
     @Inject
+    @Web3jReadWrite
     private Web3j web3j
 
     @Inject
+    @Web3jReadWrite
     private RawTransactionManager rawTxnManager
 
     private final double SCALE = Math.pow(10, 18)

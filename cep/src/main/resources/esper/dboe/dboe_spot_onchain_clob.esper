@@ -208,7 +208,7 @@ select
     i.price as price,
     i.price_level as price_level,
     max(p.in_timestamp) as in_timestamp
-from DboeSpotOrderBookWin i
+from DboeSpotOrderBookWin i unidirectional
 inner join DboeSpotOrderBookWin p on i.chain = p.chain and i.address = p.address and i.buy_sell = p.buy_sell
 where i.price_level >= p.price_level
 group by i.chain, i.address, i.quote_token, i.base_token, i.quote_name, i.base_name, i.buy_sell, i.price, i.price_level;

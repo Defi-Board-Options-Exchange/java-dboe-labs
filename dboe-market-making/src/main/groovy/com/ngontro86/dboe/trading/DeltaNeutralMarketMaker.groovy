@@ -12,6 +12,7 @@ import com.ngontro86.market.time.TimeSource
 import com.ngontro86.market.volatility.VolatilityEstimator
 import com.ngontro86.market.web3j.GreekRisk
 import com.ngontro86.market.web3j.Web3OptionPortfolioManager
+import com.ngontro86.market.web3j.Web3TokenPortfolioManager
 import org.apache.logging.log4j.Logger
 
 import javax.inject.Inject
@@ -35,6 +36,9 @@ class DeltaNeutralMarketMaker {
     private Web3OptionPortfolioManager optionPm
 
     @Inject
+    private Web3TokenPortfolioManager tokenPm
+
+    @Inject
     private VolatilityEstimator volEstimator
 
     @Inject
@@ -50,20 +54,25 @@ class DeltaNeutralMarketMaker {
     private HedgingExecutor hedgingExecutor
 
     @Inject
-    private ExchangeSpecsLoader optionLoader
+    private ExchangeSpecsLoader exchangeApiLoader
 
     @ConfigValue(config = "chain")
     private String chain = 'AVAX'
+
+    private static Collection<String> FIATS = ['USDT', 'USDC']
 
     private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor()
 
     void startSelfHedge() {
         logger.info "Set Option tokens..."
-        optionPm.initOptions(optionLoader.loadOptions(chain))
+        optionPm.initOptions(exchangeApiLoader.loadOptions(chain))
+        tokenPm.initPairs(exchangeApiLoader.loadSpotPairs(chain))
         sleep 500
 
         logger.info "Set underlying token of hedging interest..."
-        hedgingExecutor.setUnderlyings(optionLoader.loadOptions(chain).collect { it['underlying'] } as Set)
+        def underlyings = exchangeApiLoader.loadOptions(chain).collect { it['underlying'] } as Set
+        underlyings.addAll(exchangeApiLoader.loadSpotPairs(chain).collect { it['base_underlying'] })
+        hedgingExecutor.setUnderlyings(underlyings)
         sleep 500
 
         logger.info "Run delta hedge periodically every ${deltaHedgingFreqSec} secs..."
@@ -77,7 +86,11 @@ class DeltaNeutralMarketMaker {
 
     private void deltaHedge() {
         try {
-            impliedRisk().each { underlying, risk ->
+            def risks = impliedRisk()
+            risks.each {
+                println "Underlying: ${it.key}, greeks: ${it.value.toString()}"
+            }
+            risks.findAll { !FIATS.contains(it.key) }.each { underlying, risk ->
                 println "${underlying}, risk: ${risk}"
                 hedgingExecutor.hedgeIfNeeded(underlying, risk)
             }
@@ -89,9 +102,10 @@ class DeltaNeutralMarketMaker {
     private Map<String, GreekRisk> impliedRisk() {
         def greekRisks = [:] as Map<String, GreekRisk>
         try {
-            optionPm.portfolio(portfolioAddresses).each { instrId, pos ->
+            println "Calculating Options portfolio"
+            optionPm.portfolio(portfolioAddresses).findAll { it.value > 0d }.each { instrId, pos ->
                 def opt = optionPm.optionByInstrId.get(instrId).first() as Map
-
+                println "Option risk, pos: ${pos}, opt: ${opt}"
                 greekRisks.putIfAbsent(opt['underlying'], new GreekRisk())
 
                 def ttExpiry = Utils.timeDiffInYear(opt['expiry'], opt['ltt'], time.currentTimeMilliSec())
@@ -120,6 +134,13 @@ class DeltaNeutralMarketMaker {
                 risk.vega += pos * (greek1['vega'] - greek2['vega'])
                 risk.gamma += pos * (greek1['gamma'] - greek2['gamma'])
                 risk.theta += pos * (greek1['theta'] - greek2['theta'])
+            }
+
+            println "Calculating Spot portfolio"
+            tokenPm.portfolio(portfolioAddresses).findAll { it.value > 0d }.each { underlying, pos ->
+                greekRisks.putIfAbsent(underlying, new GreekRisk())
+                println "Spot risk, underlying: ${underlying}, pos: ${pos}"
+                greekRisks.get(underlying).delta += pos
             }
 
             return greekRisks

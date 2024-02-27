@@ -4,7 +4,7 @@ import com.ngontro86.app.common.postprocessor.ConfigValuePostProcessor
 import com.ngontro86.app.common.postprocessor.LoggerPostProcessor
 import com.ngontro86.component.testing.ComponentEnv
 import com.ngontro86.dboe.web3j.GasProvider
-import com.ngontro86.dboe.web3j.TxnManagerProvider
+import com.ngontro86.dboe.web3j.TxnManagerDbProvider
 import com.ngontro86.dboe.web3j.Web3jClientProvider
 import org.junit.Before
 import org.junit.Ignore
@@ -27,7 +27,7 @@ class INTERC20TokenManagerTest {
                 'gasPrice'       : '1000000000'
         ].each { k, v -> System.setProperty(k, v) }
 
-        env = ComponentEnv.env([Web3jClientProvider, GasProvider, TxnManagerProvider, ERC20TokenManager, ConfigValuePostProcessor, LoggerPostProcessor])
+        env = ComponentEnv.env([Web3jClientProvider, GasProvider, TxnManagerDbProvider, ERC20TokenManager, ConfigValuePostProcessor, LoggerPostProcessor])
     }
 
     @Test

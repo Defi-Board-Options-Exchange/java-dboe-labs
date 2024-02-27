@@ -2,6 +2,7 @@ package com.ngontro86.dboe.token
 
 import com.ngontro86.common.annotations.ConfigValue
 import com.ngontro86.common.annotations.DBOEComponent
+import com.ngontro86.common.annotations.Web3jReadWrite
 import com.ngontro86.dboe.web3j.ERC20
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.RemoteCall
@@ -28,12 +29,14 @@ class ERC20TokenManager {
     private Long nativeTokenGasLimit = 21000L
 
     @Inject
+    @Web3jReadWrite
     private Web3j web3j
 
     @Inject
     private ContractGasProvider gasProvider
 
     @Inject
+    @Web3jReadWrite
     private RawTransactionManager txnManager
 
     @ConfigValue(config = "nativeToken")

@@ -1,5 +1,6 @@
 com.ngontro86.dboe.analytic
 com.ngontro86.dboe.web3j
 com.ngontro86.dboe.clearing
+com.ngontro86.app.common.db
 com.ngontro86.app.common
 com.ngontro86.restful.common

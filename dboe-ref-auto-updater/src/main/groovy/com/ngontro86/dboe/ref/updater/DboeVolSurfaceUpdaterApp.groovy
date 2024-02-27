@@ -2,6 +2,7 @@ package com.ngontro86.dboe.ref.updater
 
 import com.ngontro86.common.annotations.ConfigValue
 import com.ngontro86.common.annotations.EntryPoint
+import com.ngontro86.common.annotations.Web3jReadWrite
 import com.ngontro86.dboe.ref.updater.helper.DeribitVolDownloaderHelper
 import com.ngontro86.dboe.web3j.DBOEGlobalPricingSystem
 import com.ngontro86.market.volatility.ParamlessPolynomialSurface
@@ -17,12 +18,14 @@ import static java.lang.System.currentTimeMillis
 class DboeVolSurfaceUpdaterApp {
 
     @Inject
+    @Web3jReadWrite
     private Web3j web3j
 
     @Inject
     private ContractGasProvider gasProvider
 
     @Inject
+    @Web3jReadWrite
     private RawTransactionManager txnManager
 
     @ConfigValue(config = "underlyings")

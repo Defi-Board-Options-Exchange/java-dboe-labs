@@ -11,4 +11,9 @@ class ClobManagerProvider {
     ClobManager clobManager() {
         return new Web3jClobManager()
     }
+
+    @Bean
+    SpotClobManager spotClobManager() {
+        return new Web3jSpotClobManager()
+    }
 }

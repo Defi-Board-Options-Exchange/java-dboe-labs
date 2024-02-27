@@ -3,7 +3,7 @@ package com.ngontro86.dboe.trading
 import com.ngontro86.common.annotations.ConfigValue
 import com.ngontro86.common.annotations.DBOEComponent
 import com.ngontro86.common.annotations.Logging
-import com.ngontro86.dboe.web3j.Web3jManager
+import com.ngontro86.dboe.web3j.annotations.OptionLoader
 import com.ngontro86.dboe.web3j.smartcontract.ClearingHouseManager
 import com.ngontro86.dboe.web3j.token.TokenLoader
 import com.ngontro86.market.instruments.ExchangeSpecsLoader
@@ -14,19 +14,18 @@ import javax.annotation.PostConstruct
 import javax.inject.Inject
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
+
+import static java.util.concurrent.TimeUnit.MINUTES
 
 @Lazy(false)
 @DBOEComponent
-class SpendingLimitApprovalManager<T> {
+class OptionsSpendingLimitApprovalManager<T> {
 
     @Logging
     private Logger logger
 
     @Inject
-    private Web3jManager web3jManager
-
-    @Inject
+    @OptionLoader
     private TokenLoader<T> tokenLoader
 
     @ConfigValue(config = "defaultSpendingLimit")
@@ -46,19 +45,23 @@ class SpendingLimitApprovalManager<T> {
 
     private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1)
 
+    @ConfigValue(config = "optionsEnabled")
+    private Boolean optionsEnabled = true
+
     @PostConstruct
     private void init() {
-        approveSLUpfront()
-
-        scheduler.scheduleAtFixedRate(new Runnable() {
-            @Override
-            void run() {
-                approveSLUpfront()
-            }
-        }, 5, 5, TimeUnit.MINUTES)
+        if (optionsEnabled) {
+            approveOptionsSLUpfront()
+            scheduler.scheduleAtFixedRate(new Runnable() {
+                @Override
+                void run() {
+                    approveOptionsSLUpfront()
+                }
+            }, 5, 30, MINUTES)
+        }
     }
 
-    private void approveSLUpfront() {
+    private void approveOptionsSLUpfront() {
         logger.info "Approve Currency Spending Limit first!"
         def options = dexSpecsLoader.loadOptions(chain)
         approveClearingHouseSLIfNeeded(options)
@@ -81,8 +84,8 @@ class SpendingLimitApprovalManager<T> {
                         def token = tokenLoader.load(it['long_contract_address'])
                         def scale = Math.pow(10, tokenLoader.decimals(token))
                         approvalNeeded = approvalNeeded ||
-                                tokenLoader.allowance(token, web3jManager.getWallet(), clearingAddr) <= scale * minSpendingLimit ||
-                                tokenLoader.allowance(tokenLoader.load(it['short_contract_address']), web3jManager.getWallet(), clearingAddr) <= scale * minSpendingLimit
+                                tokenLoader.allowance(token, tokenLoader.getOwnerAddress(), clearingAddr) <= scale * minSpendingLimit ||
+                                tokenLoader.allowance(tokenLoader.load(it['short_contract_address']), tokenLoader.getOwnerAddress(), clearingAddr) <= scale * minSpendingLimit
                     }
                     if (approvalNeeded) {
                         clearingHouseManager.enableOptionTrading(clearingAddr, und, expiry)
@@ -99,14 +102,14 @@ class SpendingLimitApprovalManager<T> {
 
         logger.info("Found: ${currClearingHouseMap.size()} unique currency and clearing house pair")
         currClearingHouseMap.each {
-            approveClearinghouse(tokenLoader.load(it.currencyAddr), defaultSpendingLimit, it.clearingHouseAddr)
+            approveSLIfNeeded(tokenLoader.load(it.currencyAddr), defaultSpendingLimit, it.clearingHouseAddr)
         }
     }
 
-    private void approveClearinghouse(T token, int spendingLimit, String clearingHouseAddress) {
+    private void approveSLIfNeeded(T token, int spendingLimit, String spender) {
         def decimal = tokenLoader.decimals(token)
-        if (tokenLoader.allowance(token, web3jManager.getWallet(), clearingHouseAddress) <= Math.pow(10, decimal) * minSpendingLimit) {
-            tokenLoader.approve(token, clearingHouseAddress, Math.pow(10, decimal) * spendingLimit as BigInteger)
+        if (tokenLoader.allowance(token, tokenLoader.getOwnerAddress(), spender) <= Math.pow(10, decimal) * minSpendingLimit) {
+            tokenLoader.approve(token, spender, Math.pow(10, decimal) * spendingLimit as BigInteger)
         }
     }
 

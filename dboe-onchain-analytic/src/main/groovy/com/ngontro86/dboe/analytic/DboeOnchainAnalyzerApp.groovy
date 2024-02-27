@@ -4,6 +4,7 @@ package com.ngontro86.dboe.analytic
 import com.ngontro86.common.annotations.ConfigValue
 import com.ngontro86.common.annotations.EntryPoint
 import com.ngontro86.common.annotations.Logging
+import com.ngontro86.common.annotations.Web3jReadOnly
 import com.ngontro86.common.net.SocketPublisher
 import com.ngontro86.common.serials.ObjEvent
 import com.ngontro86.common.serials.ObjMap
@@ -36,12 +37,14 @@ class DboeOnchainAnalyzerApp {
     private SocketPublisher<ObjEvent, Object> servPub
 
     @Inject
+    @Web3jReadOnly
     private Web3j web3j
 
     @Inject
     private ContractGasProvider gasProvider
 
     @Inject
+    @Web3jReadOnly
     private RawTransactionManager txnManager
 
     @Inject
@@ -49,6 +52,9 @@ class DboeOnchainAnalyzerApp {
 
     @ConfigValue(config = "chain")
     private String chain = "AVAX"
+
+    @ConfigValue(config = "spotDelaySec")
+    private Integer spotDelaySec = 5
 
     @ConfigValue(config = "spotRefreshFreqSec")
     private Integer spotRefreshFreqSec = 5
@@ -306,7 +312,7 @@ class DboeOnchainAnalyzerApp {
     }
 
     private long getTime() {
-        return (long) (System.currentTimeMillis() / 1000 - 5)
+        return (long) (System.currentTimeMillis() / 1000 - spotDelaySec)
     }
 
     void updateOpenInterest() {

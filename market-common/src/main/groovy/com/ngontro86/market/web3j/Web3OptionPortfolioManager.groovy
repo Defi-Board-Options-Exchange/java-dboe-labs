@@ -3,6 +3,7 @@ package com.ngontro86.market.web3j
 
 import com.ngontro86.common.annotations.DBOEComponent
 import com.ngontro86.common.annotations.Logging
+import com.ngontro86.dboe.web3j.annotations.OptionLoader
 import com.ngontro86.dboe.web3j.token.TokenLoader
 import org.apache.logging.log4j.Logger
 
@@ -15,6 +16,7 @@ class Web3OptionPortfolioManager<T> {
     private Logger logger
 
     @Inject
+    @OptionLoader
     private TokenLoader<T> tokenLoader
 
     private Map<String, T> longTokens = [:]
