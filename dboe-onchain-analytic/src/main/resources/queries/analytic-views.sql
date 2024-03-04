@@ -339,3 +339,25 @@ right outer JOIN (
 	FROM analytics.dboe_wallet_txn
 	GROUP BY 1
 ) b ON a.Address = b.Address
+
+
+
+-- Copy Trade --
+CREATE OR REPLACE VIEW dboe_copytrade_portfolio as
+SELECT DATE, TIMESTAMP, CHAIN, wallet, SUM(val) AS portfolio_val
+FROM (
+	SELECT
+		DATE, TIMESTAMP, o.CHAIN, wallet, 'Options' AS category,
+		SUM(pos * (ref_px - (case when pos < 0 then abs(i.cond_strike - i.strike)  ELSE 0 END)) ) AS val
+	FROM dboe_copytrade_options_positions o
+	INNER JOIN _dboe_option_instr i ON o.chain = i.chain AND o.instr_id = i.instr_id
+	GROUP BY DATE, TIMESTAMP, o.CHAIN, wallet
+	UNION all
+	SELECT
+		DATE, TIMESTAMP, CHAIN, wallet, 'Spot' as category,
+		SUM(pos * ref_px) AS val
+	FROM dboe_copytrade_spot_positions
+	GROUP BY  DATE, TIMESTAMP, CHAIN, wallet
+) x
+GROUP BY 1,2,3,4
+ORDER BY CHAIN, DATE, TIMESTAMP

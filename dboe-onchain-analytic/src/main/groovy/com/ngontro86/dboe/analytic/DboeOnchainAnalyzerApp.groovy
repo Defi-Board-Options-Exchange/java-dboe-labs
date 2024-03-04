@@ -196,13 +196,13 @@ class DboeOnchainAnalyzerApp {
 
             servPub.handle(new ObjMap('DboeOnchainClobSpecsEvent',
                     [
-                            'chain'                      : chain,
-                            'ob_address'                 : obAddress,
-                            'num_px_level'               : specs.component1(),
-                            'maker_fee_bps'              : specs.component2(),
-                            'taker_fee_bps'              : specs.component3(),
-                            'max_order_validity_sec'     : specs.component4(),
-                            'min_lmt_order_notional'     : specs.component5()
+                            'chain'                 : chain,
+                            'ob_address'            : obAddress,
+                            'num_px_level'          : specs.component1(),
+                            'maker_fee_bps'         : specs.component2(),
+                            'taker_fee_bps'         : specs.component3(),
+                            'max_order_validity_sec': specs.component4(),
+                            'min_lmt_order_notional': specs.component5()
                     ]))
         }
     }
@@ -253,14 +253,7 @@ class DboeOnchainAnalyzerApp {
                 def twoSidedOb = [true, false].collectEntries { bs ->
                     [(bs): dboeClob.obDepth(padding(32, option['instr_id'] as byte[]), bs).send()]
                 }
-                def refPx
-                // TODO: to remove this part.
-                if(option['expiry'] < 20231229) {
-                    refPx = dboeClob.refPrices(padding(32, option['instr_id'] as byte[])).send()
-                } else {
-                    refPx = dboeClob.refInfo(padding(32, option['instr_id'] as byte[])).send().component1()
-                }
-
+                def refPx = dboeClob.refInfo(padding(32, option['instr_id'] as byte[])).send().component1()
                 println "${option['instr_id']}, ref: ${refPx}..."
 
                 twoSidedOb.each { bs, amounts ->
@@ -298,6 +291,7 @@ class DboeOnchainAnalyzerApp {
             spotManager.setFspAddresses(fspAddresses)
 
             underlyings.each { underlying ->
+                println "Querying spot for ${underlying}, as of: ${getTime()} ..."
                 def spot = spotManager.getSpot(underlying, getTime(), 5)
                 println "${underlying}, spot: ${spot}"
                 servPub.handle(new ObjMap('DboeSpotEvent', [
@@ -312,7 +306,7 @@ class DboeOnchainAnalyzerApp {
     }
 
     private long getTime() {
-        return (long) (System.currentTimeMillis() / 1000 - spotDelaySec)
+        return (long) ((System.currentTimeMillis() / 1000) - spotDelaySec)
     }
 
     void updateOpenInterest() {

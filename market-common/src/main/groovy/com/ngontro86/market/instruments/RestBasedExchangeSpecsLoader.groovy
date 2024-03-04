@@ -20,6 +20,9 @@ class RestBasedExchangeSpecsLoader implements ExchangeSpecsLoader {
     @ConfigValue(config = "mmTokens")
     private Collection mmTokens = ['WMATIC', 'DAI', 'AAVE', '1INCH', 'LINK', 'KNC', 'GRT', 'MANA', 'CRV']
 
+    @ConfigValue(config = "mmUnderlyings")
+    private Collection mmUnderlyings = ['BTC', 'ETH', 'SOL', 'MATIC']
+
     @PostConstruct
     private void init() {
         restClient = build('dboeHost')
@@ -33,7 +36,7 @@ class RestBasedExchangeSpecsLoader implements ExchangeSpecsLoader {
     @Override
     Collection loadOptions(String chain) {
         return restClient.withQueryParams('query/listInstrument', ['chain': chain], Collection).findAll {
-            it['chain'] == chain && Utils.getTimeUtc(it['expiry'], it['ltt']) >= timeSource.currentTimeMilliSec()
+            mmUnderlyings.contains(it['underlying']) && it['chain'] == chain && Utils.getTimeUtc(it['expiry'], it['ltt']) >= timeSource.currentTimeMilliSec()
         } as Collection<Map>
     }
 
@@ -68,5 +71,23 @@ class RestBasedExchangeSpecsLoader implements ExchangeSpecsLoader {
                 'chain': chain
         ], Collection) as Collection<Map>
         return pairs.findAll { mmTokens.contains(it['base_name']) }
+    }
+
+    @Override
+    Map<String, Double> refPrices(String chain) {
+        def optionsPx = restClient.withQueryParams('query/markPrices', [
+                'chain': chain
+        ], Collection) as Collection<Map>
+        def ret = optionsPx.collectEntries { [(it['instr_id']): it['ref_price']] }
+
+        def spotPx = restClient.withQueryParams('spot/query/listMarkets', [
+                'chain': chain
+        ], Collection) as Collection<Map>
+        ret.putAll(
+                spotPx.findAll { it['quote_name'] == 'USDT' }.collectEntries {
+                    [(it['base_underlying']): it['ref_price']]
+                }
+        )
+        return ret
     }
 }

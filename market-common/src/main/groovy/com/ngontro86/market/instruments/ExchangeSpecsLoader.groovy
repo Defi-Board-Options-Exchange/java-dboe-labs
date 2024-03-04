@@ -8,4 +8,6 @@ interface ExchangeSpecsLoader {
     Collection orderbook(String chain, String instrId)
 
     Collection<Map> loadSpotPairs(String chain)
+
+    Map<String, Double> refPrices(String chain)
 }

@@ -101,9 +101,9 @@ class DeltaNeutralMarketMaker {
 
     private Map<String, GreekRisk> impliedRisk() {
         def greekRisks = [:] as Map<String, GreekRisk>
-        try {
-            println "Calculating Options portfolio"
-            optionPm.portfolio(portfolioAddresses).findAll { it.value > 0d }.each { instrId, pos ->
+        println "Calculating Options portfolio"
+        optionPm.portfolio(portfolioAddresses).findAll { it.value != 0d }.each { instrId, pos ->
+            try {
                 def opt = optionPm.optionByInstrId.get(instrId).first() as Map
                 println "Option risk, pos: ${pos}, opt: ${opt}"
                 greekRisks.putIfAbsent(opt['underlying'], new GreekRisk())
@@ -134,18 +134,22 @@ class DeltaNeutralMarketMaker {
                 risk.vega += pos * (greek1['vega'] - greek2['vega'])
                 risk.gamma += pos * (greek1['gamma'] - greek2['gamma'])
                 risk.theta += pos * (greek1['theta'] - greek2['theta'])
+            } catch (Exception e) {
+                logger.error(e)
             }
+        }
 
-            println "Calculating Spot portfolio"
-            tokenPm.portfolio(portfolioAddresses).findAll { it.value > 0d }.each { underlying, pos ->
+        println "Calculating Spot portfolio"
+        tokenPm.portfolio(portfolioAddresses).findAll { it.value > 0d }.each { underlying, pos ->
+            try {
                 greekRisks.putIfAbsent(underlying, new GreekRisk())
                 println "Spot risk, underlying: ${underlying}, pos: ${pos}"
                 greekRisks.get(underlying).delta += pos
+            } catch (Exception e) {
+                logger.error(e)
             }
-
-            return greekRisks
-        } catch (Exception e) {
-            logger.error(e)
         }
+
+        return greekRisks
     }
 }

@@ -42,4 +42,5 @@ class SpotQueryService {
     Collection<Map> spotDashboard(String chain) {
         cep.queryMap("select * from DboeSpotDashboardAddressWin(chain='${chain}')")
     }
+
 }

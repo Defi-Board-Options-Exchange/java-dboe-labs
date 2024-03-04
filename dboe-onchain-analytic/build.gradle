@@ -30,11 +30,7 @@ shadowJar {
 }
 
 dependencies {
-    compile project(':common')
-    compile project(':utils')
-    compile project(':dboe-web3j-common')
-
-    compile project(':restful-common')
+    compile project(':market-common')
 
     testCompile project(':restful-common')
     testCompile project(':component-testing')
