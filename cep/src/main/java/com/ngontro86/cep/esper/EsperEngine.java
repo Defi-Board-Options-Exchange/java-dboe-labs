@@ -93,6 +93,7 @@ public class EsperEngine implements CepEngine {
         }
 
         modulesDeployer.deploy(this, "esper", esperId);
+        logger.info("Done initialising CEP...");
     }
 
     @Override

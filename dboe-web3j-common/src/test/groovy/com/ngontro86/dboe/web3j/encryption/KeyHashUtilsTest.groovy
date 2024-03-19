@@ -10,7 +10,7 @@ class KeyHashUtilsTest {
 
     @Test
     void "should be able to hash a string"() {
-        def date = new SimpleDateFormat('yyyyMMdd').parse('20240331')
+        def date = new SimpleDateFormat('yyyyMMdd').parse('20240630')
         println KeyHashUtils.sign('xxx', 'DBOEToTheMoon', date)
     }
 

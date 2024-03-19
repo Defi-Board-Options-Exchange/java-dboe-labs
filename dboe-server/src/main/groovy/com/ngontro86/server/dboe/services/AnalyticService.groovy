@@ -35,7 +35,7 @@ class AnalyticService {
             void run() {
                 loadActiveOptions()
             }
-        }, 1, 30, TimeUnit.MINUTES)
+        }, 1, 10, TimeUnit.MINUTES)
     }
 
     private void loadActiveOptions() {
@@ -50,7 +50,7 @@ class AnalyticService {
             [(it['instr_id']): it]
         } as Map<String, Map>
 
-        optionPortfolioManager.portfolio(wallets).findAll { it.value > 0d }.each { instrId, pos ->
+        optionPortfolioManager.portfolio(wallets).findAll { it.value != 0d }.each { instrId, pos ->
             def opt = optionPortfolioManager.optionByInstrId.get(instrId).first() as Map
             def underlying = opt['underlying']
             risks.putIfAbsent(underlying, new GreekRisk())

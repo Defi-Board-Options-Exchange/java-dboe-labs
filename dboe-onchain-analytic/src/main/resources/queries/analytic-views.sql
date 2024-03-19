@@ -361,3 +361,66 @@ FROM (
 ) x
 GROUP BY 1,2,3,4
 ORDER BY CHAIN, DATE, TIMESTAMP
+
+
+--- Analytic ---
+CREATE OR REPLACE VIEW intraday_option_price_spot as
+SELECT p.date, p.timestamp, i.kind, i.expiry, i.underlying, i.strike, i.instr_id, 0.5 * (p.bid+p.ask) AS midprice, s.spot AS spot
+FROM dboe_academy.dboe_intraday_price p
+INNER JOIN dboe_academy._dboe_option_instr i ON p.instr_id = i.instr_id AND p.chain = i.chain AND p.currency = i.currency
+INNER JOIN dboe_academy.dboe_intraday_spot s ON i.underlying = s.underlying AND s.date = p.date AND p.timestamp = s.timestamp
+WHERE p.date <= i.expiry AND p.bid > 0 AND p.ask > 0 AND p.timestamp % 1000 = 0
+
+
+CREATE OR REPLACE VIEW dboe_liquidity_30d AS
+
+SELECT
+v.chain, v.currency, v.date, v.numOfTrades, t.tradedValue, t.totalFeeCollected, v.open_interest, tradeNotional
+FROM
+(
+	SELECT
+	o.chain, o.currency, o.date, SUM(o.open_interest * s.avg_spot) AS open_interest, SUM(numOfTrades) AS numOfTrades, SUM(t.totalVolume * s.avg_spot) AS tradeNotional
+	from
+	(
+		SELECT v.DATE, v.CHAIN, i.underlying, v.currency, SUM(o.open_interest) AS open_interest
+		FROM
+		(
+			SELECT o.instr_id, o.chain, o.currency, o.date AS DATE, MAX(o.TIMESTAMP) AS timestamp
+			FROM dboe_academy._dboe_open_interest o
+			WHERE o.TIMESTAMP % 10000 = 0 and MOD(o.TIMESTAMP, o.DATE) < 230000 AND o.date >= cast(date_format(NOW() - INTERVAL 30 day, '%Y%m%d') AS UNSIGNED)
+			GROUP BY 1,2,3,4
+		) v
+		INNER JOIN dboe_academy._dboe_open_interest o ON v.instr_id = o.instr_id AND v.date = o.date and v.timestamp = o.timestamp AND o.chain = v.chain AND o.currency = v.currency
+		INNER JOIN dboe_academy._dboe_option_instr i ON o.instr_id = i.instr_id AND o.chain = i.chain AND o.currency = i.currency
+		GROUP BY 1,2,3,4
+	) o
+	INNER JOIN
+	(
+		select DATE, underlying, avg(spot) as avg_spot
+		from dboe_academy.dboe_intraday_spot
+		WHERE spot > 0
+		GROUP BY 1, 2
+	) s ON o.underlying = s.underlying AND o.date = s.date
+	INNER JOIN
+	(
+		select
+		cast(date_format(date(date_sub(TxnTimestamp, INTERVAL -8 HOUR)), '%Y%m%d') AS UNSIGNED) AS DATE,
+		m.dboe_chain_name as CHAIN,
+		i.underlying,
+		COUNT(DISTINCT TransactionHash) AS numOfTrades, SUM(Amount)/2 AS totalVolume
+		from analytics.dboe_transfers t
+		INNER JOIN analytics.chain_mapping m ON t.Chain = m.name
+		inner join dboe_academy._dboe_option_instr i ON i.chain = m.dboe_chain_name AND (t.CurrencyAddress = i.long_contract_address OR t.CurrencyAddress = i.short_contract_address)
+		WHERE t.TxnTimestamp >= (now() - INTERVAL 30 day)
+		GROUP BY 1,2,3
+	) t ON s.date = t.date AND s.underlying = t.underlying
+	GROUP BY o.chain, o.currency, o.date
+) v
+INNER JOIN
+(
+	SELECT cast(date_format(date(date_sub(TxnTimestamp, INTERVAL -8 HOUR)), '%Y%m%d') AS UNSIGNED) AS date, chain,
+	SUM(Amount) AS totalFeeCollected, SUM(Amount) * 100.0 as tradedValue
+	FROM analytics.dboe_enriched_transfers
+	where TxnTimestamp >= (now() - INTERVAL 30 DAY) AND ReceiverAddress IN ('0x649fb2a8ebd926faf4375c7ed7259e74d1d7851d', '0xe39578ba69805150f869ac5703f128b2cd713595')
+	GROUP BY 1, 2
+) t ON t.date = v.date AND t.chain = v.chain

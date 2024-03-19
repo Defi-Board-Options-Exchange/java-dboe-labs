@@ -33,13 +33,13 @@ class CopyTradeService {
     }
 
     LeaderSubscription leader(String chain, String walletId) {
-        def leader = flatDao.queryList("select * from dboe_copytrade_subscription where chain = '${chain}' and user_wallet = '${walletId}'")
+        def leader = flatDao.queryList("select * from dboe_copytrade_subscriptions where chain = '${chain}' and user_wallet = '${walletId}'")
         return leader.isEmpty() ? null : new LeaderSubscription(leaderWallet: leader.first()['leader_wallet'], errorPct: leader.first()['error_pct'])
     }
 
     boolean signup(String chain, String walletId, String leaderWalletId, double errorPct) {
         try {
-            flatDao.persist('dboe_copytrade_subscription', [
+            flatDao.persist('dboe_copytrade_subscriptions', [
                     'chain'        : chain,
                     'user_wallet'  : walletId,
                     'leader_wallet': leaderWalletId,
