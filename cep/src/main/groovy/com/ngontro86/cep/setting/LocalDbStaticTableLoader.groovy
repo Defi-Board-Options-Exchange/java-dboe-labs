@@ -32,24 +32,34 @@ class LocalDbStaticTableLoader implements StaticTableLoader {
     @Override
     Map<String, Collection<Map>> load(String cepType, String instanceId, String version) {
         logger.info("Loading db, ${cepType}, ${instanceId}")
-        return staticTables.collectEntries { table -> [(table): flatDao.queryList("select * from ${table}")] }
+        return staticTables.collectEntries { table -> [(table): queryList(table)] }
     }
 
     @Override
     Map<String, Collection<Map>> reload(String cepType, String instanceId, String version) {
         logger.info("Reloading db, ${cepType}, ${instanceId}")
-        return reloadTables.collectEntries { table -> [(table): flatDao.queryList("select * from ${table}")] }
+        return reloadTables.collectEntries { table -> [(table): queryList(table)] }
     }
 
     @Override
     Map<String, Collection<Map>> slowReload(String cepType, String instanceId, String version) {
         logger.info("Slow reloading db, ${cepType}, ${instanceId}")
-        return slowReloadTables.collectEntries { table -> [(table): flatDao.queryList("select * from ${table}")] }
+        return slowReloadTables.collectEntries { table -> [(table): queryList(table)] }
     }
 
     @Override
     Map<String, Collection<Map>> verySlowReload(String cepType, String instanceId, String version) {
         logger.info("Very Slow reloading db, ${cepType}, ${instanceId}")
-        return verySlowReloadTables.collectEntries { table -> [(table): flatDao.queryList("select * from ${table}")] }
+        return verySlowReloadTables.collectEntries { table -> [(table): queryList(table)] }
+    }
+
+    private Collection<Map> queryList(String table) {
+        try {
+            logger.info("Querying: ${table}")
+            return flatDao.queryList("select * from ${table}")
+        } catch (Exception e) {
+            logger.error("Exception when query table: ${table}: ", e)
+            return []
+        }
     }
 }

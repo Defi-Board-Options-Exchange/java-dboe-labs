@@ -1,11 +1,14 @@
 package com.ngontro86.server.dboe.rest
 
+import com.ngontro86.common.annotations.Logging
 import com.ngontro86.common.annotations.RestService
 import com.ngontro86.server.dboe.services.CepAuthenticator
 import com.ngontro86.server.dboe.services.CopyTradeService
 import com.ngontro86.server.dboe.services.copytrade.CopyTradeReconciliationResult
+import com.ngontro86.server.dboe.services.copytrade.LeaderSubscription
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
+import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.annotation.Autowired
 
 import javax.ws.rs.*
@@ -15,6 +18,9 @@ import javax.ws.rs.core.MediaType
 @Path("/copyTrade")
 @Api(value = "/copyTrade")
 class CopyTradeRestService {
+
+    @Logging
+    private Logger logger
 
     @Autowired
     private CopyTradeService copyTradeService
@@ -42,11 +48,11 @@ class CopyTradeRestService {
 
     @GET
     @Path('/leader')
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Query the current leader the user subscribe to", response = String.class)
-    String leader(@QueryParam('chain') String chain, @QueryParam('walletId') String walletId) {
-        return copyTradeService.leader(chain, walletId).leaderWallet
+    @ApiOperation(value = "Query the current leader the user subscribe to", response = LeaderSubscription.class)
+    LeaderSubscription leader(@QueryParam('chain') String chain, @QueryParam('walletId') String walletId) {
+        return copyTradeService.leader(chain, walletId)
     }
 
     @POST
@@ -71,6 +77,7 @@ class CopyTradeRestService {
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Reconcile user wallet and his/her subscribed leader positions", response = CopyTradeReconciliationResult.class)
     CopyTradeReconciliationResult reconcile(@QueryParam('chain') String chain, @QueryParam('walletId') String walletId) {
+        logger.info("reconcile: user wallet:${walletId} on ${chain}")
         return copyTradeService.reconcile(chain, walletId)
     }
 

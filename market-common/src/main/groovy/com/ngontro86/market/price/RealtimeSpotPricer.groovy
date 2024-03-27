@@ -21,6 +21,7 @@ class RealtimeSpotPricer implements SpotPricer {
     @PostConstruct
     private void init() {
         restClient = build('dboeHost')
+        reload()
         scheduler.scheduleAtFixedRate(new Runnable() {
             @Override
             void run() {

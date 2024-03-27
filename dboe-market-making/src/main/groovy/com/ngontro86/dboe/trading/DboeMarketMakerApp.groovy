@@ -29,9 +29,6 @@ class DboeMarketMakerApp {
     private SpotSpendingLimitApprovalManager spotSpendingLimitApprovalManager
 
     @Inject
-    private OptionRefPriceBySpotMoveCalibrator refPriceBySpotMoveCalibrator
-
-    @Inject
     private OptionsOrderManager orderManager
 
     @Inject
@@ -56,7 +53,7 @@ class DboeMarketMakerApp {
         logger.info("Start self-hedging Trader")
         deltaNeutralMarketMaker.startSelfHedge()
 
-        if(optionsEnabled) {
+        if (optionsEnabled) {
             logger.info("Start Options Spreading with On-Chain CLOB...")
             orderManager.startSpreading()
         }

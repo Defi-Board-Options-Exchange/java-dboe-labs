@@ -2,7 +2,6 @@ package com.ngontro86.server.dboe.services
 
 import com.ngontro86.app.common.db.FlatDao
 import com.ngontro86.cep.CepEngine
-import com.ngontro86.common.annotations.ConfigValue
 import com.ngontro86.common.annotations.DBOEComponent
 import com.ngontro86.common.annotations.Logging
 import com.ngontro86.common.annotations.NonTxTransactional
@@ -174,11 +173,14 @@ class QueryService {
     }
 
     Map dashboard() {
-        def lqDashboard = cep.queryMap("select * from DboeTotalLiquidityDashboardWin")
-        def airdrop = cep.queryMap("select sum(token_reward) as airdrop, count(distinct Address) as num_wallet from DboeWalletAirdropWin")
-
-        def ret = lqDashboard.isEmpty() ? [:] : lqDashboard.first()
-        ret.putAll(airdrop.isEmpty() ? [:] : airdrop.first())
+        def ret = [:]
+        [
+                cep.queryMap("select * from DboeTotalLiquidityDashboardWin"),
+                cep.queryMap("select sum(token_reward) as airdrop, count(distinct Address) as num_wallet from DboeWalletAirdropWin"),
+                cep.queryMap("select COUNT(DISTINCT underlying) AS num_underlying_market, COUNT(DISTINCT instr_id) AS num_option_listing from DboeAllOptionsWin")
+        ].each {
+            ret.putAll(it.isEmpty() ? [:] : it.first())
+        }
         return ret
     }
 

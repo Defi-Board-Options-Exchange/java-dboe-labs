@@ -1,6 +1,7 @@
 package com.ngontro86.server.dboe.services
 
 import com.ngontro86.app.common.db.FlatDao
+import com.ngontro86.cep.CepEngine
 import com.ngontro86.common.annotations.DBOEComponent
 import com.ngontro86.common.annotations.Logging
 import com.ngontro86.common.annotations.NonTxTransactional
@@ -25,26 +26,31 @@ class CopyTradeService {
     @NonTxTransactional
     private FlatDao flatDao
 
+    @Inject
+    private CepEngine cep
+
     private String copyTradeLatestPositionQuery = ResourcesUtils.content("queries/copytrade-latest-positions.sql")
     private String copyTradeLatestPortfolioValQuery = ResourcesUtils.content("queries/copytrade-latest-portfolio.sql")
 
     Collection<Map> leaderBoard(String chain) {
-        flatDao.queryList("select * from dboe_copytrade_leader_performances where chain = '${chain}'")
+        cep.queryMap("select * from DboeCopyTradeLeaderPerformancesWin(chain = '${chain}')")
     }
 
     LeaderSubscription leader(String chain, String walletId) {
-        def leader = flatDao.queryList("select * from dboe_copytrade_subscriptions where chain = '${chain}' and user_wallet = '${walletId}'")
+        def leader = cep.queryMap("select * from DboeCopyTradeSubscriptionsWin(chain = '${chain}', user_wallet = '${walletId}')")
         return leader.isEmpty() ? null : new LeaderSubscription(leaderWallet: leader.first()['leader_wallet'], errorPct: leader.first()['error_pct'])
     }
 
     boolean signup(String chain, String walletId, String leaderWalletId, double errorPct) {
         try {
             flatDao.persist('dboe_copytrade_subscriptions', [
-                    'chain'        : chain,
-                    'user_wallet'  : walletId,
-                    'leader_wallet': leaderWalletId,
-                    'error_pct'    : errorPct,
-                    'timestamp'    : getTimeFormat(currentTimeMillis(), "yyyyMMddHHmmss")
+                    [
+                            'chain'        : chain,
+                            'user_wallet'  : walletId,
+                            'leader_wallet': leaderWalletId,
+                            'error_pct'    : errorPct,
+                            'timestamp'    : getTimeFormat(currentTimeMillis(), "yyyyMMddHHmmss")
+                    ]
             ])
             return true
         } catch (Exception e) {
@@ -55,41 +61,52 @@ class CopyTradeService {
 
     CopyTradeReconciliationResult reconcile(String chain, String userWalletId) {
         CopyTradeReconciliationResult res = new CopyTradeReconciliationResult()
-        def subscription = leader(chain, userWalletId)
-        if (subscription == null) {
-            return res
+        try {
+            def subscription = leader(chain, userWalletId)
+            if (subscription == null) {
+                return res
+            }
+            def leaderPv = flatDao.queryList(String.format(copyTradeLatestPortfolioValQuery, chain, subscription.leaderWallet))
+            def userPv = flatDao.queryList(String.format(copyTradeLatestPortfolioValQuery, chain, userWalletId))
+
+            if (leaderPv.isEmpty() || userPv.isEmpty()) {
+                return res
+            }
+
+            res.setLeaderPortfolioValue(leaderPv.first()['portfolio_value'])
+            res.setUserPortfolioValue(userPv.first()['portfolio_value'])
+
+            def leaderPos = latestPositions(chain, subscription.leaderWallet).collectEntries { [(it['token']): it] }
+            def userPos = latestPositions(chain, userWalletId).collectEntries { [(it['token']): it] }
+
+            def positionDiffs = []
+            positionDiffs << leaderPos.collect { token, map ->
+
+                def userPosition = userPos.containsKey(token) ? userPos.get(token)['pos'] : 0d
+                def idealPosition = estUserPos(res.leaderPortfolioValue, res.userPortfolioValue, map['pos'])
+
+                new PositionDiff(
+                        token: token,
+                        strike: map['strike'],
+                        condStrike: map['cond_strike'],
+                        longContractAddr: map['long_contract_address'],
+                        shortContractAddr: map['long_contract_address'],
+                        currencyAddr: map['currency_address'],
+                        obAddr: map['ob_address'],
+                        optionFactoryAddr: map['option_factory_address'],
+                        clearingHouseAddr: map['clearing_address'],
+                        isOption: 'Options' == map['category'],
+                        isCash: ['USDT', 'USDt', 'USDC'].contains(token),
+                        leaderPos: map['pos'],
+                        userPos: userPosition,
+                        idealUserPos: idealPosition,
+                        needAdjustment: needAdj(userPosition, idealPosition, subscription.errorPct)
+                )
+            }
+            res.positionDiffs = positionDiffs
+        } catch (Exception e) {
+            logger.error(e)
         }
-        def leaderPv = flatDao.queryList(String.format(copyTradeLatestPortfolioValQuery, chain, subscription))
-        def userPv = flatDao.queryList(String.format(copyTradeLatestPortfolioValQuery, chain, userWalletId))
-
-        if (leaderPv.isEmpty() || userPv.isEmpty()) {
-            return res
-        }
-
-        res.setLeaderPortfolioValue(leaderPv.first()['portfolio_value'])
-        res.setUserPortfolioValue(userPv.first()['portfolio_value'])
-
-        def leaderPos = latestPositions(chain, subscription).collectEntries { [(it['token']): it] }
-        def userPos = latestPositions(chain, userWalletId).collectEntries { [(it['token']): it] }
-
-        def positionDiffs = []
-        positionDiffs << leaderPos.collect { token, map ->
-
-            def userPosition = userPos.containsKey(token) ? userPos.get(token)['pos'] : 0d
-            def idealPosition = estUserPos(res.leaderPortfolioValue, res.userPortfolioValue, map['pos'])
-
-            new PositionDiff(
-                    token: token,
-                    isOption: 'Options' == map['category'],
-                    isCash: ['USDT', 'USDt', 'USDC'].contains(token),
-                    leaderPos: map['pos'],
-                    userPos: userPosition,
-                    idealUserPos: idealPosition,
-                    needAdjustment: needAdj(userPosition, idealPosition, subscription.errorPct)
-            )
-        }
-
-        res.positionDiffs = positionDiffs
 
         return res
     }
@@ -106,6 +123,6 @@ class CopyTradeService {
     }
 
     Collection<Map> latestPositions(String chain, String walletId) {
-        flatDao.queryList(String.format(copyTradeLatestPositionQuery, chain, walletId, chain, walletId))
+        flatDao.queryList(String.format(copyTradeLatestPositionQuery, chain, walletId))
     }
 }

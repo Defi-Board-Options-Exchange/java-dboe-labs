@@ -65,7 +65,7 @@ class Black76Test {
 
     @Test
     void "should work out greek"() {
-        println Black76.greekDboe(option: [kind: Call, atm: 104.5d, strike: 105d, condStrike: 120d, r: 0.0, t: 12.0 / 365d, vol: 1.5])
+        println Black76.greekDboe(option: [kind: Call, atm: 3580d, strike: 3700d, condStrike: 3950d, r: 0.0, t: 2.0 / 365d, vol: 1.5])
     }
 
     @Test

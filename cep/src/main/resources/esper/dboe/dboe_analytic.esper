@@ -79,10 +79,12 @@ create window DboeWalletAirdropWin.std:unique(plan, name, Address) as dboe_walle
 
 
 create schema dboe_total_liquidity_dashboard_event as (
+    date int,
+    eod_open_interest double,
+    total_traded_notional double,
     num_txn int,
     total_traded_value double,
-    total_fee double,
-    open_interest double
+    total_fee double
 );
 
 create window DboeTotalLiquidityDashboardWin.win:length(1) as dboe_total_liquidity_dashboard_event;

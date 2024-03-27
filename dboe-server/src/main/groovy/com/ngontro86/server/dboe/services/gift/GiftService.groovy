@@ -1,13 +1,11 @@
 package com.ngontro86.server.dboe.services.gift
 
 import com.ngontro86.cep.CepEngine
-import com.ngontro86.cep.setting.CepEngineInitializer
 import com.ngontro86.common.annotations.DBOEComponent
 import com.ngontro86.common.annotations.Logging
 import com.ngontro86.common.serials.ObjMap
 import org.apache.logging.log4j.Logger
 
-import javax.annotation.PostConstruct
 import javax.inject.Inject
 
 import static com.ngontro86.common.times.GlobalTimeController.currentTimeMillis
@@ -22,17 +20,15 @@ class GiftService {
     @Inject
     private CepEngine cep
 
-    @Inject
-    private CepEngineInitializer initializer
+    private Map<String, GiftConfig> giftConfigs = [:]
 
-    private Map<String, GiftConfig> giftConfigs
-
-    @PostConstruct
-    private void init() {
-        giftConfigs = cep.queryMap("select * from DboeMysteriousGiftConfigWin").collectEntries {
-            [(it['name']): new GiftConfig(maxReward: it['max_reward'], minReward: it['min_reward'])]
+    private setConfigsIfNeeded() {
+        if (giftConfigs.isEmpty()) {
+            giftConfigs = cep.queryMap("select * from DboeMysteriousGiftConfigWin").collectEntries {
+                [(it['name']): new GiftConfig(maxReward: it['max_reward'], minReward: it['min_reward'])]
+            }
+            logger.info("Got: ${giftConfigs.size()} Gift Config records")
         }
-        logger.info("Got: ${giftConfigs.size()} Gift Config records")
     }
 
     Collection<Map> numOfGifts(String wallet) {
@@ -40,6 +36,7 @@ class GiftService {
     }
 
     Double open(String openKey, String wallet, String name) {
+        setConfigsIfNeeded()
         def numOfGifts = numOfGifts(wallet).groupBy { it['name'] }
         if (!numOfGifts.containsKey(name) || numOfGifts.get(name).first()['quota'] <= 0) {
             throw new IllegalAccessError("No more gift name:${name} for this wallet:${wallet}")

@@ -1,0 +1,37 @@
+module com.ngontro86.server.dboe_copytrade;
+
+create schema dboe_copytrade_leader_addresses_event as (
+    email string,
+    wallet_id string,
+    timestamp long
+);
+
+create window DboeCopyTradeLeaderWin.std:unique(email) as dboe_copytrade_leader_addresses_event;
+@Name('DboeCopyTradeLeaderWin') insert into DboeCopyTradeLeaderWin select * from dboe_copytrade_leader_addresses_event;
+
+
+create schema dboe_copytrade_subscriptions_event as (
+    user_wallet string,
+    chain string,
+    leader_wallet string,
+    error_pct double,
+    timestamp long
+);
+
+create window DboeCopyTradeSubscriptionsWin.std:unique(user_wallet, chain) as dboe_copytrade_subscriptions_event;
+@Name('DboeCopyTradeSubscriptionsWin') insert into DboeCopyTradeSubscriptionsWin select * from dboe_copytrade_subscriptions_event;
+
+
+create schema dboe_copytrade_leader_performances_event as (
+    email string,
+    chain string,
+    wallet_id string,
+    portfolio_value double,
+    avg_daily_ret double,
+    annualised_stdev double,
+    timestamp long
+);
+
+create window DboeCopyTradeLeaderPerformancesWin.std:unique(email, chain, wallet_id) as dboe_copytrade_leader_performances_event;
+@Name('DboeCopyTradeLeaderPerformancesWin') insert into DboeCopyTradeLeaderPerformancesWin select * from dboe_copytrade_leader_performances_event;
+

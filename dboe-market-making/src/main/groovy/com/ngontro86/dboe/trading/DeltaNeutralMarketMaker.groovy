@@ -59,7 +59,7 @@ class DeltaNeutralMarketMaker {
     @ConfigValue(config = "chain")
     private String chain = 'AVAX'
 
-    private static Collection<String> FIATS = ['USDT', 'USDC']
+    private static Collection<String> FIATS = ['USDT', 'USDC', 'DAI']
 
     private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor()
 
@@ -105,7 +105,7 @@ class DeltaNeutralMarketMaker {
         optionPm.portfolio(portfolioAddresses).findAll { it.value != 0d }.each { instrId, pos ->
             try {
                 def opt = optionPm.optionByInstrId.get(instrId).first() as Map
-                println "Option risk, pos: ${pos}, opt: ${opt}"
+                println "Option:, ${opt['instr_id']}, pos:, ${pos}"
                 greekRisks.putIfAbsent(opt['underlying'], new GreekRisk())
 
                 def ttExpiry = Utils.timeDiffInYear(opt['expiry'], opt['ltt'], time.currentTimeMilliSec())
@@ -117,7 +117,7 @@ class DeltaNeutralMarketMaker {
                         strike: opt['strike'],
                         r     : 0.0,
                         t     : ttExpiry,
-                        vol   : volEstimator.impliedVol(opt['underlying'], timeExpiryUtc, Math.log(opt['strike'] / spotPricer.spot(opt['underlying'])))
+                        vol   : volEstimator.impliedVol(opt['underlying'], timeExpiryUtc, Math.log(opt['strike'] / spotPricer.spot(opt['underlying'])))/100d
                 ]
 
                 def greek2 = Black76.greek option: [
@@ -126,14 +126,13 @@ class DeltaNeutralMarketMaker {
                         strike: opt['cond_strike'],
                         r     : 0.0,
                         t     : ttExpiry,
-                        vol   : volEstimator.impliedVol(opt['underlying'], timeExpiryUtc, Math.log(opt['cond_strike'] / spotPricer.spot(opt['underlying'])))
+                        vol   : volEstimator.impliedVol(opt['underlying'], timeExpiryUtc, Math.log(opt['cond_strike'] / spotPricer.spot(opt['underlying'])))/100d
                 ]
 
-                def risk = greekRisks.get(opt['underlying'])
-                risk.delta += pos * (greek1['delta'] - greek2['delta'])
-                risk.vega += pos * (greek1['vega'] - greek2['vega'])
-                risk.gamma += pos * (greek1['gamma'] - greek2['gamma'])
-                risk.theta += pos * (greek1['theta'] - greek2['theta'])
+                greekRisks.get(opt['underlying']).delta += pos * (greek1['delta'] - greek2['delta'])
+                greekRisks.get(opt['underlying']).vega += pos * (greek1['vega'] - greek2['vega'])
+                greekRisks.get(opt['underlying']).gamma += pos * (greek1['gamma'] - greek2['gamma'])
+                greekRisks.get(opt['underlying']).theta += pos * (greek1['theta'] - greek2['theta'])
             } catch (Exception e) {
                 logger.error(e)
             }

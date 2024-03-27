@@ -8,7 +8,6 @@ import com.ngontro86.cep.CepEngine;
 import com.ngontro86.cep.esper.aggregation.MAvgAggregationFunction;
 import com.ngontro86.cep.esper.aggregation.PrevDoubleAggregationFunction;
 import com.ngontro86.cep.setting.CepModuleDeployer;
-import com.ngontro86.cep.setting.ui.UserInfoSetup;
 import com.ngontro86.common.Handler;
 import com.ngontro86.common.annotations.ConfigValue;
 import com.ngontro86.common.annotations.Logging;
@@ -28,8 +27,6 @@ import java.util.Map;
 import static com.ngontro86.cep.esper.EsperUtils.parseEventBeanUnderlyingAsMap;
 
 public class EsperEngine implements CepEngine {
-    @Inject
-    private UserInfoSetup setup;
 
     @ConfigValue
     private final Boolean externalClock = true;
@@ -100,7 +97,9 @@ public class EsperEngine implements CepEngine {
     public boolean accept(Object obj) {
         if (obj instanceof ObjMap) {
             ObjMap objMap = (ObjMap) obj;
-            epRuntime.sendEvent(objMap, objMap.name);
+            if (objMap.name != null && !objMap.isEmpty()) {
+                epRuntime.sendEvent(objMap, objMap.name);
+            }
         } else {
             epRuntime.sendEvent(obj);
         }
