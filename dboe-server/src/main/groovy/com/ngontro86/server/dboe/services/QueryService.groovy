@@ -157,7 +157,7 @@ class QueryService {
     }
 
     Collection<Map> newWalletCount() {
-        flatDao.queryList("select * from dboe_new_wallet_count")
+        flatDao.queryList("select * from dboe_wallet_count")
     }
 
     double tradedValue(String chain) {
@@ -176,8 +176,9 @@ class QueryService {
         def ret = [:]
         [
                 cep.queryMap("select * from DboeTotalLiquidityDashboardWin"),
-                cep.queryMap("select sum(token_reward) as airdrop, count(distinct Address) as num_wallet from DboeWalletAirdropWin"),
-                cep.queryMap("select COUNT(DISTINCT underlying) AS num_underlying_market, COUNT(DISTINCT instr_id) AS num_option_listing from DboeAllOptionsWin")
+                cep.queryMap("select SUM(token_reward) as airdrop, COUNT(DISTINCT Address) as num_wallet from DboeWalletAirdropWin"),
+                cep.queryMap("select COUNT(DISTINCT underlying) AS num_underlying_market, COUNT(DISTINCT instr_id) AS num_option_listing from DboeAllOptionsWin"),
+                cep.queryMap("select COUNT(DISTINCT address) AS num_pair from DboeSpotMarketWin")
         ].each {
             ret.putAll(it.isEmpty() ? [:] : it.first())
         }

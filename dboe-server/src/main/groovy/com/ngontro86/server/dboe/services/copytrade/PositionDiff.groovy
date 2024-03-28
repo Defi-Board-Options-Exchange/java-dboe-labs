@@ -2,6 +2,8 @@ package com.ngontro86.server.dboe.services.copytrade
 
 class PositionDiff {
     String token
+    String underlying
+    int expiry
     double strike
     double condStrike
     String longContractAddr

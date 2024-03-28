@@ -87,6 +87,8 @@ class CopyTradeService {
 
                 new PositionDiff(
                         token: token,
+                        underlying: map['underlying'],
+                        expiry: map['expiry'],
                         strike: map['strike'],
                         condStrike: map['cond_strike'],
                         longContractAddr: map['long_contract_address'],

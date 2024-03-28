@@ -279,13 +279,13 @@ INNER JOIN dboe_copytrade_latest_timestamp t ON p.chain = t.chain AND p.wallet =
 
 
 CREATE OR REPLACE VIEW dboe_copytrade_position as
-SELECT p.date, 'Options' AS category, p.wallet, p.instr_id AS token, p.chain, p.pos, p.ref_px, i.strike, i.cond_strike, i.long_contract_address, i.short_contract_address, i.currency_address, i.ob_address, i.option_factory_address, i.clearing_address
+SELECT p.date, 'Options' AS category, p.wallet, p.instr_id AS token, p.chain, p.pos, p.ref_px, i.underlying, i.expiry, i.strike, i.cond_strike, i.long_contract_address, i.short_contract_address, i.currency_address, i.ob_address, i.option_factory_address, i.clearing_address
 FROM dboe_copytrade_options_positions p
 INNER JOIN dboe_copytrade_latest_timestamp t ON p.chain = t.chain AND p.wallet = t.wallet AND p.timestamp = t.options_latest_timestamp
 INNER JOIN dboe_all_options i ON p.chain = i.chain AND p.instr_id = i.instr_id
 
 UNION ALL
-SELECT p.date, 'Spot' AS category, p.wallet, p.token, p.chain, p.pos, p.ref_px, 0 AS strike, 0 AS cond_strike, i.base_token AS long_contract_address, i.base_token AS short_contract_address, i.quote_token AS currency_address, i.address AS ob_address, NULL AS option_factory_address, NULL AS clearing_address
+SELECT p.date, 'Spot' AS category, p.wallet, p.token, p.chain, p.pos, p.ref_px, null as underlying, 0 as expiry, 0 AS strike, 0 AS cond_strike, i.base_token AS long_contract_address, i.base_token AS short_contract_address, i.quote_token AS currency_address, i.address AS ob_address, NULL AS option_factory_address, NULL AS clearing_address
 FROM dboe_copytrade_spot_positions p
 INNER JOIN dboe_copytrade_latest_timestamp t ON p.chain = t.chain AND p.wallet = t.wallet AND p.timestamp = t.spot_latest_timestamp
 INNER JOIN dboe_spot_markets i ON p.chain = i.chain AND p.token = i.base_name AND i.quote_name = 'USDT'
