@@ -405,3 +405,39 @@ FROM
     GROUP BY 1,2
 ) r
 INNER JOIN dboe_airdrop_bonuses b ON r.numOfReferral >= b.min_no_referral AND r.numOfReferral <= b.max_no_referral
+
+
+
+INSERT ignore INTO dboe_wallet_first_trade
+select SenderAddress AS Address, cast(date_format(MIN(TxnTimestamp), '%Y%m%d') as unsigned) AS first_trade_date
+from analytics.dboe_transfers
+WHERE TxnTimestamp > date_sub(NOW(), INTERVAL 2 DAY)
+GROUP BY 1
+UNION ALL
+select ReceiverAddress AS Address, cast(date_format(MIN(TxnTimestamp), '%Y%m%d') as unsigned) AS first_trade_date
+from analytics.dboe_transfers
+WHERE TxnTimestamp > date_sub(NOW(), INTERVAL 2 DAY)
+GROUP BY 1
+
+
+REPLACE INTO dboe_wallet_count
+SELECT a.date, a.num_new_wallet_accept_tc, k.num_new_wallet_kyt, t.num_wallet_sent_order
+from
+(
+	SELECT FLOOR(timestamp/1000000) as date, COUNT(*) AS num_new_wallet_accept_tc
+	FROM dboe_tc_agreements
+	where FLOOR(timestamp/1000000) >= cast(date_format(date(date_sub(current_date, INTERVAL 5 Day)), '%Y%m%d') AS UNSIGNED)
+	GROUP BY 1
+) a
+LEFT outer JOIN (
+	SELECT FLOOR(timestamp/1000000) as date, COUNT(*) AS num_new_wallet_kyt
+	FROM dboe_kyt_addresses
+	where FLOOR(timestamp/1000000) >= cast(date_format(date(date_sub(current_date, INTERVAL 5 Day)), '%Y%m%d') AS UNSIGNED)
+	GROUP BY 1
+) k ON a.date = k.date
+LEFT OUTER JOIN (
+	SELECT cast(date_format(date_sub(TxnTimestamp, INTERVAL -8 HOUR), '%Y%m%d') AS unsigned) AS DATE, COUNT(distinct SenderAddress) + COUNT(DISTINCT ReceiverAddress) AS num_wallet_sent_order 
+	FROM analytics.dboe_transfers
+   WHERE TxnTimestamp >= timestamp(date_format(date(date_sub(CURRENT_DATE(), INTERVAL 5 DAY)), '%Y%m%d'))
+   GROUP BY 1
+) t ON a.date = t.date

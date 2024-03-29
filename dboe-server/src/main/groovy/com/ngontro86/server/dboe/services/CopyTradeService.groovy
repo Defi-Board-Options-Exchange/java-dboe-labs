@@ -49,7 +49,8 @@ class CopyTradeService {
                             'user_wallet'  : walletId,
                             'leader_wallet': leaderWalletId,
                             'error_pct'    : errorPct,
-                            'timestamp'    : getTimeFormat(currentTimeMillis(), "yyyyMMddHHmmss")
+                            'timestamp'    : getTimeFormat(currentTimeMillis(), "yyyyMMddHHmmss"),
+                            'active'       : 1
                     ]
             ])
             return true
@@ -126,5 +127,10 @@ class CopyTradeService {
 
     Collection<Map> latestPositions(String chain, String walletId) {
         flatDao.queryList(String.format(copyTradeLatestPositionQuery, chain, walletId))
+    }
+
+    boolean unsubscribe(String chain, String userWallet, String leaderWallet) {
+        flatDao.updateQuery("update dboe_copytrade_subscriptions set active = 0 where chain = '${chain}' and user_wallet = ''${userWallet}' and leader_wallet='${leaderWallet}'")
+        true
     }
 }

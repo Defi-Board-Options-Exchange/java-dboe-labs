@@ -59,7 +59,7 @@ class CopyTradeRestService {
     @Path('/signup')
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Query the current leader the user subscribe to", response = Boolean.class)
+    @ApiOperation(value = "Subscribe to this leader", response = Boolean.class)
     boolean signup(@HeaderParam("passCode") String passCode,
                    @QueryParam('chain') String chain,
                    @QueryParam('walletId') String walletId,
@@ -69,6 +69,21 @@ class CopyTradeRestService {
             return false
         }
         return copyTradeService.signup(chain, walletId, leaderWalletId, errorPct)
+    }
+
+    @POST
+    @Path('/unsubscribe')
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Unsubscribe", response = Boolean.class)
+    boolean unsubscribe(@HeaderParam("passCode") String passCode,
+                   @QueryParam('chain') String chain,
+                   @QueryParam('walletId') String walletId,
+                   @QueryParam('leaderWalletId') String leaderWalletId) {
+        if (!cepAuthenticator.auth(passCode)) {
+            return false
+        }
+        return copyTradeService.unsubscribe(chain, walletId, leaderWalletId)
     }
 
     @GET
