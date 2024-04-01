@@ -18,7 +18,7 @@ create schema dboe_copytrade_subscriptions_event as (
     timestamp long
 );
 
-create window DboeCopyTradeSubscriptionsWin.std:unique(user_wallet, chain) as dboe_copytrade_subscriptions_event;
+create window DboeCopyTradeSubscriptionsWin.win:time(900 sec).std:unique(user_wallet, chain) as dboe_copytrade_subscriptions_event;
 @Name('DboeCopyTradeSubscriptionsWin') insert into DboeCopyTradeSubscriptionsWin select * from dboe_copytrade_subscriptions_event;
 
 

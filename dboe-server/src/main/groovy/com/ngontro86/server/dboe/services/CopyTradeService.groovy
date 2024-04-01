@@ -130,7 +130,7 @@ class CopyTradeService {
     }
 
     boolean unsubscribe(String chain, String userWallet, String leaderWallet) {
-        flatDao.updateQuery("update dboe_copytrade_subscriptions set active = 0 where chain = '${chain}' and user_wallet = ''${userWallet}' and leader_wallet='${leaderWallet}'")
+        flatDao.updateQuery("update dboe_copytrade_subscriptions set active = 0 where chain = '${chain}' and user_wallet = '${userWallet}' and leader_wallet='${leaderWallet}'")
         true
     }
 }

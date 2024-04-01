@@ -4,7 +4,6 @@ import com.ngontro86.app.common.postprocessor.ConfigValuePostProcessor
 import com.ngontro86.app.common.postprocessor.LoggerPostProcessor
 import com.ngontro86.cep.setting.CepModuleDeployer
 import com.ngontro86.cep.setting.LocalResourceCepModuleLoader
-import com.ngontro86.cep.setting.ui.UserInfoSetup
 import com.ngontro86.common.Handler
 import com.ngontro86.common.copyq.QFilter
 import com.ngontro86.common.serials.ObjMap
@@ -27,7 +26,7 @@ class EsperEngineTest {
 
         ].each { k, v -> System.setProperty(k, v) }
 
-        env = ComponentEnv.env([EsperEngine, CepModuleDeployer, QFilter, ConfigValuePostProcessor, LoggerPostProcessor, LocalResourceCepModuleLoader, UserInfoSetup])
+        env = ComponentEnv.env([EsperEngine, CepModuleDeployer, QFilter, ConfigValuePostProcessor, LoggerPostProcessor, LocalResourceCepModuleLoader])
     }
 
     @Test
