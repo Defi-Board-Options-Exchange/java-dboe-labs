@@ -15,7 +15,9 @@ create schema dboe_mysterious_gift_user_open_event as (
     name string,
     wallet_id string,
     open_key string,
-    reward double
+    reward double,
+    status string,
+    timestamp long
 );
 
 create window DboeMysteriousGiftUserOpenWin.std:unique(date, name, wallet_id, open_key) as dboe_mysterious_gift_user_open_event;

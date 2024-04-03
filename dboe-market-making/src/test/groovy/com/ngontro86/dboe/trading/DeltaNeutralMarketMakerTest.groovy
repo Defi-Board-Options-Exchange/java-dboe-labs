@@ -10,6 +10,7 @@ import com.ngontro86.market.volatility.VolEstimatorProvider
 import com.ngontro86.dboe.trading.test.InMemoryExchangeSpecsLoader
 import com.ngontro86.dboe.trading.test.NoOpHedger
 import com.ngontro86.dboe.web3j.token.TokenLoaderProvider
+import com.ngontro86.market.web3j.Web3TokenPortfolioManager
 import org.junit.Before
 import org.junit.Test
 
@@ -34,6 +35,7 @@ class DeltaNeutralMarketMakerTest {
         env = ComponentEnv.env([DeltaNeutralMarketMaker,
                                 NoOpHedger,
                                 Web3OptionPortfolioManager,
+                                Web3TokenPortfolioManager,
                                 TokenLoaderProvider,
                                 InMemoryExchangeSpecsLoader,
                                 VolEstimatorProvider,

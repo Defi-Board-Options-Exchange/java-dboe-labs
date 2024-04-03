@@ -35,4 +35,9 @@ class InMemoryExchangeSpecsLoader implements ExchangeSpecsLoader {
     Collection<Map> loadSpotPairs(String chain) {
         return []
     }
+
+    @Override
+    Map<String, Double> refPrices(String chain) {
+        return [:]
+    }
 }

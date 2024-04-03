@@ -49,6 +49,7 @@ class GiftService {
                 'wallet_id': wallet,
                 'open_key' : openKey,
                 'reward'   : reward,
+                'status'   : 'NEW',
                 'timestamp': currentTimeMillis
         ]))
 
