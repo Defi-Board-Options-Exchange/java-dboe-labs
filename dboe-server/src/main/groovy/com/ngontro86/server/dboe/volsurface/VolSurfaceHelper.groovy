@@ -23,11 +23,15 @@ class VolSurfaceHelper {
         }
     }
 
+    private static boolean deepITM(option) {
+        return option['kind'] == 'Call' ? option['moneyness'] <= -0.05d : option['moneyness'] >= 0.05d
+    }
+
     private static List smoothenOneCurve(options) {
         try {
             ['bid_iv', 'ask_iv', 'ref_iv'].each { volType ->
                 def linearReg = new MultiLinearReg("", 2)
-                options.each { row ->
+                options.findAll { !deepITM(it) }.each { row ->
                     if (row[volType] != null) {
                         linearReg.addData([row['moneyness'], row['moneyness'] * row['moneyness']] as double[], row[volType])
                     }
