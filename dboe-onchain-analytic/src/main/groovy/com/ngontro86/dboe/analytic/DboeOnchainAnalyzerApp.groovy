@@ -293,7 +293,9 @@ class DboeOnchainAnalyzerApp {
             def dmms = getDmms()
             dmms.each { dmm ->
                 def quotingUnderlyings = dmm['quote_underlyings'].split(",")
-                getOptions().findAll { quotingUnderlyings.contains(it['underlying']) }.each { option ->
+                getOptions().findAll {
+                    quotingUnderlyings.contains(it['underlying']) || dmm['quote_underlyings'] == 'ALL'
+                }.each { option ->
                     def clobAddress = option['ob_address']
                     def dboeClob = getClob(clobAddress)
                     def refPx = dboeClob.refInfo(padding(32, option['instr_id'] as byte[])).send().component1()
