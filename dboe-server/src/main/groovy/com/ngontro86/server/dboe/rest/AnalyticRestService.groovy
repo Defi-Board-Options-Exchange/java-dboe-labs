@@ -1,8 +1,8 @@
 package com.ngontro86.server.dboe.rest
 
 import com.ngontro86.common.annotations.RestService
-import com.ngontro86.market.web3j.GreekRisk
 import com.ngontro86.server.dboe.services.AnalyticService
+import com.ngontro86.server.dboe.services.analytic.PortfolioRisk
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,8 +22,8 @@ class AnalyticRestService {
     @Path('/greek/{walletId}')
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Compute Greeks for this particular wallet", response = Map.class)
-    Map<String, GreekRisk> singleWallet(@PathParam('walletId') String walletId) {
+    @ApiOperation(value = "Compute Greeks for this particular wallet", response = PortfolioRisk.class)
+    PortfolioRisk singleWallet(@PathParam('walletId') String walletId) {
         return analyticService.greeks([walletId])
     }
 
@@ -31,8 +31,26 @@ class AnalyticRestService {
     @Path('/greeks')
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Compute Greeks for multiple wallets. Addresses are separated by comma", response = Map.class)
-    Map<String, GreekRisk> multiWallets(@QueryParam('wallets') String wallets) {
+    @ApiOperation(value = "Compute Greeks for multiple wallets. Addresses are separated by comma", response = PortfolioRisk.class)
+    PortfolioRisk multiWallets(@QueryParam('wallets') String wallets) {
         return analyticService.greeks(wallets.split(",") as Collection)
+    }
+
+    @GET
+    @Path('/dmmQuote/{dmmAddr}/${instrId}')
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Return the quotes from this DMM to a particular Option", response = Collection.class)
+    Collection<Map> dmmQuote(@PathParam("dmmAddr") String dmmAddr, @PathParam('instrId') String instrId) {
+        return analyticService.dmmQuote(dmmAddr, instrId)
+    }
+
+    @GET
+    @Path('/dmmQuote/{dmmAddr}')
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Return all the quotes from this DMM", response = Collection.class)
+    Collection<Map> dmmQuotes(@PathParam("dmmAddr") String dmmAddr) {
+        return analyticService.dmmQuotes(dmmAddr)
     }
 }

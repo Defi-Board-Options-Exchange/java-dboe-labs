@@ -101,6 +101,7 @@ create schema DboeOptionGreekEvent as (
     bid_iv double,
     ask_iv double,
     spot double,
+    ref double,
     greek Double[],
     in_timestamp long
 );

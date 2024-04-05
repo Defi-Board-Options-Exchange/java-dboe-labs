@@ -84,6 +84,7 @@ class VolSurfaceProcessor {
                                 'bid_iv'      : it['bid_iv'],
                                 'ask_iv'      : it['ask_iv'],
                                 'spot'        : it['spot'],
+                                'ref'         : it['ref'],
                                 'greek'       : it['greek'],
                                 'in_timestamp': cepEngine.currentTimeMillis,
                         ]

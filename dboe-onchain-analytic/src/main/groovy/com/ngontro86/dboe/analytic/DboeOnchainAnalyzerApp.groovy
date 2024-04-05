@@ -73,7 +73,7 @@ class DboeOnchainAnalyzerApp {
     private Map<String, DBOEOptionFactory> optionFactories = [:]
     private Map<String, String> optionFactoryFspAddrMap = [:]
 
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(5)
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(6)
 
     @EntryPoint
     void go() {
@@ -114,6 +114,13 @@ class DboeOnchainAnalyzerApp {
             }
 
         }, 5, spotRefreshFreqSec, TimeUnit.SECONDS)
+
+        scheduler.scheduleAtFixedRate(new Runnable() {
+            @Override
+            void run() {
+                pullDmmQuotes()
+            }
+        }, 5, 10, TimeUnit.MINUTES)
 
         while (true) {
             logger.info("Pausing for 100 ms ...")
@@ -170,6 +177,10 @@ class DboeOnchainAnalyzerApp {
 
     Collection<Map> getOptions() {
         build('dboeHost').withQueryParams('query/listInstrument', ['chain': chain], Collection) as Collection<Map>
+    }
+
+    Collection<Map> getDmms() {
+        build('dboeHost').withQueryParams('query/query', ['query': "select * from DboeDmmWin(chain='${chain}')"], Collection) as Collection<Map>
     }
 
     void updateOnchainClobSpecs() {
@@ -245,8 +256,6 @@ class DboeOnchainAnalyzerApp {
     void pullObs() {
         try {
             def options = getOptions()
-            println "Found: ${options.size()} options On ${chain} ..."
-
             options.each { option ->
                 def clobAddress = option['ob_address']
                 def dboeClob = getClob(clobAddress)
@@ -254,7 +263,6 @@ class DboeOnchainAnalyzerApp {
                     [(bs): dboeClob.obDepth(padding(32, option['instr_id'] as byte[]), bs).send()]
                 }
                 def refPx = dboeClob.refInfo(padding(32, option['instr_id'] as byte[])).send().component1()
-                println "${option['instr_id']}, ref: ${refPx}..."
 
                 twoSidedOb.each { bs, amounts ->
                     amounts.eachWithIndex { amt, idx ->
@@ -270,6 +278,38 @@ class DboeOnchainAnalyzerApp {
                                         'price_level' : idx,
                                         'ref_price'   : refPx,
                                         'amount'      : amt,
+                                        'in_timestamp': getCurrentTimeMillis()
+                                ]))
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error(e)
+        }
+    }
+
+    void pullDmmQuotes() {
+        try {
+            def dmms = getDmms()
+            dmms.each { dmm ->
+                def quotingUnderlyings = dmm['quote_underlyings'].split(",")
+                getOptions().findAll { quotingUnderlyings.contains(it['underlying']) }.each { option ->
+                    def clobAddress = option['ob_address']
+                    def dboeClob = getClob(clobAddress)
+                    def refPx = dboeClob.refInfo(padding(32, option['instr_id'] as byte[])).send().component1()
+                    [true, false].each { bs ->
+                        def quotes = dboeClob.userQuotes(dmm['address'], padding(32, option['instr_id'] as byte[]), bs).send()
+                        servPub.handle(new ObjMap('DboeDmmQuoteEvent',
+                                [
+                                        'chain'       : option['chain'],
+                                        'dmm'         : dmm['address'],
+                                        'instr_id'    : option['instr_id'],
+                                        'buy_sell'    : (bs ? 1 : 2),
+                                        'price_levels': quotes.component1() as int[],
+                                        'ref_price'   : refPx,
+                                        'amounts'     : quotes.component2().collect {
+                                            it / Math.pow(10, 18)
+                                        } as double[],
                                         'in_timestamp': getCurrentTimeMillis()
                                 ]))
                     }

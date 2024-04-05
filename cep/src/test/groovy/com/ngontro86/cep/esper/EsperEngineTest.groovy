@@ -30,6 +30,13 @@ class EsperEngineTest {
     }
 
     @Test
+    void "convert"() {
+        List<Integer> list = [1,2,3]
+        def arr = list as int[]
+        println "${arr.length}"
+    }
+
+    @Test
     void "should bring up DBOE Server"() {
         def cep = env.component(EsperEngine)
 

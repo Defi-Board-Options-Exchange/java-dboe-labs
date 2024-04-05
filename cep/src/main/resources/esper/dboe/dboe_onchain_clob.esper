@@ -123,6 +123,20 @@ inner join DboeAddressDividerWin d on l.chain = d.chain and l.underlying = d.und
 inner join DboeCollateralWin c on l.chain = c.chain and l.currency = c.token
 inner join DboeUnderlyingMarketWin m on l.underlying = m.underlying;
 
+create schema DboeDmmQuoteEvent as (
+    chain string,
+    dmm string,
+    instr_id string,
+    buy_sell int,
+    price_levels int[],
+    ref_price int,
+    amounts double[],
+    in_timestamp long
+);
+
+create window DboeDmmQuoteWin.std:unique(chain, dmm, instr_id, buy_sell) as DboeDmmQuoteEvent;
+@Name('DboeDmmQuoteWin') insert into DboeDmmQuoteWin select * from DboeDmmQuoteEvent;
+
 create schema DboeOnchainOrderbookEvent as (
     chain string,
     ob_address string,
