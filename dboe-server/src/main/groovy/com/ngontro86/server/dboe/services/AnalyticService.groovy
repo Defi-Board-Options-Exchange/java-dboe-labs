@@ -63,6 +63,7 @@ class AnalyticService {
     PortfolioRisk greeks(Collection<String> wallets) {
         Map<String, Double> vals = ['USDT': usdtBalance(wallets)]
         Map<String, GreekRisk> risks = [:]
+        Map<String, Map<String, Double>> optionPos = [:]
         def optionGreeks = cepEngine.queryMap("select * from DboeOptionGreekWin").collectEntries {
             [(it['instr_id']): it]
         } as Map<String, Map>
@@ -72,6 +73,8 @@ class AnalyticService {
             def underlying = opt['underlying']
             risks.putIfAbsent(underlying, new GreekRisk())
             vals.putIfAbsent(underlying, 0d)
+            optionPos.putIfAbsent(underlying, [:])
+            optionPos.get(underlying).put(instrId, pos)
 
             if (optionGreeks.containsKey(instrId)) {
                 def spot = optionGreeks.get(instrId)['spot']
@@ -87,7 +90,7 @@ class AnalyticService {
             }
         }
 
-        return new PortfolioRisk(vals: vals, greeks: risks)
+        return new PortfolioRisk(vals: vals, greeks: risks, optionPos: optionPos)
     }
 
     Collection<Map> dmmQuote(String dmmAddr, String instrId) {

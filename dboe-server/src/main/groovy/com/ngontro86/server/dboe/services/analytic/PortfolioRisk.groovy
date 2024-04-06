@@ -7,6 +7,8 @@ class PortfolioRisk {
     Map<String, Double> vals
     Map<String, GreekRisk> greeks
 
+    Map<String, Map<String, Double>> optionPos
+
     @JsonProperty('TOTAL VAL')
     double totalVal() {
         return vals.collect { it.value }.sum()

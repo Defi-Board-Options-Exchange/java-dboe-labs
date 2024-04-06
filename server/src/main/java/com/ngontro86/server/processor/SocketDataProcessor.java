@@ -28,7 +28,9 @@ public abstract class SocketDataProcessor<RECV, SEND> implements Runnable {
         while (true) {
             try {
                 OneEventHandler oneEvent = q.take();
-                processOneEvent(oneEvent.event, oneEvent.handler);
+                if (oneEvent.event != null) {
+                    processOneEvent(oneEvent.event, oneEvent.handler);
+                }
             } catch (Exception e) {
                 logger.error(e);
             }
