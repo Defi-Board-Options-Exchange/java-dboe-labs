@@ -68,7 +68,7 @@ class DboeOnchainAnalyzerApp {
     @ConfigValue(config = "obRefreshFreqSec")
     private Integer obRefreshFreqSec = 2
 
-    private Map<String, DBOEClob> dboeClobs = [:]
+    private Map<String, Object> dboeClobs = [:]
 
     private Map<String, DBOEOptionFactory> optionFactories = [:]
     private Map<String, String> optionFactoryFspAddrMap = [:]
@@ -134,7 +134,12 @@ class DboeOnchainAnalyzerApp {
         clobs.each {
             def clobAddress = it['ob_sc_address'] as String
             if (!dboeClobs.containsKey(clobAddress)) {
-                dboeClobs.put(clobAddress, DBOEClob.load(clobAddress, web3j, txnManager, gasProvider))
+                // TODO:
+                if (clobAddress.toLowerCase().equals('0x4FC3Da4aC2BD32C013724cecf87f1084B7e0AEad'.toLowerCase())) {
+                    dboeClobs.put(clobAddress, DBOEClob.load(clobAddress, web3j, txnManager, gasProvider))
+                } else {
+                    dboeClobs.put(clobAddress, com.ngontro86.dboe.web3j.v2.DBOEClob.load(clobAddress, web3j, txnManager, gasProvider))
+                }
             }
             def optionFactoryAddress = dboeClobs.get(clobAddress).optionFactory().send()
             def clearingHouseAddress = dboeClobs.get(clobAddress).clearingHouse().send()
@@ -161,7 +166,7 @@ class DboeOnchainAnalyzerApp {
         }
     }
 
-    private DBOEClob getClob(String clobAddress) {
+    private Object getClob(String clobAddress) {
         return dboeClobs.get(clobAddress)
     }
 
@@ -189,17 +194,33 @@ class DboeOnchainAnalyzerApp {
 
             def obClob = getClob(obAddress)
             [true, false].each { buySell ->
-                def fixedSpreads = obClob.getFixedSpreads(buySell).send() as int[]
-                fixedSpreads.eachWithIndex { spread, idx ->
-                    servPub.handle(new ObjMap('DboeFixedSpreadEvent',
-                            [
-                                    'chain'           : chain,
-                                    'ob_address'      : obAddress,
-                                    'buy_sell'        : buySell ? 1 : 2,
-                                    'price_level'     : idx,
-                                    'fixed_spread_bps': spread
-                            ]
-                    ))
+                // TODO:
+                if (obAddress.toLowerCase().equals('0x4FC3Da4aC2BD32C013724cecf87f1084B7e0AEad'.toLowerCase())) {
+                    def fixedSpreads = obClob.getFixedSpreads(buySell).send() as int[]
+                    fixedSpreads.eachWithIndex { spread, idx ->
+                        servPub.handle(new ObjMap('DboeFixedSpreadEvent',
+                                [
+                                        'chain'           : chain,
+                                        'ob_address'      : obAddress,
+                                        'buy_sell'        : buySell ? 1 : 2,
+                                        'price_level'     : idx,
+                                        'fixed_spread_bps': spread
+                                ]
+                        ))
+                    }
+                } else {
+                    def fixedSpreads = obClob.getFixedSpreads().send() as int[]
+                    fixedSpreads.eachWithIndex { spread, idx ->
+                        servPub.handle(new ObjMap('DboeFixedSpreadEvent',
+                                [
+                                        'chain'           : chain,
+                                        'ob_address'      : obAddress,
+                                        'buy_sell'        : buySell ? 1 : 2,
+                                        'price_level'     : idx,
+                                        'fixed_spread_bps': spread
+                                ]
+                        ))
+                    }
                 }
             }
 
@@ -297,23 +318,28 @@ class DboeOnchainAnalyzerApp {
                     quotingUnderlyings.contains(it['underlying']) || dmm['quote_underlyings'] == 'ALL'
                 }.each { option ->
                     def clobAddress = option['ob_address']
-                    def dboeClob = getClob(clobAddress)
-                    def refPx = dboeClob.refInfo(padding(32, option['instr_id'] as byte[])).send().component1()
-                    [true, false].each { bs ->
-                        def quotes = dboeClob.userQuotes(dmm['address'], padding(32, option['instr_id'] as byte[]), bs).send()
-                        servPub.handle(new ObjMap('DboeDmmQuoteEvent',
-                                [
-                                        'chain'       : option['chain'],
-                                        'dmm'         : dmm['address'],
-                                        'instr_id'    : option['instr_id'],
-                                        'buy_sell'    : (bs ? 1 : 2),
-                                        'price_levels': quotes.component1() as int[],
-                                        'ref_price'   : refPx,
-                                        'amounts'     : quotes.component2().collect {
-                                            it / Math.pow(10, 18)
-                                        } as double[],
-                                        'in_timestamp': getCurrentTimeMillis()
-                                ]))
+                    // TODO
+                    if (!clobAddress.toLowerCase().equals('0x4FC3Da4aC2BD32C013724cecf87f1084B7e0AEad'.toLowerCase())) {
+                        def dboeClob = (com.ngontro86.dboe.web3j.v2.DBOEClob)getClob(clobAddress)
+                        def refPx = dboeClob.refInfo(padding(32, option['instr_id'] as byte[])).send().component1()
+                        [true, false].each { bs ->
+                            def quotes = dboeClob.dmmQuotes(dmm['address'], padding(32, option['instr_id'] as byte[]), bs).send()
+                            if(!quotes.findAll {it > 0}.isEmpty()) {
+                                servPub.handle(new ObjMap('DboeDmmQuoteEvent',
+                                        [
+                                                'chain'       : option['chain'],
+                                                'dmm'         : dmm['address'],
+                                                'instr_id'    : option['instr_id'],
+                                                'buy_sell'    : (bs ? 1 : 2),
+                                                'price_levels': [],
+                                                'ref_price'   : refPx,
+                                                'amounts'     : quotes.collect {
+                                                    it / Math.pow(10, 18)
+                                                } as double[],
+                                                'in_timestamp': getCurrentTimeMillis()
+                                        ]))
+                            }
+                        }
                     }
                 }
             }
