@@ -195,4 +195,12 @@ class QueryService {
         logger.error("New raw error: ${rawError}...")
         return ['Unknown error', 'Reach out to DBOE Support']
     }
+
+    double gasBuffer(String chain) {
+        def r = cep.queryMap("select buffer_pct from DboeGasPriceBufferWin(chain='${chain}')")
+        if (r.isEmpty()) {
+            return 10.0d
+        }
+        return r.first()['buffer_pct'] as Double
+    }
 }

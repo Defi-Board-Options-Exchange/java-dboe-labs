@@ -134,7 +134,7 @@ create schema DboeDmmQuoteEvent as (
     in_timestamp long
 );
 
-create window DboeDmmQuoteWin.std:unique(chain, dmm, instr_id, buy_sell) as DboeDmmQuoteEvent;
+create window DboeDmmQuoteWin.win:time(900 sec).std:unique(chain, dmm, instr_id, buy_sell) as DboeDmmQuoteEvent;
 @Name('DboeDmmQuoteWin') insert into DboeDmmQuoteWin select * from DboeDmmQuoteEvent;
 
 create schema DboeOnchainOrderbookEvent as (

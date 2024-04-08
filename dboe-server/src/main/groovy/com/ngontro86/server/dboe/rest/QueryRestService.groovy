@@ -331,4 +331,13 @@ class QueryRestService {
     Collection blockchainError(@QueryParam("rawError") String rawError) {
         return queryService.blockchainError(rawError)
     }
+
+    @GET
+    @Path('/gasBuffer')
+    @Produces(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Given a chain, query the buffer for gas price", response = Double.class)
+    Double gasBuffer(@QueryParam("chain") String chain) {
+        return queryService.gasBuffer(chain)
+    }
 }

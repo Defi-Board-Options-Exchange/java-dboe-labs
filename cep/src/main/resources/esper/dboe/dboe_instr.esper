@@ -102,4 +102,12 @@ create schema dboe_dmm_event as (
 create window DboeDmmWin.std:unique(chain, address) as dboe_dmm_event;
 @Name('DboeDmmWin') insert into DboeDmmWin select * from dboe_dmm_event;
 
+create schema dboe_gas_price_buffer_event as (
+    chain string,
+    buffer_pct double
+);
+
+create window DboeGasPriceBufferWin.std:unique(chain) as dboe_gas_price_buffer_event;
+@Name('DboeGasPriceBufferWin') insert into DboeGasPriceBufferWin select * from dboe_gas_price_buffer_event;
+
 
