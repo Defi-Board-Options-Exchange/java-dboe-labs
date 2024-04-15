@@ -26,4 +26,46 @@ class UtilsTest {
         assert Utils.instrId('L', '0.0', true, 15.5, 20230926) == 'L15.5C926'
         assert Utils.instrId('D', '0.000', true, 0.065, 20230926) == 'D0.065C926'
     }
+
+    @Test
+    void "return atm call and put"() {
+        assert Utils.atmCallPut(3710d,
+                [
+                        [
+                                'kind'  : 'Call',
+                                'strike': 3600d
+                        ],
+                        [
+                                'kind'  : 'Call',
+                                'strike': 3700d
+                        ],
+                        [
+                                'kind'  : 'Call',
+                                'strike': 3800d
+                        ],
+                        [
+                                'kind'  : 'Put',
+                                'strike': 3700d
+                        ],
+                        [
+                                'kind'  : 'Put',
+                                'strike': 3600d
+                        ],
+                        [
+                                'kind'  : 'Put',
+                                'strike': 3500d
+                        ]
+                ]).equals(
+                [
+                        [
+                                'kind'  : 'Call',
+                                'strike': 3800d
+                        ],
+                        [
+                                'kind'  : 'Put',
+                                'strike': 3700d
+                        ]
+                ]
+        )
+    }
 }

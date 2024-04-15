@@ -15,6 +15,7 @@ import com.ngontro86.market.web3j.Web3OptionPortfolioManager
 import com.ngontro86.market.web3j.Web3TokenPortfolioManager
 import org.apache.logging.log4j.Logger
 
+import javax.annotation.PostConstruct
 import javax.inject.Inject
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -61,7 +62,18 @@ class DeltaNeutralMarketMaker {
 
     private static Collection<String> FIATS = ['USDT', 'USDC', 'DAI']
 
+    @ConfigValue(config = "initialPositions")
+    private Collection initialPositions
+
+    private Map<String, Double> startingPositions = [:]
+
     private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor()
+
+    @PostConstruct
+    private void init() {
+        startingPositions << initialPositions.collectEntries { [(it.split(":")[0]): Double.valueOf(it.split(":")[1])] }
+        println "Starting Positions: ${startingPositions}"
+    }
 
     void startSelfHedge() {
         logger.info "Set Option tokens..."
@@ -117,7 +129,7 @@ class DeltaNeutralMarketMaker {
                         strike: opt['strike'],
                         r     : 0.0,
                         t     : ttExpiry,
-                        vol   : volEstimator.impliedVol(opt['underlying'], timeExpiryUtc, Math.log(opt['strike'] / spotPricer.spot(opt['underlying'])))/100d
+                        vol   : volEstimator.impliedVol(opt['underlying'], timeExpiryUtc, Math.log(opt['strike'] / spotPricer.spot(opt['underlying']))) / 100d
                 ]
 
                 def greek2 = Black76.greek option: [
@@ -126,7 +138,7 @@ class DeltaNeutralMarketMaker {
                         strike: opt['cond_strike'],
                         r     : 0.0,
                         t     : ttExpiry,
-                        vol   : volEstimator.impliedVol(opt['underlying'], timeExpiryUtc, Math.log(opt['cond_strike'] / spotPricer.spot(opt['underlying'])))/100d
+                        vol   : volEstimator.impliedVol(opt['underlying'], timeExpiryUtc, Math.log(opt['cond_strike'] / spotPricer.spot(opt['underlying']))) / 100d
                 ]
 
                 greekRisks.get(opt['underlying']).delta += pos * (greek1['delta'] - greek2['delta'])
@@ -149,6 +161,10 @@ class DeltaNeutralMarketMaker {
             }
         }
 
+        startingPositions.each { underlying, pos ->
+            greekRisks.putIfAbsent(underlying, new GreekRisk())
+            greekRisks.get(underlying).delta -= pos
+        }
         return greekRisks
     }
 }

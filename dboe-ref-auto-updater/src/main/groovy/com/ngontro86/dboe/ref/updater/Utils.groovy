@@ -29,4 +29,10 @@ class Utils {
     static String instrId(String prefix, String strikeFmt, boolean callPut, double strike, int expiry) {
         "${prefix}${new DecimalFormat(strikeFmt).format(strike)}${callPut ? 'C' : 'P'}${expiry % 10000}"
     }
+
+    static Map[] atmCallPut(double spot, Collection options) {
+        def calls = options.findAll { it['kind'] == 'Call' && it['strike'] >= spot }.sort { it['strike'] }
+        def puts = options.findAll { it['kind'] == 'Put' && it['strike'] <= spot }.sort { -it['strike'] }
+        return [calls.isEmpty() ? null : calls.first(), puts.isEmpty() ? null : puts.first()]
+    }
 }
