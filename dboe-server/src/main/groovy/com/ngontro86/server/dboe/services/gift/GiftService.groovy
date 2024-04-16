@@ -24,7 +24,7 @@ class GiftService {
 
     private setConfigsIfNeeded() {
         if (giftConfigs.isEmpty()) {
-            giftConfigs = cep.queryMap("select * from DboeMysteriousGiftConfigWin").collectEntries {
+            giftConfigs = cep.queryMap("select * from DboeMGConfigWin").collectEntries {
                 [(it['name']): new GiftConfig(maxReward: it['max_reward'], minReward: it['min_reward'])]
             }
             logger.info("Got: ${giftConfigs.size()} Gift Config records")
@@ -32,7 +32,7 @@ class GiftService {
     }
 
     Collection<Map> numOfGifts(String wallet) {
-        return cep.queryMap("select name, quota from DboeMysteriousGiftUserQuotaLeftWin(wallet_id='${wallet.toLowerCase()}')")
+        return cep.queryMap("select name, quota from DboeMGUserQuotaLeftWin(wallet_id='${wallet.toLowerCase()}')")
     }
 
     Double open(String openKey, String wallet, String name) {
@@ -57,15 +57,15 @@ class GiftService {
     }
 
     Collection<Map> gifts() {
-        cep.queryMap("select name, max_recipient, pool_size, reward_token, max_reward as reward from DboeMysteriousGiftConfigWin")
+        cep.queryMap("select name, max_recipient, pool_size, reward_token, max_reward as reward from DboeMGConfigWin")
     }
 
     Collection<Map> giftHistory(String walletId) {
-        cep.queryMap("select date, o.name as name, reward, c.reward_token as token from DboeMysteriousGiftUserOpenWin(wallet_id='${walletId.toLowerCase()}') o inner join DboeMysteriousGiftConfigWin c on o.name = c.name")
+        cep.queryMap("select date, o.name as name, reward, c.reward_token as token from DboeMGUserOpenWin(wallet_id='${walletId.toLowerCase()}') o inner join DboeMGConfigWin c on o.name = c.name")
     }
 
     Collection<Map> giftDashboard() {
-        cep.queryMap("select c.reward_token as token, sum(c.pool_size) as pool_size, sum(reward) as reward from DboeMysteriousGiftUserOpenWin o inner join DboeMysteriousGiftConfigWin c on o.name = c.name group by c.reward_token")
+        cep.queryMap("select c.reward_token as token, sum(c.pool_size) as pool_size, sum(reward) as reward from DboeMGUserOpenWin o inner join DboeMGConfigWin c on o.name = c.name group by c.reward_token")
     }
 
     private static class GiftConfig {

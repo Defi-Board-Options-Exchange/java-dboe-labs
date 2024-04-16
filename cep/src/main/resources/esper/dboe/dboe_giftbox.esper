@@ -20,18 +20,8 @@ create schema dboe_mysterious_gift_user_open_event as (
     timestamp long
 );
 
-create window DboeMysteriousGiftUserOpenWin.std:unique(date, name, wallet_id, open_key) as dboe_mysterious_gift_user_open_event;
-@Name('DboeMysteriousGiftUserOpenWin') insert into DboeMysteriousGiftUserOpenWin select * from dboe_mysterious_gift_user_open_event;
-
-create schema DboeMGUserTotalOpenEvent as (
-    wallet_id string,
-    name string,
-    frequency string,
-    num_open int,
-    total_reward double
-);
-create window DboeMysteriousGiftUserTotalOpenWin.std:unique(name, frequency, wallet_id) as DboeMGUserTotalOpenEvent;
-@Name('DboeMysteriousGiftUserTotalOpenWin') insert into DboeMysteriousGiftUserTotalOpenWin select * from DboeMGUserTotalOpenEvent;
+create window DboeMGUserOpenWin.std:unique(date, name, wallet_id, open_key) as dboe_mysterious_gift_user_open_event;
+@Name('DboeMGUserOpenWin') insert into DboeMGUserOpenWin select * from dboe_mysterious_gift_user_open_event;
 
 create schema dboe_mysterious_gift_config_event as (
     name string,
@@ -49,8 +39,8 @@ create schema dboe_mysterious_gift_config_event as (
     timestamp long
 );
 
-create window DboeMysteriousGiftConfigWin.std:unique(name, type) as dboe_mysterious_gift_config_event;
-@Name('DboeMysteriousGiftConfigWin') insert into DboeMysteriousGiftConfigWin select * from dboe_mysterious_gift_config_event;
+create window DboeMGConfigWin.std:unique(name, type) as dboe_mysterious_gift_config_event;
+@Name('DboeMGConfigWin') insert into DboeMGConfigWin select * from dboe_mysterious_gift_config_event;
 
 create schema dboe_date_event as (date int, in_timestamp long);
 create window DboeDateWin.win:length(1) as dboe_date_event;
@@ -60,41 +50,52 @@ insert into dboe_date_event
 select
     current_timestamp().getYear() * 10000 + (1 + current_timestamp().getMonthOfYear()) * 100 + current_timestamp().getDayOfMonth() as date,
     current_timestamp as in_timestamp
-from DboeMysteriousGiftConfigWin
+from DboeMGConfigWin
 output snapshot every 5 minutes;
 
-@Name('Total Daily Open')
+create schema DboeMGUserTotalOpenEvent as (
+    date int,
+    wallet_id string,
+    name string,
+    frequency string,
+    num_open int,
+    total_reward double
+);
+create window DboeMGUserTotalOpenWin.std:unique(date, name, frequency, wallet_id) as DboeMGUserTotalOpenEvent;
+@Name('DboeMGUserTotalOpenWin') insert into DboeMGUserTotalOpenWin select * from DboeMGUserTotalOpenEvent;
+
+@Name('Total Daily Latest Opens')
 insert into DboeMGUserTotalOpenEvent
 select
-    o.name as name, o.wallet_id as wallet_id, c.frequency as frequency,
+    o.date as date, o.name as name, o.wallet_id as wallet_id, c.frequency as frequency,
     cast(count(distinct o.open_key) as int) as num_open,
     sum(o.reward) as total_reward
-from DboeMysteriousGiftUserOpenWin o
-inner join DboeMysteriousGiftConfigWin(frequency='Daily') c on o.name = c.name
+from DboeMGUserOpenWin o
+inner join DboeMGConfigWin(frequency='Daily') c on o.name = c.name
 inner join DboeDateWin d on d.date = o.date
-group by o.name, o.wallet_id;
+group by o.date, o.name, o.wallet_id;
 
-@Name('Total Daily Open')
+@Name('Total non-Daily Open')
 insert into DboeMGUserTotalOpenEvent
 select
-    o.name as name, o.wallet_id as wallet_id, c.frequency as frequency,
+    0 as date, o.name as name, o.wallet_id as wallet_id, c.frequency as frequency,
     cast(count(distinct o.open_key) as int) as num_open,
     sum(o.reward) as total_reward
-from DboeMysteriousGiftUserOpenWin o
-inner join DboeMysteriousGiftConfigWin(frequency<>'Daily') c on o.name = c.name
+from DboeMGUserOpenWin o
+inner join DboeMGConfigWin(frequency<>'Daily') c on o.name = c.name
 group by o.name, o.wallet_id;
 
-create schema DboeMysteriousGiftUserQuotaEvent as (
+create schema DboeMGUserQuotaEvent as (
     name string,
     wallet_id string,
     quota int
 );
 
-create window DboeMysteriousGiftUserQuotaWin.std:unique(name, wallet_id) as DboeMysteriousGiftUserQuotaEvent;
-@Name('DboeMysteriousGiftUserQuotaWin') insert into DboeMysteriousGiftUserQuotaWin select * from DboeMysteriousGiftUserQuotaEvent;
+create window DboeMGUserQuotaWin.std:unique(name, wallet_id) as DboeMGUserQuotaEvent;
+@Name('DboeMGUserQuotaWin') insert into DboeMGUserQuotaWin select * from DboeMGUserQuotaEvent;
 
 @Name('Gift-Quota')
-insert into DboeMysteriousGiftUserQuotaEvent
+insert into DboeMGUserQuotaEvent
 select
      c.name as name,
      w.Address as wallet_id,
@@ -106,33 +107,34 @@ select
         else 0
      end as quota
 from DboeWalletTradesInvitesWin w
-inner join DboeMysteriousGiftConfigWin c;
+inner join DboeMGConfigWin c;
 
-create schema DboeMysteriousGiftUserQuotaLeftEvent as (
+create schema DboeMGUserQuotaLeftEvent as (
     name string,
     wallet_id string,
     quota int
 );
 
-create window DboeMysteriousGiftUserQuotaLeftWin.std:unique(name, wallet_id) as DboeMysteriousGiftUserQuotaLeftEvent;
-@Name('DboeMysteriousGiftUserQuotaLeftWin') insert into DboeMysteriousGiftUserQuotaLeftWin select * from DboeMysteriousGiftUserQuotaLeftEvent;
+create window DboeMGUserQuotaLeftWin.std:unique(name, wallet_id) as DboeMGUserQuotaLeftEvent;
+@Name('DboeMGUserQuotaLeftWin') insert into DboeMGUserQuotaLeftWin select * from DboeMGUserQuotaLeftEvent;
 
 @Name('Daily-Gift-Quota-Left-Timer')
-insert into DboeMysteriousGiftUserQuotaLeftEvent
+insert into DboeMGUserQuotaLeftEvent
 select
     q.name as name,
     q.wallet_id as wallet_id,
     q.quota - coalesce(o.num_open, 0) as quota
-from DboeMysteriousGiftUserQuotaWin q
-inner join DboeMysteriousGiftConfigWin(frequency='Daily') c on q.name = c.name
-left outer join DboeMysteriousGiftUserTotalOpenWin(frequency='Daily') o on o.name = q.name and o.wallet_id = q.wallet_id;
+from DboeMGUserQuotaWin q
+inner join DboeMGConfigWin(frequency='Daily') c on q.name = c.name
+left outer join DboeMGUserTotalOpenWin(frequency='Daily') o on o.name = q.name and o.wallet_id = q.wallet_id
+left outer join DboeDateWin d on o.date = d.date;
 
 @Name('Other Gift-Quota-Left')
-insert into DboeMysteriousGiftUserQuotaLeftEvent
+insert into DboeMGUserQuotaLeftEvent
 select
     q.name as name,
     q.wallet_id as wallet_id,
     q.quota - coalesce(o.num_open, 0) as quota
-from DboeMysteriousGiftUserQuotaWin q
-inner join DboeMysteriousGiftConfigWin(frequency<>'Daily') c on q.name = c.name
-left outer join DboeMysteriousGiftUserTotalOpenWin(frequency<>'Daily') o on o.name = q.name and o.wallet_id = q.wallet_id;
+from DboeMGUserQuotaWin q
+inner join DboeMGConfigWin(frequency<>'Daily') c on q.name = c.name
+left outer join DboeMGUserTotalOpenWin(frequency<>'Daily') o on o.name = q.name and o.wallet_id = q.wallet_id;
