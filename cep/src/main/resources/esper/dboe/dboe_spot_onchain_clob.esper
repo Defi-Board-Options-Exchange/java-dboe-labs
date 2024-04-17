@@ -28,7 +28,7 @@ create window DboeSpotPrevRefWin.std:unique(chain, quote_token, base_token) as d
 @Name('DboeSpotPrevRefWin') insert into DboeSpotPrevRefWin select * from dboe_spot_prev_ref_event;
 
 
-create window DboeSpotDashboardAddressWin.std:unique(chain, dashboard_address) as dboe_spot_dashboard_address_event;
+create window DboeSpotDashboardAddressWin.win:time(120 sec).std:unique(chain, dashboard_address) as dboe_spot_dashboard_address_event;
 @Name('DboeSpotDashboardAddressWin') insert into DboeSpotDashboardAddressWin select * from dboe_spot_dashboard_address_event;
 
 create schema DboeSpotMarketEvent as (
