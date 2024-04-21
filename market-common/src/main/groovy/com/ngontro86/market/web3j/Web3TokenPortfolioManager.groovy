@@ -20,7 +20,7 @@ class Web3TokenPortfolioManager<T> {
     private TokenLoader<T> tokenLoader
 
     private Map<String, T> tokens = [:]
-    private Map<String, BigInteger> decimals = [:]
+    private Map<String, Double> decimals = [:]
 
     void initPairs(Collection<Map> tokens) {
         tokens.each {

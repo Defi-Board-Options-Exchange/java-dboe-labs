@@ -63,7 +63,7 @@ class DeltaNeutralMarketMaker {
     private static Collection<String> FIATS = ['USDT', 'USDC', 'DAI']
 
     @ConfigValue(config = "initialPositions")
-    private Collection initialPositions
+    private Collection<String> initialPositions= []
 
     private Map<String, Double> startingPositions = [:]
 

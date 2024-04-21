@@ -63,7 +63,7 @@ class VariousINTTest {
         def web3jClientProvider = env.component(Web3jClientProvider)
         def txnDbProvider = env.component(TxnManagerDbProvider)
         println "Wallet: ${txnDbProvider.rwTxnManager().fromAddress}"
-        def dmm = DedicatedSpotMarketMaker.load('0xfBe316629fe7ec12AA2c1AD8B9B32985B0606893', web3jClientProvider.web3jRWClient(), txnDbProvider.rwTxnManager(), env.component(ContractGasProvider))
+        def dmm = DedicatedSpotMarketMaker.load('0x7869365da3747de9E615aa413Ac948CC62866349', web3jClientProvider.web3jRWClient(), txnDbProvider.rwTxnManager(), env.component(ContractGasProvider))
         println "Owner: ${dmm.owner().send()}"
         [
                 '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
@@ -78,10 +78,10 @@ class VariousINTTest {
                 '0xc2132d05d31c914a87c6611c10748aeb04b58e8f'
         ].each { addr ->
             def erc20 = ERC20.load(addr, web3jClientProvider.web3jROClient(), txnDbProvider.roTxnManager(), env.component(ContractGasProvider))
-            def balance = erc20.balanceOf('0xfBe316629fe7ec12AA2c1AD8B9B32985B0606893').send()
+            def balance = erc20.balanceOf('0x7869365da3747de9E615aa413Ac948CC62866349').send()
             try {
                 if (balance > 0) {
-                    println "Withdrawing ${erc20.name().send()}..."
+                    println "Withdrawing ${erc20.name().send()}, ${balance}..."
                     dmm.withdraw(balance, addr).send()
                 }
             } catch (Exception e) {
