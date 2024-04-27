@@ -33,15 +33,21 @@ class Web3OptionPortfolioManager<T> {
         optionByInstrId = options.groupBy { it['instr_id'] }
     }
 
-    Map<String, Double> portfolio(Collection<String> addresses) {
+    Map<String, Double> portfolio(Set<String> underlyings, Collection<String> addresses) {
         Map<String, Double> positionPortfolio = [:]
-        longTokens.each { instrId, longToken ->
+        longTokens.findAll {
+            underlyings.isEmpty() || underlyings.contains(optionByInstrId.get(it.key).first()['underlying'])
+        }.each { instrId, longToken ->
             positionPortfolio[instrId] = addresses.collect { addr ->
                 tokenLoader.balanceOf(longToken, addr) - tokenLoader.balanceOf(shortTokens[instrId], addr)
             }.sum() / DBOE_TOKEN_SCALE
         }
         logger.info "Portfolio: ${positionPortfolio}"
         return positionPortfolio
+    }
+
+    Map<String, Double> portfolio(Collection<String> addresses) {
+        return portfolio([] as Set, addresses)
     }
 
     private void loadLongShortOption(Map option) {

@@ -60,7 +60,7 @@ class AnalyticService {
         }
     }
 
-    PortfolioRisk greeks(Collection<String> wallets) {
+    PortfolioRisk greeks(Set<String> underlyings, Collection<String> wallets) {
         Map<String, Double> vals = ['USDT': usdtBalance(wallets)]
         Map<String, GreekRisk> risks = [:]
         Map<String, Map<String, Double>> optionPos = [:]
@@ -68,7 +68,7 @@ class AnalyticService {
             [(it['instr_id']): it]
         } as Map<String, Map>
 
-        optionPortfolioManager.portfolio(wallets).findAll { it.value != 0d }.each { instrId, pos ->
+        optionPortfolioManager.portfolio(underlyings, wallets).findAll { it.value != 0d }.each { instrId, pos ->
             def opt = optionPortfolioManager.optionByInstrId.get(instrId).first() as Map
             def underlying = opt['underlying']
             risks.putIfAbsent(underlying, new GreekRisk())

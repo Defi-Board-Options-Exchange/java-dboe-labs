@@ -19,12 +19,12 @@ class AnalyticRestService {
     private AnalyticService analyticService
 
     @GET
-    @Path('/greek/{walletId}')
+    @Path('/greek/{underlying}/{walletId}')
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Compute Greeks for this particular wallet", response = PortfolioRisk.class)
-    PortfolioRisk singleWallet(@PathParam('walletId') String walletId) {
-        return analyticService.greeks([walletId])
+    PortfolioRisk singleWallet(@PathParam('underlying') String underlying, @PathParam('walletId') String walletId) {
+        return analyticService.greeks([underlying], [walletId])
     }
 
     @GET
@@ -33,7 +33,16 @@ class AnalyticRestService {
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Compute Greeks for multiple wallets. Addresses are separated by comma", response = PortfolioRisk.class)
     PortfolioRisk multiWallets(@QueryParam('wallets') String wallets) {
-        return analyticService.greeks(wallets.split(",") as Collection)
+        return analyticService.greeks([], wallets.split(",") as Collection)
+    }
+
+    @GET
+    @Path('/greeks')
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Compute Greeks for multiple wallets. Addresses are separated by comma", response = PortfolioRisk.class)
+    PortfolioRisk multiWallets(@QueryParam('underlying') String underlying, @QueryParam('wallets') String wallets) {
+        return analyticService.greeks([underlying], wallets.split(",") as Collection)
     }
 
     @GET

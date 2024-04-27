@@ -28,15 +28,19 @@ class Web3TokenPortfolioManager<T> {
         }
     }
 
-    Map<String, Double> portfolio(Collection<String> addresses) {
+    Map<String, Double> portfolio(Collection<String> underlyings, Collection<String> addresses) {
         Map<String, Double> positionPortfolio = [:]
-        tokens.each { underlying, token ->
+        tokens.findAll { underlyings.isEmpty() || underlyings.contains(it) }.each { underlying, token ->
             positionPortfolio[underlying] = addresses.collect { addr ->
                 tokenLoader.balanceOf(token, addr)
-            }.sum() / decimals[underlying]
+            }.sum() * 1d / decimals[underlying]
         }
-        logger.info "Spot portfolio: ${positionPortfolio}"
+        println "Spot portfolio: ${positionPortfolio}"
         return positionPortfolio
+    }
+
+    Map<String, Double> portfolio(Collection<String> addresses) {
+        return portfolio([] as Set, addresses)
     }
 
     private void loadPair(Map pair) {
