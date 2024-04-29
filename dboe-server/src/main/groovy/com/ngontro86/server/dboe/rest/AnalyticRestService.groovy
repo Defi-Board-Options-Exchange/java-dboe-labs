@@ -32,17 +32,17 @@ class AnalyticRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Compute Greeks for multiple wallets. Addresses are separated by comma", response = PortfolioRisk.class)
-    PortfolioRisk multiWallets(@QueryParam('wallets') String wallets) {
-        return analyticService.greeks([], wallets.split(",") as Collection)
+    PortfolioRisk multiWallets(@QueryParam('underlying') String underlying, @QueryParam('wallets') String wallets) {
+        return analyticService.greeks([underlying], wallets.split(",") as Collection)
     }
 
     @GET
-    @Path('/greeks')
+    @Path('/allMarketGreeks')
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Compute Greeks for multiple wallets. Addresses are separated by comma", response = PortfolioRisk.class)
-    PortfolioRisk multiWallets(@QueryParam('underlying') String underlying, @QueryParam('wallets') String wallets) {
-        return analyticService.greeks([underlying], wallets.split(",") as Collection)
+    PortfolioRisk allMarketGreeks(@QueryParam('wallets') String wallets) {
+        return analyticService.greeks([], wallets.split(",") as Collection)
     }
 
     @GET

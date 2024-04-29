@@ -1,7 +1,7 @@
 select
     i.underlying as underlying,
     i.instr_id as instr_id,
-    i.expiry as expiry, i.kind as kind,
+    i.expiry as expiry, i.ltt as ltt, i.kind as kind,
     i.strike as strike, i.cond_strike as cond_strike,
     s.spot as spot, Math.log(i.strike/s.spot) as moneyness,
     p.bid as bid, r.ref_price as ref, p.ask as ask,
