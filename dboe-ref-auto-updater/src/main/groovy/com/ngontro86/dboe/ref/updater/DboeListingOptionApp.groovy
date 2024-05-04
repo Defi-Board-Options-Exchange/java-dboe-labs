@@ -104,7 +104,6 @@ class DboeListingOptionApp {
                     ]
             ])
 
-
         }
 
         println "Exiting now..."
@@ -124,8 +123,8 @@ class DboeListingOptionApp {
                                     "isCall"     : callPut,
                                     "isLong"     : true,
                                     "multiplier" : 1,
-                                    "ltt"        : 150000,
-                                    "lttUtc"     : Utils.getTimeUtc(expiry, 150000) / 1000L,
+                                    "ltt"        : template['ltt_gmt'],
+                                    "lttUtc"     : Utils.getTimeUtc(expiry, template['ltt_gmt']) / 1000L,
                                     "cond_strike": strike + (callPut ? 1 : -1) * template['collateral'] * template['scale_up'],
                                     "strike"     : strike,
                                     "currency"   : template['currency'],

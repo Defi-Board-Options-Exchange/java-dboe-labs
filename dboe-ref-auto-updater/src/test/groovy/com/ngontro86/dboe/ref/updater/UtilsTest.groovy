@@ -9,6 +9,11 @@ import static com.ngontro86.utils.EqualUtils.equals
 class UtilsTest {
 
     @Test
+    void "should return epoch time given date and time LTT"() {
+        assert Utils.getTimeUtc(20240503, 80000) == 1714723200000
+    }
+
+    @Test
     void "should return a good list of strikes"() {
         assert equals(listStrikes(true, 1592.5, 10.0, 2, 5, 100), [157000, 158000, 159000, 160000, 161000, 162000, 163000, 164000])
         assert equals(listStrikes(false, 1592.5, 10.0, 2, 5, 100), [155000, 156000, 157000, 158000, 159000, 160000, 161000, 162000])
