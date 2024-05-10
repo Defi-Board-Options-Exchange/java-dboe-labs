@@ -441,3 +441,38 @@ LEFT OUTER JOIN (
    WHERE TxnTimestamp >= timestamp(date_format(date(date_sub(CURRENT_DATE(), INTERVAL 5 DAY)), '%Y%m%d'))
    GROUP BY 1
 ) t ON a.date = t.date
+
+
+-------- Spot Analytics --------
+CREATE OR REPLACE VIEW dboe_spot_transfer_3d AS
+SELECT
+TransactionHash AS txn_hash, m.dboe_chain_name AS chain,
+unix_timestamp(TxnTimestamp) AS timestamp,
+SenderAddress AS address, 'OUT' AS in_out, s.name, amount
+FROM analytics.dboe_spot_transfers t
+INNER JOIN dboe_academy.dboe_spot_tokens s ON t.CurrencyAddress = s.token
+INNER JOIN analytics.chain_mapping m ON t.Chain = m.name
+WHERE TxnTimestamp >= date_sub(NOW(), INTERVAL 3 DAY)
+UNION
+SELECT
+TransactionHash AS txn_hash, m.dboe_chain_name AS chain,
+unix_timestamp(TxnTimestamp) AS timestamp,
+ReceiverAddress AS address, 'IN' AS in_out, s.name, amount
+FROM analytics.dboe_spot_transfers t
+INNER JOIN dboe_academy.dboe_spot_tokens s ON t.CurrencyAddress = s.token
+INNER JOIN analytics.chain_mapping m ON t.Chain = m.name
+WHERE TxnTimestamp >= date_sub(NOW(), INTERVAL 3 DAY)
+
+
+REPLACE INTO dboe_academy.dboe_spot_daily_trade_liquidity
+SELECT
+cast(date_format(date_sub(TxnTimestamp, INTERVAL -8 HOUR), '%Y%m%d') AS unsigned) AS DATE,
+s.name AS token_name,
+SUM(Amount) AS total_volume,
+COUNT(DISTINCT TransactionHash) AS no_txn
+FROM analytics.dboe_spot_transfers t
+INNER JOIN dboe_academy.dboe_spot_tokens s ON t.CurrencyAddress = s.token
+WHERE TxnTimestamp >= timestamp(date_format(date(date_sub(CURRENT_DATE(), INTERVAL 2 DAY)), '%Y%m%d'))
+GROUP BY 1,2
+
+

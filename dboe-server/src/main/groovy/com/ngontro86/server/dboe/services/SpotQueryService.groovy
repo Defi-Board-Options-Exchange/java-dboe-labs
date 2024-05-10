@@ -36,11 +36,14 @@ class SpotQueryService {
     }
 
     Collection<Map> trades(String walletId, String chain) {
-        []
+        cep.queryMap("select * from DboeSpotTransferWin(chain='${chain}',address='${walletId}')")
     }
 
     Collection<Map> spotDashboard(String chain) {
         cep.queryMap("select * from DboeSpotDashboardAddressWin(chain='${chain}')")
     }
 
+    Collection<Map> stats(String chain) {
+        cep.queryMap("select * from DboeSpotDailyTradeLiquidityWin")
+    }
 }

@@ -28,7 +28,7 @@ create window DboeSpotPrevRefWin.std:unique(chain, quote_token, base_token) as d
 @Name('DboeSpotPrevRefWin') insert into DboeSpotPrevRefWin select * from dboe_spot_prev_ref_event;
 
 
-create window DboeSpotDashboardAddressWin.win:time(120 sec).std:unique(chain, dashboard_address) as dboe_spot_dashboard_address_event;
+create window DboeSpotDashboardAddressWin.std:unique(chain, dashboard_address) as dboe_spot_dashboard_address_event;
 @Name('DboeSpotDashboardAddressWin') insert into DboeSpotDashboardAddressWin select * from dboe_spot_dashboard_address_event;
 
 create schema DboeSpotMarketEvent as (
@@ -212,3 +212,26 @@ from DboeSpotOrderBookWin i unidirectional
 inner join DboeSpotOrderBookWin p on i.chain = p.chain and i.address = p.address and i.buy_sell = p.buy_sell
 where i.price_level >= p.price_level
 group by i.chain, i.address, i.quote_token, i.base_token, i.quote_name, i.base_name, i.buy_sell, i.price, i.price_level;
+
+create schema dboe_spot_transfer_3d_event as (
+    txn_hash string,
+    chain string,
+    timestamp long,
+    address string,
+    in_out string,
+    name string,
+    amount double
+);
+
+create window DboeSpotTransferWin.std:unique(chain, txn_hash, address, in_out, name) as dboe_spot_transfer_3d_event;
+@Name('DboeSpotTransferWin') insert into DboeSpotTransferWin select * from dboe_spot_transfer_3d_event;
+
+create schema dboe_spot_daily_trade_liquidity_event as (
+    date int,
+    token_name string,
+    total_volume double,
+    no_txn int
+);
+
+create window DboeSpotDailyTradeLiquidityWin.std:unique(date, token_name) as dboe_spot_daily_trade_liquidity_event;
+@Name('DboeSpotDailyTradeLiquidityWin') insert into DboeSpotDailyTradeLiquidityWin select * from dboe_spot_daily_trade_liquidity_event;

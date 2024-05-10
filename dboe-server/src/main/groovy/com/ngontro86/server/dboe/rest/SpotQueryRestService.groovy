@@ -70,4 +70,13 @@ class SpotQueryRestService {
     Collection<Map> spotDashboard(@QueryParam("chain") String chain) {
         return queryService.spotDashboard(chain)
     }
+
+    @GET
+    @Path('/stats')
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Get Spot Stats", response = Collection.class)
+    Collection<Map> stats(@QueryParam("chain") String chain) {
+        return queryService.stats(chain)
+    }
 }
