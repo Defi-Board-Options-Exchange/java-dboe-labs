@@ -1,6 +1,6 @@
 package com.ngontro86.server.dboe.services
 
-import com.ngontro86.common.times.GlobalTimeController
+
 import com.ngontro86.market.pricing.Black76
 import com.ngontro86.market.pricing.OptionKind
 import com.ngontro86.utils.GlobalTimeUtils
@@ -40,5 +40,9 @@ class Utils {
             parameterisedBody = parameterisedBody.replaceAll("${sep}${k}${sep}", v.toString())
         }
         return parameterisedBody
+    }
+
+    static Map minMax(Collection<Map> obs, String prop, boolean minMax) {
+        return minMax ? obs.max { a, b -> a[prop] <=> b[prop] } : obs.min { a, b -> a[prop] <=> b[prop] }
     }
 }

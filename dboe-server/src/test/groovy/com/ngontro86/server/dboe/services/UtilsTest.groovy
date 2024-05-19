@@ -55,4 +55,25 @@ class UtilsTest {
         ].findAll { it.key.toString().toLowerCase().endsWith('ca257dec0') }
                 .values().first() == 'a@b.com'
     }
+
+    @Test
+    void "find the min max from the list of object"() {
+        println Utils.minMax(
+                [
+                        [
+                                'strike': 12
+                        ],
+                        [
+                                'strike': 13
+                        ],
+                        [
+                                'strike': 14
+                        ],
+                        [
+                                'strike': 15
+                        ]
+                ], 'strike', true
+        )
+    }
+
 }

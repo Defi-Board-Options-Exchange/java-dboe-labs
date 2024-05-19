@@ -51,10 +51,16 @@ class DboeSpotOnchainAnalyzerApp {
     @ConfigValue(config = "obRefreshFreqSec")
     private Integer obRefreshFreqSec = 2
 
+    @ConfigValue(config = "marketRefreshFreqSec")
+    private Integer marketRefreshFreqSec = 5
+
+    @ConfigValue(config = "tradingStatsFreqSec")
+    private Integer tradingStatsFreqSec = 15
+
     private Map<String, DBOESpotDashboard> dboeSpotDashboards = [:]
     private Map<String, DBOESpotMarket> dboeSpotMarkets = [:]
 
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2)
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(3)
 
     @EntryPoint
     void go() {
@@ -68,7 +74,7 @@ class DboeSpotOnchainAnalyzerApp {
             void run() {
                 init()
             }
-        }, 10, 10, TimeUnit.MINUTES)
+        }, 2, marketRefreshFreqSec, TimeUnit.MINUTES)
 
         scheduler.scheduleAtFixedRate(new Runnable() {
             @Override
@@ -77,6 +83,14 @@ class DboeSpotOnchainAnalyzerApp {
                 updateMarketRefs()
             }
         }, 5, obRefreshFreqSec, TimeUnit.SECONDS)
+
+        scheduler.scheduleAtFixedRate(new Runnable() {
+            @Override
+            void run() {
+                pullTradingStats()
+            }
+
+        }, 5, tradingStatsFreqSec, TimeUnit.SECONDS)
 
         while (true) {
             logger.info("Pausing for 100 ms ...")
@@ -88,65 +102,92 @@ class DboeSpotOnchainAnalyzerApp {
         def dashboards = getSpotDashboard()
 
         dashboards.each {
-            def dashboardAddress = it['dashboard_address'] as String
-            if (!dboeSpotDashboards.containsKey(dashboardAddress)) {
-                dboeSpotDashboards.put(dashboardAddress, DBOESpotDashboard.load(dashboardAddress, web3j, txnManager, gasProvider))
-            }
-            def spots = dboeSpotDashboards.get(dashboardAddress).dashboard().send()
-            println "Dashboard:${dashboardAddress} got: ${spots.size()} Spot Market..."
-
-            spots.each { spotMarketAddr ->
-                if (!dboeSpotMarkets.containsKey(spotMarketAddr)) {
-                    dboeSpotMarkets.put(spotMarketAddr, DBOESpotMarket.load(spotMarketAddr, web3j, txnManager, gasProvider))
+            try {
+                def dashboardAddress = it['dashboard_address'] as String
+                if (!dboeSpotDashboards.containsKey(dashboardAddress)) {
+                    dboeSpotDashboards.put(dashboardAddress, DBOESpotDashboard.load(dashboardAddress, web3j, txnManager, gasProvider))
                 }
-                def spotMarket = dboeSpotMarkets.get(spotMarketAddr)
-                def quoteToken = spotMarket.quoteToken().send()
-                def baseToken = spotMarket.baseToken().send()
-                def quoteErc20 = ERC20.load(quoteToken, web3j, txnManager, gasProvider)
-                def baseErc20 = ERC20.load(baseToken, web3j, txnManager, gasProvider)
-                println "Found a pair: ${baseToken}/${quoteToken}"
-                servPub.handle(new ObjMap('DboeSpotMarketEvent',
-                        [
-                                'chain'        : chain,
-                                'quote_token'  : quoteToken,
-                                'base_token'   : baseToken,
-                                'base_name'    : baseErc20.symbol().send(),
-                                'quote_name'   : quoteErc20.symbol().send(),
-                                'quote_decimal': (long) Math.pow(10, quoteErc20.decimals().send()),
-                                'base_decimal' : (long) Math.pow(10, baseErc20.decimals().send()),
-                                'address'      : spotMarketAddr
-                        ]))
+                def spots = dboeSpotDashboards.get(dashboardAddress).dashboard().send()
+                println "Dashboard:${dashboardAddress} got: ${spots.size()} Spot Market..."
 
-                [true, false].each { buySell ->
-                    def fixedSpreads = spotMarket.getFixedSpreads(buySell).send() as int[]
-                    fixedSpreads.eachWithIndex { spread, idx ->
-                        servPub.handle(new ObjMap('DboeSpotFixedSpreadEvent',
-                                [
-                                        'chain'           : chain,
-                                        'address'         : spotMarketAddr,
-                                        'buy_sell'        : buySell ? 1 : 2,
-                                        'price_level'     : idx,
-                                        'fixed_spread_bps': spread
-                                ]
-                        ))
+                spots.each { spotMarketAddr ->
+                    if (!dboeSpotMarkets.containsKey(spotMarketAddr)) {
+                        dboeSpotMarkets.put(spotMarketAddr, DBOESpotMarket.load(spotMarketAddr, web3j, txnManager, gasProvider))
+                    }
+                    def spotMarket = dboeSpotMarkets.get(spotMarketAddr)
+                    def quoteToken = spotMarket.quoteToken().send()
+                    def baseToken = spotMarket.baseToken().send()
+                    def quoteErc20 = ERC20.load(quoteToken, web3j, txnManager, gasProvider)
+                    def baseErc20 = ERC20.load(baseToken, web3j, txnManager, gasProvider)
+                    println "Found a pair: ${spotMarketAddr}, ${baseToken}/${quoteToken}"
+                    servPub.handle(new ObjMap('DboeSpotMarketEvent',
+                            [
+                                    'chain'        : chain,
+                                    'dashboard'    : dashboardAddress,
+                                    'quote_token'  : quoteToken,
+                                    'base_token'   : baseToken,
+                                    'base_name'    : baseErc20.symbol().send(),
+                                    'quote_name'   : quoteErc20.symbol().send(),
+                                    'quote_decimal': (long) Math.pow(10, quoteErc20.decimals().send()),
+                                    'base_decimal' : (long) Math.pow(10, baseErc20.decimals().send()),
+                                    'address'      : spotMarketAddr
+                            ]))
+
+                    def specs = spotMarket.getObSpecs().send()
+
+                    servPub.handle(new ObjMap('DboeSpotClobSpecsEvent',
+                            [
+                                    'chain'                 : chain,
+                                    'address'               : spotMarketAddr,
+                                    'num_px_level'          : specs.component1(),
+                                    'maker_fee_bps'         : specs.component2(),
+                                    'taker_fee_bps'         : specs.component3(),
+                                    'max_order_validity_sec': specs.component4(),
+                                    'min_lmt_order_notional': specs.component5()
+                            ]))
+
+                    [true, false].each { buySell ->
+                        specs.component1().times { idx ->
+                            servPub.handle(new ObjMap('DboeSpotFixedSpreadEvent',
+                                    [
+                                            'chain'           : chain,
+                                            'address'         : spotMarketAddr,
+                                            'buy_sell'        : buySell ? 1 : 2,
+                                            'price_level'     : idx,
+                                            'fixed_spread_bps': spotMarket.obSpreadsBps(idx).send()
+                                    ]
+                            ))
+                        }
                     }
                 }
+            } catch (Exception e) {
+                logger.error(e)
+            }
 
-                def specs = spotMarket.getObSpecs().send()
+        }
+    }
 
-                servPub.handle(new ObjMap('DboeSpotClobSpecsEvent',
+    void pullTradingStats() {
+        try {
+            def spotMarkets = getSpotMarkets()
+            println "Found: ${spotMarkets.size()} Spot Markets On ${chain} to pull trading Stats..."
+
+            spotMarkets.each { market ->
+                def spotMarket = dboeSpotMarkets.get(market['address'])
+                servPub.handle(new ObjMap('DboeSpotOnchainLiquidityEvent',
                         [
-                                'chain'                 : chain,
-                                'address'               : spotMarketAddr,
-                                'num_px_level'          : specs.component1(),
-                                'maker_fee_bps'         : specs.component2(),
-                                'taker_fee_bps'         : specs.component3(),
-                                'max_order_validity_sec': specs.component4(),
-                                'min_lmt_order_notional': specs.component5()
+                                'chain'         : chain,
+                                'quote_name'    : market['quote_name'],
+                                'base_name'     : market['base_name'],
+                                'trade_count'   : spotMarket.totalTradeCount().send(),
+                                'trade_notional': spotMarket.totalTradedNotional().send() / market['quote_decimal'],
+                                'trade_amount'  : spotMarket.totalTradedAmount().send() / market['base_decimal'],
+                                'in_timestamp'  : getCurrentTimeMillis()
                         ]))
 
             }
-
+        } catch (Exception e) {
+            logger.error(e)
         }
     }
 

@@ -102,10 +102,10 @@ create or replace view dboe_wallet_refer_stats as
 SELECT
 	i.email AS referrer_email,
 	i.wallet_address AS referrer_wallet,
-	i2.email AS referee_email,
-	r.wallet_address AS referee_wallet,
+	coalesce(i2.email, '') AS referee_email,
+	coalesce(r.wallet_address, '') AS referee_wallet,
 	case when t.Address IS NULL then 0 ELSE 1 END AS referee_transacted_status,
-	r.timestamp AS acked_timestamp
+	coalesce(r.timestamp, 0) AS acked_timestamp
 FROM referral_info i
 LEFT outer JOIN referral_ack r ON right(i.wallet_address, 8) = r.referral_code AND r.timestamp > i.timestamp
 LEFT OUTER JOIN referral_info i2 ON r.wallet_address = i2.wallet_address

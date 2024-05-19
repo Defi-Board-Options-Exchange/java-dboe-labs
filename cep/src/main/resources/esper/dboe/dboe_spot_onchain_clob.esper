@@ -32,6 +32,7 @@ create window DboeSpotDashboardAddressWin.std:unique(chain, dashboard_address) a
 @Name('DboeSpotDashboardAddressWin') insert into DboeSpotDashboardAddressWin select * from dboe_spot_dashboard_address_event;
 
 create schema DboeSpotMarketEvent as (
+    dashboard string,
     quote_token string,
     base_token string,
     quote_name string,
@@ -235,3 +236,18 @@ create schema dboe_spot_daily_trade_liquidity_event as (
 
 create window DboeSpotDailyTradeLiquidityWin.std:unique(date, token_name) as dboe_spot_daily_trade_liquidity_event;
 @Name('DboeSpotDailyTradeLiquidityWin') insert into DboeSpotDailyTradeLiquidityWin select * from dboe_spot_daily_trade_liquidity_event;
+
+
+create schema DboeSpotOnchainLiquidityEvent as (
+    chain string,
+    address string,
+    quote_name string,
+    base_name string,
+    trade_count int,
+    trade_notional double,
+    trade_amount double,
+    no_txn int
+);
+
+create window DboeSpotOnchainLiquidityWin.std:unique(chain, address, quote_name, base_name) as DboeSpotOnchainLiquidityEvent;
+@Name('DboeSpotOnchainLiquidityWin') insert into DboeSpotOnchainLiquidityWin select * from DboeSpotOnchainLiquidityEvent;

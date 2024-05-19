@@ -53,7 +53,8 @@ class AnalyticService {
 
     private double usdtBalance(Collection<String> wallets) {
         try {
-            return tokenPortfolioManager.portfolio(wallets).find { it.key == 'USDT' }.value
+            def rec = tokenPortfolioManager.portfolio(wallets).find { it.key == 'USDT' }
+            return rec == null ? 0d : rec.value
         } catch (Exception e) {
             logger.error(e)
             return 0d
