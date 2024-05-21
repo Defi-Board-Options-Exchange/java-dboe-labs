@@ -177,6 +177,7 @@ class DboeSpotOnchainAnalyzerApp {
                 servPub.handle(new ObjMap('DboeSpotOnchainLiquidityEvent',
                         [
                                 'chain'         : chain,
+                                'address'       : market['address'],
                                 'quote_name'    : market['quote_name'],
                                 'base_name'     : market['base_name'],
                                 'trade_count'   : spotMarket.totalTradeCount().send(),
