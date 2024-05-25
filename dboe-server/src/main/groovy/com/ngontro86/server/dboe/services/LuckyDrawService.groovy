@@ -42,15 +42,16 @@ class LuckyDrawService {
     @ConfigValue(config = "coolingOffMin")
     private Integer coolingOffMin = 5
 
+    @ConfigValue(config = "reqBatchSize")
+    private Integer reqBatchSize = 5
+
     private Collection<Map> pendingLuckyReqs = []
-    private Set<Map> lastReqs = [] as Set<Map>
+    private Map<String, Long> lastReqTimes = [:]
 
     private LuckyDrawStats stats = new LuckyDrawStats()
 
     @PostConstruct
     private void init() {
-        lastReqs = flatDao.queryList("select * from dboe_academy.dboe_luckydraw_wallets order by timestamp desc limit 20")
-        stats.setMostRecentLuckyWallets(lastReqs.collect { it['wallet'] })
         def dbStats = flatDao.queryList("select * from dboe_academy.dboe_luckydraw_stats where underlying = '${fixedUnderlying}'")
         if (!dbStats.isEmpty()) {
             stats.setTotalRequest(dbStats.first()['total_requests'])
@@ -61,19 +62,14 @@ class LuckyDrawService {
     Map luckyOrNot(String wallet) {
         try {
             stats.setTotalLuckyDraw(stats.getTotalRequest() + 1)
-            def exist = !lastReqs.findAll { it['wallet'] == wallet }.isEmpty()
-            if (exist) {
+            def tooEarly = lastReqTimes.getOrDefault(wallet, 0) + coolingOffMin * 60000 > GlobalTimeController.currentTimeMillis
+            if (tooEarly) {
                 return [
                         'lucky' : false,
                         'reason': "Retry after ${coolingOffMin} minutes"
                 ]
             }
-
-            lastReqs << [
-                    'wallet'   : wallet,
-                    'timestamp': GlobalTimeController.currentTimeMillis
-            ]
-            removeIfNeeded()
+            lastReqTimes[wallet] = GlobalTimeController.currentTimeMillis
 
             boolean lucky = Math.random() <= luckyChance
             if (lucky) {
@@ -85,7 +81,7 @@ class LuckyDrawService {
                 stats.setTotalLuckyDraw(stats.getTotalLuckyDraw() + 1)
             }
             return [
-                    'lucky' : true,
+                    'lucky' : lucky,
                     'reason': 'Random basis'
             ]
         } catch (Exception e) {
@@ -97,15 +93,8 @@ class LuckyDrawService {
         }
     }
 
-    void removeIfNeeded() {
-        if (lastReqs.first()['timestamp'] <= GlobalTimeController.currentTimeMillis - coolingOffMin * 60000) {
-            lastReqs.remove(lastReqs.first())
-            stats.setMostRecentLuckyWallets(lastReqs.collect { it['wallet'] })
-        }
-    }
-
     void persistIfNeeded() {
-        if (pendingLuckyReqs.size() >= 100) {
+        if (pendingLuckyReqs.size() >= reqBatchSize) {
             flatDao.persist('dboe_luckydraw_wallets', pendingLuckyReqs)
             flatDao.persist('dboe_luckdraw_stats',
                     [
@@ -117,6 +106,7 @@ class LuckyDrawService {
                             ]
                     ]
             )
+            stats.setMostRecentLuckyWallets(pendingLuckyReqs.collect { it['wallet'] })
             pendingLuckyReqs.clear()
         }
     }

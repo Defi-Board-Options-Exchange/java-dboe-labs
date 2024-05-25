@@ -178,7 +178,8 @@ class QueryService {
                 cep.queryMap("select * from DboeTotalLiquidityDashboardWin"),
                 cep.queryMap("select SUM(token_reward) as airdrop, COUNT(DISTINCT Address) as num_wallet from DboeWalletAirdropWin"),
                 cep.queryMap("select COUNT(DISTINCT underlying) AS num_underlying_market, COUNT(DISTINCT instr_id) AS num_option_listing from DboeAllOptionsWin where OptionUtils.timeDiffInYear(expiry, ltt, current_timestamp()) > 0d"),
-                cep.queryMap("select COUNT(DISTINCT address) AS num_pair from DboeSpotMarketWin")
+                cep.queryMap("select COUNT(DISTINCT address) AS num_pair from DboeSpotMarketWin"),
+                cep.queryMap("select sum(trade_notional) AS cumulative_spot_traded_value from DboeSpotOnchainLiquidityWin")
         ].each {
             ret.putAll(it.isEmpty() ? [:] : it.first())
         }
