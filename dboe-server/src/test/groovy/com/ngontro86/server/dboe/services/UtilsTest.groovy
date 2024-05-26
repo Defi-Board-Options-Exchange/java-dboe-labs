@@ -58,22 +58,27 @@ class UtilsTest {
 
     @Test
     void "find the min max from the list of object"() {
-        println Utils.minMax(
+        assert Utils.minMax(
                 [
-                        [
-                                'strike': 12
-                        ],
-                        [
-                                'strike': 13
-                        ],
-                        [
-                                'strike': 14
-                        ],
-                        [
-                                'strike': 15
-                        ]
-                ], 'strike', true
-        )
+                        ['strike': 12],
+                        ['strike': 13],
+                        ['strike': 14],
+                        ['strike': 15]
+                ],
+                'strike',
+                true
+        ) == ['strike': 15]
+
+        assert Utils.minMax(
+                [
+                        ['strike': 12],
+                        ['strike': 13],
+                        ['strike': 14],
+                        ['strike': 15]
+                ],
+                'strike',
+                false
+        ) == ['strike': 12]
     }
 
 }

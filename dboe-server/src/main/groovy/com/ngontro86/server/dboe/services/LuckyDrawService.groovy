@@ -45,6 +45,9 @@ class LuckyDrawService {
     @ConfigValue(config = "reqBatchSize")
     private Integer reqBatchSize = 5
 
+    @ConfigValue(config = "minExpiry")
+    private Integer minExpiry = 20240531
+
     private Collection<Map> pendingLuckyReqs = []
     private Map<String, Long> lastReqTimes = [:]
 
@@ -61,12 +64,12 @@ class LuckyDrawService {
 
     Map luckyOrNot(String wallet) {
         try {
-            stats.setTotalLuckyDraw(stats.getTotalRequest() + 1)
+            stats.incrementReq()
             def tooEarly = lastReqTimes.getOrDefault(wallet, 0) + coolingOffMin * 60000 > GlobalTimeController.currentTimeMillis
             if (tooEarly) {
                 return [
                         'lucky' : false,
-                        'reason': "Retry after ${coolingOffMin} minutes"
+                        'reason': "Retry after ${coolingOffMin} minutes".toString()
                 ]
             }
             lastReqTimes[wallet] = GlobalTimeController.currentTimeMillis
@@ -78,7 +81,8 @@ class LuckyDrawService {
                         'timestamp': GlobalTimeUtils.getTimeFormat(GlobalTimeController.currentTimeMillis, 'yyyyMMddHHmmss')
                 ]
                 persistIfNeeded()
-                stats.setTotalLuckyDraw(stats.getTotalLuckyDraw() + 1)
+                stats.incrementLuckyReq()
+                stats.addWallet(wallet)
             }
             return [
                     'lucky' : lucky,
@@ -106,7 +110,6 @@ class LuckyDrawService {
                             ]
                     ]
             )
-            stats.setMostRecentLuckyWallets(pendingLuckyReqs.collect { it['wallet'] })
             pendingLuckyReqs.clear()
         }
     }
@@ -117,10 +120,13 @@ class LuckyDrawService {
 
     Map gimme(boolean upDown) {
         def options = cep.queryMap("select i.* " +
-                "from DboeOptionInstrWin(chain='${chain}',underlying='${fixedUnderlying}',kind='${upDown ? 'Call' : 'Put'}') i " +
+                "from DboeOptionInstrWin(expiry>=${minExpiry},chain='${chain}',underlying='${fixedUnderlying}',kind='${upDown ? 'Call' : 'Put'}') i " +
                 "inner join DboeOptionTimeToExpiryWin(time_to_expiry>0) t on i.instr_id = t.instr_id " +
                 "inner join DboeOptionChainMarketWin(bid>0,ask>0,Math.abs(greek[1])<${absDelta}) m on i.instr_id = m.instr_id and i.chain = m.chain")
-
-        return Utils.minMax(options, 'strike', upDown)
+        int minExpiry = options.groupBy { it['expiry'] }.keySet().min()
+        if (options.findAll { it['expiry'] == minExpiry }.isEmpty()) {
+            return [:]
+        }
+        return Utils.minMax(options.findAll { it['expiry'] == minExpiry }, 'strike', upDown)
     }
 }
