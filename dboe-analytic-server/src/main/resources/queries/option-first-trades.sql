@@ -1,0 +1,1 @@
+select lower(Address) as Address from analytics.dboe_wallet_first_trade

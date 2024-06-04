@@ -20,4 +20,5 @@ include ':dboe-token-distributor'
 include ':dboe-ref-auto-updater'
 
 include ':component-testing'
+include ':dboe-analytic-server'
 

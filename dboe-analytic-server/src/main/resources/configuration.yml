@@ -1,0 +1,24 @@
+server:
+  type: default
+  maxThreads: 4096
+  maxQueuedRequests: 4096
+  rootPath: /api/*
+  requestLog:
+    appenders: []
+  applicationConnectors:
+    - type: http
+      port: 9696
+    - type: https
+      port: 9443
+      keyStorePath: "/home/truongvinh_vu_gmail_com/certs/dboeServerCert.jks"
+      keyStoreType: JKS
+      keyStorePassword: "15Feb2022"
+      validateCerts: false
+      validatePeers: false
+  adminConnectors:
+    - type: http
+      port: 9697
+swagger:
+  description: Dropwizard Swagger
+logging:
+  level: INFO

@@ -24,12 +24,50 @@ class LuckyDrawRestService {
     private LuckyDrawService luckyDrawService
 
     @GET
+    @Path('/status')
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Step 1. Find out current status, any free Option for today", response = Map.class)
+    Map status() {
+        return luckyDrawService.status()
+    }
+
+    @GET
+    @Path('/optionAvail')
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Step 2. Find out option available for bullish and bearish", response = Map.class)
+    Map optionAvailability() {
+        return luckyDrawService.optionAvail()
+    }
+
+    @GET
     @Path('/luckyOrNot/{walletId}')
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Find out whether this wallet got luck or not", response = Map.class)
+    @ApiOperation(value = "Step 3. Find out whether this wallet got luck or not", response = Map.class)
     Map luckyOrNot(@PathParam('walletId') String walletId) {
         return luckyDrawService.luckyOrNot(walletId)
+    }
+
+    @GET
+    @Path('/lastSpinTime/{walletId}')
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Find out the last time user spin", response = Map.class)
+    Map lastSpinTime(@PathParam('walletId') String walletId) {
+        return luckyDrawService.lastSpinTime(walletId)
+    }
+
+
+    @GET
+    @Path('/gimme')
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Step 4. Return the Option depending on the market trend", response = Map.class)
+    Map gimme(@QueryParam('trend') String upDown) {
+        logger.info("Gimme: ${upDown}")
+        return luckyDrawService.gimme(upDown == 'Up')
     }
 
     @GET
@@ -39,15 +77,5 @@ class LuckyDrawRestService {
     @ApiOperation(value = "Get past lucky stats", response = LuckyDrawStats.class)
     LuckyDrawStats luckyStats() {
         return luckyDrawService.pastLuckyWallets()
-    }
-
-    @GET
-    @Path('/gimme')
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Return the Option depending on the market trend", response = Map.class)
-    Map gimme(@QueryParam('trend') String upDown) {
-        logger.info("Gimme: ${upDown}")
-        return luckyDrawService.gimme(upDown == 'Up')
     }
 }
