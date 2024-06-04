@@ -72,7 +72,7 @@ class LuckyDrawService {
 
     @PostConstruct
     private void init() {
-        def dbStats = flatDao.queryList("select * from dboe_academy.dboe_luckydraw_stats where underlying = '${fixedUnderlying}'")
+        def dbStats = flatDao.queryList("select * from dboe_academy.dboe_luckdraw_stats where underlying = '${fixedUnderlying}'")
         if (!dbStats.isEmpty()) {
             stats.setTotalRequest(dbStats.first()['total_requests'])
             stats.setTotalLuckyDraw(dbStats.first()['total_lucky_wallets'])
