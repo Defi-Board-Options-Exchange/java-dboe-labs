@@ -19,28 +19,28 @@ class AnalyticRestService {
 
     @GET
     @Path('/firstOptionTrade')
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Return the quotes from this DMM to a particular Option", response = Boolean.class)
-    boolean firstOptionTrade(@QueryParam("address") String addr) {
+    @ApiOperation(value = "Return the quotes from this DMM to a particular Option", response = Map.class)
+    Map firstOptionTrade(@QueryParam("address") String addr) {
         return analyticService.firstOptionTrade(addr)
     }
 
     @GET
     @Path('/firstSpotTrade')
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Return the quotes from this DMM to a particular Option", response = Boolean.class)
-    boolean firstSpotTrade(@QueryParam("address") String addr) {
+    @ApiOperation(value = "Return the quotes from this DMM to a particular Option", response = Map.class)
+    Map firstSpotTrade(@QueryParam("address") String addr) {
         return analyticService.firstSpotTrade(addr)
     }
 
     @GET
     @Path('/invited')
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Return the quotes from this DMM to a particular Option", response = Boolean.class)
-    boolean invited(@QueryParam("address") String addr, @QueryParam("noOfInvites") Integer noOfInvites) {
+    @ApiOperation(value = "Return the quotes from this DMM to a particular Option", response = Map.class)
+    Map invited(@QueryParam("address") String addr, @QueryParam("noOfInvites") Integer noOfInvites) {
         return analyticService.invited(addr, noOfInvites)
     }
 

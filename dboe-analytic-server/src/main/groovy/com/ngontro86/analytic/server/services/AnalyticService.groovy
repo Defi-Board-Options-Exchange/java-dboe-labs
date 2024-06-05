@@ -67,15 +67,15 @@ class AnalyticService {
         }
     }
 
-    boolean firstOptionTrade(String address) {
-        optionTrades[address.toLowerCase()]
+    Map firstOptionTrade(String address) {
+        return ['result': optionTrades[address.toLowerCase()]]
     }
 
-    boolean firstSpotTrade(String address) {
-        spotTrades[address.toLowerCase()]
+    Map firstSpotTrade(String address) {
+        return ['result': spotTrades[address.toLowerCase()]]
     }
 
-    boolean invited(String address, int noOfInvites) {
-        return invites[address.toLowerCase()] >= noOfInvites
+    Map invited(String address, int noOfInvites) {
+        return ['result': invites[address.toLowerCase()] >= noOfInvites]
     }
 }
