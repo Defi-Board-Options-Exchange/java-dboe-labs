@@ -10,3 +10,4 @@
 @Name('DboeSpotMarketsWin') select dashboard, address, chain, quote_token, base_token, quote_name, base_name, quote_decimal, base_decimal from DboeSpotMarketWin
 @Name('DboeSpotRefPrice') select chain, address, cast(1.0 * ref_price/px_scale, double) as ref_price, current_timestamp() as in_timestamp from DboeSpotRefWin output snapshot at (*/15, *, *, *, *)
 @Name('DboeSpotOnchainLiquidity') select chain, address, quote_name, base_name, trade_count, trade_notional, trade_amount, current_timestamp() as timestamp from DboeSpotOnchainLiquidityWin output snapshot at (*, */5, *, *, *)
+@Name('DboeIntradayVolSurface') select source, underlying, expiry, kind, timeToExpiry, vol, atm_price, strike, current_timestamp() as timestamp from DboeVolSurfaceWin output snapshot at (*/15, *, *, *, *)

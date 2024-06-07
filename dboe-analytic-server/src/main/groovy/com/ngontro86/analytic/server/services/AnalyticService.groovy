@@ -68,14 +68,14 @@ class AnalyticService {
     }
 
     Map firstOptionTrade(String address) {
-        return ['data': ['result': optionTrades[address.toLowerCase()]]]
+        return ['data': ['result': optionTrades.getOrDefault(address.toLowerCase(), false)]]
     }
 
     Map firstSpotTrade(String address) {
-        return ['data': ['result': spotTrades[address.toLowerCase()]]]
+        return ['data': ['result': spotTrades.getOrDefault(address.toLowerCase(), false)]]
     }
 
     Map invited(String address, int noOfInvites) {
-        return ['data': ['result': invites[address.toLowerCase()] >= noOfInvites]]
+        return ['data': ['result': invites.getOrDefault(address.toLowerCase(), 0) >= noOfInvites]]
     }
 }

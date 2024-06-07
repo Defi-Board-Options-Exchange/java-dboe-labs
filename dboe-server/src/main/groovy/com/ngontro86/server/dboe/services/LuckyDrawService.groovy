@@ -72,7 +72,7 @@ class LuckyDrawService {
 
     @PostConstruct
     private void init() {
-        def dbStats = flatDao.queryList("select * from dboe_academy.dboe_luckdraw_stats where underlying = '${fixedUnderlying}'")
+        def dbStats = flatDao.queryList("select * from dboe_academy.dboe_luckydraw_stats where underlying = '${fixedUnderlying}'")
         if (!dbStats.isEmpty()) {
             stats.setTotalRequest(dbStats.first()['total_requests'])
             stats.setTotalLuckyDraw(dbStats.first()['total_lucky_wallets'])
@@ -159,7 +159,7 @@ class LuckyDrawService {
     void persistIfNeeded() {
         if (pendingLuckyReqs.size() >= reqBatchSize) {
             flatDao.persist('dboe_luckydraw_wallets', pendingLuckyReqs)
-            flatDao.persist('dboe_luckdraw_stats',
+            flatDao.persist('dboe_luckydraw_stats',
                     [
                             [
                                     'underlying'         : fixedUnderlying,
@@ -183,9 +183,9 @@ class LuckyDrawService {
 
     Map status() {
         [
-                'slotAvailable' : dailyLuckyDrawQuota >= dailyLuckyDrawCounts[getTimeFormat(currentTimeMillis, 'yyyyMMdd')],
+                'slotAvailable' : dailyLuckyDrawQuota >= dailyLuckyDrawCounts.getOrDefault(getTimeFormat(currentTimeMillis, 'yyyyMMdd'), 0),
                 'upcomingExpiry': selectedExpiry,
-                'luckySlotToday': dailyLuckyDrawCounts[getTimeFormat(currentTimeMillis, 'yyyyMMdd')]
+                'luckySlotToday': dailyLuckyDrawCounts.getOrDefault(getTimeFormat(currentTimeMillis, 'yyyyMMdd'), 0)
         ]
     }
 
@@ -195,7 +195,7 @@ class LuckyDrawService {
 
     Map lastSpinTime(String wallet) {
         [
-                'lastSpinTimeUtc' : lastReqTimes[wallet],
+                'lastSpinTimeUtc' : lastReqTimes.getOrDefault(wallet, 0),
                 'waitingPeriodMin': coolingOffMin
         ]
     }
