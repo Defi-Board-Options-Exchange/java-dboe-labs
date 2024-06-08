@@ -1,8 +1,10 @@
 package com.ngontro86.dboe.trading
 
+import com.ngontro86.app.common.db.FlatDao
 import com.ngontro86.common.annotations.ConfigValue
 import com.ngontro86.common.annotations.DBOEComponent
 import com.ngontro86.common.annotations.Logging
+import com.ngontro86.common.annotations.NonTxTransactional
 import com.ngontro86.dboe.trading.hedge.HedgingExecutor
 import com.ngontro86.dboe.web3j.Utils
 import com.ngontro86.market.instruments.ExchangeSpecsLoader
@@ -15,7 +17,6 @@ import com.ngontro86.market.web3j.Web3OptionPortfolioManager
 import com.ngontro86.market.web3j.Web3TokenPortfolioManager
 import org.apache.logging.log4j.Logger
 
-import javax.annotation.PostConstruct
 import javax.inject.Inject
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
@@ -60,19 +61,20 @@ class DeltaNeutralMarketMaker {
     @ConfigValue(config = "chain")
     private String chain = 'AVAX'
 
-    private static Collection<String> FIATS = ['USDT', 'USDC', 'DAI']
-
-    @ConfigValue(config = "initialPositions")
-    private Collection<String> initialPositions= []
-
-    private Map<String, Double> startingPositions = [:]
+    @ConfigValue(config = "fiats")
+    private Collection<String> FIATS = ['USDT', 'USDC', 'DAI']
 
     private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor()
 
-    @PostConstruct
-    private void init() {
-        startingPositions << initialPositions.collectEntries { [(it.split(":")[0]): Double.valueOf(it.split(":")[1])] }
-        println "Starting Positions: ${startingPositions}"
+    @Inject
+    @NonTxTransactional
+    private FlatDao flatDao
+
+    private Map<String, Double> getInitialPosition() {
+        def transfers = flatDao.queryList("select token_name, sum(amount) as amount from dboe_mm.dboe_dmm_transfers group by 1")
+        return transfers.collectEntries {
+            [(it['token_name']): it['amount']]
+        }
     }
 
     void startSelfHedge() {
@@ -161,7 +163,7 @@ class DeltaNeutralMarketMaker {
             }
         }
 
-        startingPositions.each { underlying, pos ->
+        getInitialPosition().each { underlying, pos ->
             greekRisks.putIfAbsent(underlying, new GreekRisk())
             greekRisks.get(underlying).delta -= pos
         }
