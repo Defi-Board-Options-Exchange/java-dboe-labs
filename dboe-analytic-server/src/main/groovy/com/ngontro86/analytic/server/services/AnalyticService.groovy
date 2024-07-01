@@ -30,9 +30,11 @@ class AnalyticService {
     private String spotFirstTradeQ = ResourcesUtils.content("queries/spot-first-trades.sql")
     private String optionFirstTradeQ = ResourcesUtils.content("queries/option-first-trades.sql")
     private String invitesQ = ResourcesUtils.content("queries/no-invites.sql")
+    private String luckyDrawQ = ResourcesUtils.content("queries/luckydraw.sql")
 
     private Map<String, Boolean> optionTrades = [:]
     private Map<String, Boolean> spotTrades = [:]
+    private Map<String, Boolean> luckyDraws = [:]
     private Map<String, Integer> invites = [:]
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor()
@@ -59,6 +61,10 @@ class AnalyticService {
             println("Found: ${spotTradeWallets.size()} wallets traded Spot")
             spotTrades = spotTradeWallets.collectEntries { [(it): true] }
 
+            def luckyDrawWallets = flatDao.queryStringList(luckyDrawQ)
+            println("Found: ${luckyDrawWallets.size()} wallets got lucky draw")
+            luckyDraws = luckyDrawWallets.collectEntries { [(it): true] }
+
             def noOfInvites = flatDao.queryList(invitesQ)
             println("Found: ${noOfInvites.size()} invitation records")
             invites = noOfInvites.collectEntries { [(it['Address']): it['numOfInvitations']] }
@@ -77,5 +83,14 @@ class AnalyticService {
 
     Map invited(String address, int noOfInvites) {
         return ['data': ['result': invites.getOrDefault(address.toLowerCase(), 0) >= noOfInvites]]
+    }
+
+    // Galxe to query
+    Map joinedLuckyDraw(String address) {
+        return ['is_ok': luckyDraws.getOrDefault(address.toLowerCase(), false)]
+    }
+
+    Map firstTradeAllCombined(String address) {
+        return ['data': ['result': optionTrades.getOrDefault(address.toLowerCase(), false) || spotTrades.getOrDefault(address.toLowerCase(), false)]]
     }
 }

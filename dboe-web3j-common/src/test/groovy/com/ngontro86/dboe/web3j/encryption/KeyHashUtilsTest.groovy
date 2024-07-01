@@ -9,7 +9,7 @@ class KeyHashUtilsTest {
 
     @Test
     void "should be able to unhash a string"() {
-        def date = new SimpleDateFormat('yyyyMMdd').parse('20240630')
+        def date = new SimpleDateFormat('yyyyMMdd').parse('20241230')
         [
                 'xxx'
         ].each {
@@ -17,12 +17,20 @@ class KeyHashUtilsTest {
         }
     }
 
+    @Test
+    void "should be able to unhash"() {
+        println KeyHashUtils.unhashedKey(
+                '',
+                'DBOEToTheMoon'
+        )
+    }
+
 
     @Test
     void "should be able to unhash a string 2"() {
         def date = new SimpleDateFormat('yyyyMMdd').parse('20241230')
-        ResourcesUtils.lines("to-encrypt.csv").each {line ->
-            println "insert into private_keys values('TeamLP', '${line.split( ',')[0]}',1, '${KeyHashUtils.sign(line.split(",")[1], 'DBOEToTheMoon', date)}','DBOEToTheMoon',20241230, '');"
+        ResourcesUtils.lines("to-encrypt.csv").each { line ->
+            println "insert into private_keys values('TeamLP', '${line.split(',')[0]}',1, '${KeyHashUtils.sign(line.split(",")[1], 'DBOEToTheMoon', date)}','DBOEToTheMoon',20241230, '');"
         }
     }
 

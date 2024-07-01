@@ -1,0 +1,1 @@
+SELECT distinct lower(wallet) as Address FROM  dboe_academy.dboe_luckydraw_wallets

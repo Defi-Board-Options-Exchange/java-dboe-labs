@@ -406,6 +406,11 @@ FROM
 ) r
 INNER JOIN dboe_airdrop_bonuses b ON r.numOfReferral >= b.min_no_referral AND r.numOfReferral <= b.max_no_referral
 
+REPLACE INTO dboe_airdrop_records
+SELECT
+t.first_trade_date as date, 'first trade' AS plan, r.name, r.airdrop_date, Address, r.first_trade_bonus as token_reward
+FROM analytics.dboe_wallet_first_trade t
+inner join dboe_airdrop_phases r on t.first_trade_date between r.starting_date and r.ending_date
 
 
 INSERT ignore INTO dboe_wallet_first_trade

@@ -80,7 +80,7 @@ class LuckyDrawService {
 
         lastReqTimes = flatDao.queryList("select * from dboe_academy.dboe_luckydraw_wallets")
                 .collectEntries {
-                    [(it['wallet']): getTimeUtc(String.valueOf(it['timestamp']), 'GMT', 'yyyyMMddHHmmss')]
+                    [(it['wallet']): it['timestamp_utc'] == 0? getTimeUtc(String.valueOf(it['timestamp']), 'GMT+8', 'yyyyMMddHHmmss') : it['timestamp_utc']]
                 }
 
         dailyLuckyDrawCounts = flatDao.queryList("select floor(timestamp/1000000) as date, count(*) as numOfDraw from dboe_academy.dboe_luckydraw_wallets group by 1")
@@ -134,13 +134,16 @@ class LuckyDrawService {
             boolean lucky = Math.random() <= luckyChance
             if (lucky) {
                 pendingLuckyReqs << [
-                        'wallet'   : wallet,
-                        'timestamp': getTimeFormat(currentTimeMillis, 'yyyyMMddHHmmss')
+                        'wallet'       : wallet,
+                        'timestamp_utc': currentTimeMillis,
+                        'timestamp'    : getTimeFormat(currentTimeMillis, 'yyyyMMddHHmmss')
                 ]
                 persistIfNeeded()
                 stats.incrementLuckyReq()
                 stats.addWallet(wallet)
-                dailyLuckyDrawCounts[getTimeFormat(currentTimeMillis, 'yyyyMMdd')] += 1
+                def date = getTimeFormat(currentTimeMillis, 'yyyyMMdd')
+                dailyLuckyDrawCounts.putIfAbsent(date, 0)
+                dailyLuckyDrawCounts[date] += 1
             }
 
             return [
@@ -165,6 +168,7 @@ class LuckyDrawService {
                                     'underlying'         : fixedUnderlying,
                                     'total_requests'     : stats.totalRequest,
                                     'total_lucky_wallets': stats.totalLuckyDraw,
+                                    'timestamp_utc'      : currentTimeMillis,
                                     'timestamp'          : getTimeFormat(currentTimeMillis, 'yyyyMMddHHmmss')
                             ]
                     ]

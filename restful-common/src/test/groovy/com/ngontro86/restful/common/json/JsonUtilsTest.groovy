@@ -161,4 +161,13 @@ class JsonUtilsTest {
             map.each { k, v -> println "${k} - ${v}" }
         }
     }
+
+    @Test
+    void "should be able to form json str"() {
+        println JsonUtils.toJson([
+                'agreementId' : 'PVN30',
+                'agreementUrl': 'https://dboe.exchange',
+                'invoiceUrl'  : 'https://dboe.exchange'
+        ])
+    }
 }

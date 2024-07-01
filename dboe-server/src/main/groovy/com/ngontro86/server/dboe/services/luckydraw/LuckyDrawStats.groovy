@@ -1,7 +1,8 @@
 package com.ngontro86.server.dboe.services.luckydraw
 
 class LuckyDrawStats {
-    Collection<String> mostRecentLuckyWallets = new ArrayList(20)
+
+    Collection<String> mostRecentLuckyWallets = new ArrayList<>(20)
     int totalLuckyDraw
     int totalRequest
 

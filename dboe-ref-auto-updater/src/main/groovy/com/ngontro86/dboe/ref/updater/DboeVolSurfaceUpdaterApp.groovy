@@ -72,15 +72,20 @@ class DboeVolSurfaceUpdaterApp {
                 println "${underlying}, ${timeToExpiry}, ${moneynesses}, ${vols}"
                 println "Pausing for few secs before publishing to Blockchain"
                 sleep 5000
-
-                gps.addVols(
-                        padding(32, underlying as byte[]),
-                        timeToExpiry as BigInteger,
-                        moneynesses.collect { it * Math.pow(10, 18) as BigInteger },
-                        vols.collect { it * Math.pow(10, 2) as BigInteger }
-                ).send()
-                println "DONE ${underlying}, ${timeToExpiry}!"
+                if(!gotNegativeVol(vols)) {
+                    gps.addVols(
+                            padding(32, underlying as byte[]),
+                            timeToExpiry as BigInteger,
+                            moneynesses.collect { it * Math.pow(10, 18) as BigInteger },
+                            vols.collect { it * Math.pow(10, 2) as BigInteger }
+                    ).send()
+                    println "DONE ${underlying}, ${timeToExpiry}!"
+                }
             }
         }
+    }
+
+    private boolean gotNegativeVol(Collection vols) {
+        return !vols.findAll { it <= 0d }.isEmpty()
     }
 }

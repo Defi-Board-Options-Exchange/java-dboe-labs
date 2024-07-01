@@ -21,16 +21,25 @@ class AnalyticRestService {
     @Path('/firstOptionTrade')
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Return the quotes from this DMM to a particular Option", response = Map.class)
+    @ApiOperation(value = "Whether user placed any first option trade", response = Map.class)
     Map firstOptionTrade(@QueryParam("address") String addr) {
         return analyticService.firstOptionTrade(addr)
+    }
+
+    @GET
+    @Path('/firstTradeAllCombined')
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Whether user placed any first trade either Options or Spot", response = Map.class)
+    Map firstTradeAllCombined(@QueryParam("address") String addr) {
+        return analyticService.firstTradeAllCombined(addr)
     }
 
     @GET
     @Path('/firstSpotTrade')
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Return the quotes from this DMM to a particular Option", response = Map.class)
+    @ApiOperation(value = "Whether user placed any first Spot trade", response = Map.class)
     Map firstSpotTrade(@QueryParam("address") String addr) {
         return analyticService.firstSpotTrade(addr)
     }
@@ -42,6 +51,15 @@ class AnalyticRestService {
     @ApiOperation(value = "Return the quotes from this DMM to a particular Option", response = Map.class)
     Map invited(@QueryParam("address") String addr, @QueryParam("noOfInvites") Integer noOfInvites) {
         return analyticService.invited(addr, noOfInvites)
+    }
+
+    @GET
+    @Path('/joinedLuckyDraw')
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "Return whether this wallet got luckydraw or not", response = Map.class)
+    Map joinedLuckyDraw(@QueryParam("address") String addr) {
+        return analyticService.joinedLuckyDraw(addr)
     }
 
 }
