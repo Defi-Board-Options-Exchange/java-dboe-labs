@@ -9,6 +9,13 @@ import static com.ngontro86.utils.EqualUtils.equals
 class UtilsTest {
 
     @Test
+    void "should return a good starting time in block"() {
+        assert Utils.getTimeUtcWithBlock(11, 5, 5) == 10
+        assert Utils.getTimeUtcWithBlock(16, 5, 5) == 15
+        assert Utils.getTimeUtcWithBlock(31, 5, 5) == 30
+    }
+
+    @Test
     void "should return epoch time given date and time LTT"() {
         assert Utils.getTimeUtc(20240503, 80000) == 1714723200000
     }

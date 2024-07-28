@@ -6,6 +6,10 @@ import java.text.DecimalFormat
 
 class Utils {
 
+    static long getTimeUtcWithBlock(long nowUtc, long pivotUtc, long block) {
+        return pivotUtc + (long)(Math.floor((nowUtc - pivotUtc) / block) * block)
+    }
+
     static long getTimeUtc(int yyyyMMdd, int ltt) {
         return GlobalTimeUtils.getTimeUtc(String.format("%08d %06d", yyyyMMdd, ltt), "GMT", "yyyyMMdd HHmmss")
     }
