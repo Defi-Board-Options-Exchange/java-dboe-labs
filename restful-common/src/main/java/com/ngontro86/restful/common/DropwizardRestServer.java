@@ -24,8 +24,7 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
-import java.util.EnumSet;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @DBOEComponent
@@ -69,6 +68,9 @@ public class DropwizardRestServer extends Application<AbstractConfiguration> {
 
     @ConfigValue
     private Boolean corEnabled = true;
+
+    @ConfigValue
+    private String corOrigins = "*";
 
     @PostConstruct
     private void init() {
@@ -136,7 +138,7 @@ public class DropwizardRestServer extends Application<AbstractConfiguration> {
             logger.info("CORS is enabled!");
             final FilterRegistration.Dynamic cors =
                     environment.servlets().addFilter("CORS", CrossOriginFilter.class);
-            cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "*");
+            cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, corOrigins);
             cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, "X-Requested-With,Content-Type,Accept,Origin,Authorization,passCode");
             cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "OPTIONS,GET,PUT,POST,DELETE,HEAD");
             cors.setInitParameter(CrossOriginFilter.ALLOW_CREDENTIALS_PARAM, "true");

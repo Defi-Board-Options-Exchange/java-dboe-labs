@@ -1,4 +1,4 @@
-create or replace view dboe_static_smart_contract_address AS
+create or replace view analytics.dboe_static_smart_contract_address AS
 select distinct
 	m.name as chain,
 	ob_address, option_factory_address, clearing_address,
@@ -7,9 +7,9 @@ select distinct
 	case when cast(date_format(curdate(),'%Y%m%d') as unsigned) between min(floor(timestamp/1000000)) and max(expiry) then 1 else 0 end as is_active
 from dboe_academy._dboe_address_divider d
 inner join chain_mapping m on d.chain = m.dboe_chain_name
-group by 1,2,3,4
+group by 1,2,3,4;
 
-create or replace view dboe_enriched_transfers AS
+create or replace view analytics.dboe_enriched_transfers AS
 select
 TransactionHash, TxnTimestamp, SenderAddress, ReceiverAddress, Amount, CurrencyAddress, m.dboe_chain_name as chain,
 COALESCE(l.underlying, s.underlying, '') AS underlying,
@@ -19,21 +19,21 @@ COALESCE(l.instr_id, s.instr_id, '') AS instr_id,
 case when s.short_contract_address is not null then ABS(s.strike - s.cond_strike) ELSE 0 end AS Collateral,
 case when (s.instr_id IS NULL and l.instr_id IS null) then 0 ELSE 1 END AS isOption,
 case when s.short_contract_address is not null then -1 when l.long_contract_address is not null then 1 ELSE 0 END AS isLongOrShort
-from dboe_transfers t
-INNER JOIN chain_mapping m ON t.Chain = m.name
+from analytics.dboe_transfers t
+INNER JOIN analytics.chain_mapping m ON t.Chain = m.name
 LEFT outer join dboe_academy.dboe_all_options l ON t.CurrencyAddress = l.long_contract_address AND l.chain = m.dboe_chain_name
 LEFT OUTER JOIN dboe_academy.dboe_all_options s ON t.CurrencyAddress = s.short_contract_address AND s.chain = m.dboe_chain_name
 WHERE t.TxnTimestamp >= (now() - INTERVAL 15 day);
 
-create or replace view dboe_transfer_option_instr AS
+create or replace view analytics.dboe_transfer_option_instr AS
 select distinct
 TransactionHash, instr_id, m.dboe_chain_name as chain
-from dboe_transfers t
-INNER JOIN chain_mapping m ON t.Chain = m.name
+from analytics.dboe_transfers t
+INNER JOIN analytics.chain_mapping m ON t.Chain = m.name
 inner join dboe_academy.dboe_all_options o ON (t.CurrencyAddress = o.long_contract_address OR t.CurrencyAddress = o.short_contract_address) AND o.chain = m.dboe_chain_name;
 
 
-create or replace view dboe_wallet_txn AS
+create or replace view analytics.dboe_wallet_txn AS
 SELECT x.TransactionHash, x.Chain, max(TxnTimestamp) AS TxnTimestamp, Address, o.instr_id, SUM(optionAmount) AS volume, SUM(notional) AS notional, case when SUM(optionAmount) != 0 then SUM(notional)/SUM(optionAmount) ELSE 0 end AS avgPx
 FROM (
 	SELECT TransactionHash, CHAIN, TxnTimestamp, SenderAddress AS Address, -SUM(Amount*isLongOrShort) AS optionAmount, SUM(Amount * (1 - isOption)) - SUM(Amount*Collateral*isOption*isLongOrShort) AS notional
@@ -45,9 +45,9 @@ FROM (
 	GROUP BY TransactionHash, CHAIN, TxnTimestamp, ReceiverAddress
 ) x
 INNER JOIN dboe_transfer_option_instr o ON x.TransactionHash = o.TransactionHash AND x.Chain = o.Chain
-GROUP BY x.TransactionHash, x.CHAIN, Address, o.instr_id
+GROUP BY x.TransactionHash, x.CHAIN, Address, o.instr_id;
 
-create or replace view dboe_wallet_position as
+create or replace view dboe_academy.dboe_wallet_position as
 select
 chain,
 Address as wallet_id, instr_id,
@@ -58,7 +58,7 @@ from analytics.dboe_wallet_txn
 group by 1,2,3;
 
 --------------------- Other View -----------------
-create or replace view dboe_all_options as
+create or replace view dboe_academy.dboe_all_options as
 select
 `i`.`instr_id` AS `instr_id`,`i`.`chain` AS `chain`,`i`.`collateral_group` AS `collateral_group`,`i`.`underlying` AS `underlying`,
 `i`.`kind` AS `kind`,`i`.`expiry` AS `expiry`,`i`.`ltt` AS `ltt`,`i`.`multiplier` AS `multiplier`,`i`.`strike` AS `strike`,`i`.`cond_strike` AS `cond_strike`,
@@ -70,10 +70,10 @@ from `_dboe_option_instr` `i`
 inner join `_dboe_address_divider` `d` on `i`.`chain` = `d`.`chain` and `i`.`underlying` = `d`.`underlying` and `i`.`expiry` = `d`.`expiry`
 inner join `dboe_collateral` `c` on `i`.`chain` = `c`.`chain` and `i`.`currency` = `c`.`token`
 inner join `_dboe_underlying_market` `m` on `i`.`underlying` = `m`.`underlying`
-where `i`.`expiry` >= cast(date_format((now() - interval 14 day),'%Y%m%d') as unsigned)
+where `i`.`expiry` >= cast(date_format((now() - interval 14 day),'%Y%m%d') as UNSIGNED);
 
 
-create or replace view dboe_options_universe as
+create or replace view dboe_academy.dboe_options_universe as
 select
 `i`.`instr_id` AS `instr_id`,`i`.`chain` AS `chain`,`i`.`collateral_group` AS `collateral_group`,`i`.`underlying` AS `underlying`,
 `i`.`kind` AS `kind`,`i`.`expiry` AS `expiry`,`i`.`ltt` AS `ltt`,`i`.`multiplier` AS `multiplier`,`i`.`strike` AS `strike`,`i`.`cond_strike` AS `cond_strike`,
@@ -85,9 +85,9 @@ from `_dboe_option_instr` `i`
 inner join `_dboe_address_divider` `d` on `i`.`chain` = `d`.`chain` and `i`.`underlying` = `d`.`underlying` and `i`.`expiry` = `d`.`expiry`
 inner join `dboe_collateral` `c` on `i`.`chain` = `c`.`chain` and `i`.`currency` = `c`.`token`
 inner join `_dboe_underlying_market` `m` on `i`.`underlying` = `m`.`underlying`
-where `i`.`expiry` >= 20230728
+where `i`.`expiry` >= 20230728;
 
-create or replace view dboe_wallet_airdrop as
+create or replace view dboe_academy.dboe_wallet_airdrop as
 SELECT
 plan, name, airdrop_date, Address, sum(token_reward) as token_reward
 from dboe_airdrop_records
@@ -96,9 +96,9 @@ UNION ALL
 SELECT distinct
 'first trade' AS plan, r.name, r.airdrop_date, Address, r.first_trade_bonus as token_reward
 FROM analytics.dboe_wallet_first_trade t
-inner join dboe_airdrop_phases r on t.first_trade_date between r.starting_date and r.ending_date
+inner join dboe_airdrop_phases r on t.first_trade_date between r.starting_date and r.ending_date;
 
-create or replace view dboe_wallet_refer_stats as
+create or replace view dboe_academy.dboe_wallet_refer_stats as
 SELECT
 	i.email AS referrer_email,
 	i.wallet_address AS referrer_wallet,
@@ -109,9 +109,9 @@ SELECT
 FROM referral_info i
 LEFT outer JOIN referral_ack r ON right(i.wallet_address, 8) = r.referral_code AND r.timestamp > i.timestamp
 LEFT OUTER JOIN referral_info i2 ON r.wallet_address = i2.wallet_address
-LEFT OUTER JOIN analytics.dboe_wallet_first_trade t ON r.wallet_address = t.Address
+LEFT OUTER JOIN analytics.dboe_wallet_first_trade t ON r.wallet_address = t.Address;
 
-CREATE OR REPLACE VIEW dboe_active_option_traded_value AS
+CREATE OR REPLACE VIEW dboe_academy.dboe_active_option_traded_value AS
 
 SELECT o.chain, t.instr_id, SUM(ABS(volume)) * s.avg_spot/2 AS tradedValue
 FROM analytics.dboe_wallet_txn t
@@ -123,9 +123,9 @@ INNER JOIN
 	WHERE spot > 0
 	GROUP BY 1, 2
 ) s ON o.underlying = s.underlying AND cast(date_format(t.TxnTimestamp, '%Y%m%d') AS UNSIGNED) = s.date
-group BY o.chain, t.instr_id, s.avg_spot
+group BY o.chain, t.instr_id, s.avg_spot;
 
-CREATE OR REPLACE VIEW dboe_new_wallet_count as
+CREATE OR REPLACE VIEW dboe_academy.dboe_new_wallet_count as
 SELECT a.date, a.numNewWallets, k.newWalletKyt, t.numberOfWalletSubmittedOrders
 from
 (
@@ -150,9 +150,9 @@ LEFT OUTER JOIN (
         WHERE TIMESTAMPDIFF(MINUTE, TxnTimestamp, CURRENT_TIMESTAMP) < 10080
 	) X
 	GROUP BY 1
-) t ON a.date = t.date
+) t ON a.date = t.date;
 
-CREATE OR replace VIEW dboe_prev_ref as
+CREATE OR replace VIEW dboe_academy.dboe_prev_ref as
 SELECT
 	r.*, '4h' as delay
 FROM (
@@ -162,10 +162,10 @@ FROM (
 	WHERE in_timestamp <= (UNIX_TIMESTAMP()*1000 - 7200000) AND i.expiry >= cast(date_format((now()),'%Y%m%d') as UNSIGNED)
 	GROUP BY 1,2,3
 ) x
-INNER JOIN _dboe_ref_prices r ON x.chain = r.chain AND x.instr_id = r.instr_id AND x.currency = r.currency AND x.in_timestamp = r.in_timestamp
+INNER JOIN _dboe_ref_prices r ON x.chain = r.chain AND x.instr_id = r.instr_id AND x.currency = r.currency AND x.in_timestamp = r.in_timestamp;
 
 
-CREATE OR replace VIEW dboe_spot_prev_ref as
+CREATE OR replace VIEW dboe_academy.dboe_spot_prev_ref as
 SELECT
 	r.*, s.quote_token as quote_token, s.base_token as base_token, '4h' as delay
 FROM (
@@ -175,9 +175,9 @@ FROM (
 	GROUP BY 1,2
 ) x
 INNER JOIN _dboe_spot_ref_prices r ON x.chain = r.chain AND x.address = r.address AND x.in_timestamp = r.in_timestamp
-inner join dboe_spot_markets s on r.chain = s.chain and r.address = s.address
+inner join dboe_spot_markets s on r.chain = s.chain and r.address = s.address;
 
-CREATE OR REPLACE VIEW dboe_total_liquidity_dashboard as
+CREATE OR REPLACE VIEW dboe_academy.dboe_total_liquidity_dashboard as
 SELECT oi.DATE, eod_oi AS eod_open_interest, totalNotional AS total_traded_notional, numOfTrade AS num_txn, tradedValue AS total_traded_value, totalFee AS total_fee,
 case when oi.date = cast(date_format(CURRENT_DATE(), '%Y%m%d') AS UNSIGNED) then 1 ELSE 0 end AS active
 FROM (
@@ -191,7 +191,7 @@ INNER JOIN (
 	INNER JOIN dboe_avg_spot s ON t.date = s.date and t.underlying = s.underlying
 	GROUP BY 1
 ) t ON oi.date = t.date
-INNER join analytics.dboe_daily_fee f ON t.date = f.date
+INNER join analytics.dboe_daily_fee f ON t.date = f.date;
 
 
 --- on Analytics
